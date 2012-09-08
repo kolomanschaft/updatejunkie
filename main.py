@@ -3,7 +3,6 @@ from AdStore import *
 from AdAssessor import *
 from WillhabenObserver import *
 from Logger import *
-from threading import Thread
 import md5
 import sys
 import os
@@ -32,25 +31,27 @@ if __name__ == "__main__":
 	kwdsAll = AdCriterionTitleKeywordsAll(["galaxy"])
 	kwdsAny = AdCriterionTitleKeywordsAny(["s3", "sIII", "i9300"])
 	kwdsNot = AdCriterionTitleKeywordsNot(["freischalten"])
-	price = AdCriterionPriceLimit(350)
+	price = AdCriterionPriceLimit(400)
 	
 	assessor = AdAssessor()
 	assessor.add_criteria(kwdsAll, kwdsAny, kwdsNot, price)
 	
-	observer = WillhabenObserver(url, store, assessor, logger = logger, update_interval = 120)
+	observer = WillhabenObserver(url, store, assessor, logger = logger, update_interval = 60)
 	
-	# ---------------------------------------------------------
-	# Set up of the platform dependent components and run loop
-	# ---------------------------------------------------------
+	# ---------------------------------------------------------------
+	# Set up of the platform dependent components and run event loop
+	# ---------------------------------------------------------------
 	
 	if sys.platform == "linux2":
 		from platform_dependant.Linux import GTKNotification
-		import gtk
+		import gtk, gobject
 		GTKNotify = GTKNotification(icon = "./logo.png")
 		observer.notification = GTKNotify
-		t = Thread(target = observer.run)
-		t.start()
+		print "Starting observer thread now"
+		observer.start()
+		gobject.threads_init()
 		gtk.main()
+
 	elif sys.platform == "darwin":
 		import Foundation, objc, AppKit
 		from PyObjCTools import AppHelper

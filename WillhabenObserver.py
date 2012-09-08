@@ -3,17 +3,20 @@ import time
 from itertools import compress
 from WillhabenConnector import *
 from Logger import *
+import threading
 
-class WillhabenObserver:
+class WillhabenObserver(threading.Thread):
 	
 	def __init__(self, url, store, assessor, notification = None, logger = Logger(), update_interval = 180):
+		super(WillhabenObserver, self).__init__()
 		self.interval = update_interval
 		self.connector = WillhabenConnector(url)
 		self.store = store
 		self.assessor = assessor
 		self.notification = notification
 		self.logger = logger
-
+		self.daemon = True
+	
 	def process_ads(self, ads):
 		hits = map(self.assessor.check, ads)
 		hit_ads = [ad for ad in compress(ads, hits)]
