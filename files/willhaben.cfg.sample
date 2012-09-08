@@ -1,22 +1,31 @@
+# This is a Willhaben observer sample configuration file. Copy 
+# 'willhaben.cfg.sample' to 'willhaben.cfg' and adjust it to your needs. As an 
+# alternative you can store an arbitrary duplicate and pass the path as 
+# argument to 'main.py'
+
+
 [General]
 
 # Copy the URL of the willhaben.at listing you want to observe
 url = http://www.example.com/
 
-# If this is 'no' the observer will forget all ads after close
+# If this option is 'no' the observer will forget all seen ads after closing
 ads.store = yes
+
 
 [TitleCriteria]
 
-# All of these keywords must appear in an ad's title to trigger a notification
+# All of these keywords must appear in an ad's title in order to trigger a 
+# notification
 keywords.all = ['word-1', 'word-2']
 
-# At least one of these keywords must appear in an ad's title to trigger a notification
+# At least one of these keywords must appear in an ad's title in order to to 
+# trigger a notification
 keywords.any = ['word-3', 'word-4', 'word-5']
 
-# None of these keywords must appear in an ad's title to trigger a notification
+# None of these keywords are allowed to appear in an ad's title in order to 
+# trigger a notification
 keywords.not = ['bad-word-1', 'bad-word-2']
 
-# The ads price must be less or equal to trigger a notification
+# The ad's price must be less or equal in order to trigger a notification
 price.limit = 520
-
