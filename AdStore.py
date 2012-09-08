@@ -39,15 +39,13 @@ class AdStore:
 		"""
 		'flag' has the same meaning as the 'flag' parameter in anydbm.open()
 		"""
-		if path == None:
-			self.path = "./adstore.save"
-		else:
-			self.path = path
+		self.path = path
 		self.flag = flag
 		self.autosave = autosave
 		self.load()
 	
 	def save(self):
+		if not self.path: return
 		sh = shelve.open(self.path, self.flag)
 		try:
 			sh["ads"] = self.ads
@@ -56,6 +54,7 @@ class AdStore:
 		return True
 	
 	def load(self):
+		if not self.path: return
 		sh = shelve.open(self.path, self.flag)
 		try:
 			self.ads = sh["ads"]

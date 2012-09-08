@@ -2,7 +2,8 @@
 
 *~
 .DS_Store
-files/
+files/*.save
+files/*.log
 
 # Added by github.com
 

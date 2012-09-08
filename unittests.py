@@ -4,6 +4,7 @@ import os
 from AdStore import *
 from AdAssessor import *
 from Logger import *
+from Config import *
 
 class TestAdStore(unittest.TestCase):
 	
@@ -106,6 +107,33 @@ class TestLogger(unittest.TestCase):
 			l = f.readline()
 			self.assertNotRegexpMatches(l, s1)
 			self.assertRegexpMatches(l, s2)
+
+class TestConfig(unittest.TestCase):
+	
+	path = "./test.cfg"
+	
+	def setUp(self):
+		if not os.path.exists(self.path):
+			f = open(self.path, "w")
+			f.close()
+		self.config = Config(self.path)
+	
+	def tearDown(self):
+		os.remove(self.path)
+	
+	def testSafeLoadOptions(self):
+		testurl = "http://example.com"
+		self.config.url = testurl
+		self.config.save()
+		c = Config(self.path)
+		self.assertTrue(testurl == c.url)
+	
+	def testSaveLoadCriteria(self):
+		kwds = ["word-1", "word-2", "word-3"]
+		self.config.title_keywords_all = kwds
+		self.config.save()
+		c = Config(self.path)
+		self.assertListEqual(kwds, c.title_keywords_all)
 
 if __name__ == "__main__":
 	unittest.main()

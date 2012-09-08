@@ -1,0 +1,22 @@
+[General]
+
+# Copy the URL of the willhaben.at listing you want to observe
+url = http://www.example.com/
+
+# If this is 'no' the observer will forget all ads after close
+ads.store = yes
+
+[TitleCriteria]
+
+# All of these keywords must appear in an ad's title to trigger a notification
+keywords.all = ['word-1', 'word-2']
+
+# At least one of these keywords must appear in an ad's title to trigger a notification
+keywords.any = ['word-3', 'word-4', 'word-5']
+
+# None of these keywords must appear in an ad's title to trigger a notification
+keywords.not = ['bad-word-1', 'bad-word-2']
+
+# The ads price must be less or equal to trigger a notification
+price.limit = 520
+
