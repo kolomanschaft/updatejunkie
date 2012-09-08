@@ -3,6 +3,7 @@ from AdStore import *
 from AdAssessor import *
 from WillhabenObserver import *
 from Logger import *
+from threading import Thread
 import md5
 import sys
 import os
@@ -36,22 +37,26 @@ if __name__ == "__main__":
 	assessor = AdAssessor()
 	assessor.add_criteria(kwdsAll, kwdsAny, kwdsNot, price)
 	
+	observer = WillhabenObserver(url, store, assessor, logger = logger, update_interval = 120)
+	
 	# ---------------------------------------------------------
 	# Set up of the platform dependent components and run loop
 	# ---------------------------------------------------------
 	
 	if sys.platform == "linux2":
 		from platform_dependant.Linux import GTKNotification
-		notification = GTKNotification(icon = "./logo.png")
-		observer = WillhabenObserver(url, store, assessor, notification, update_interval = 60)
-		observer.run()
+		import gtk
+		GTKNotify = GTKNotification(icon = "./logo.png")
+		observer.notification = GTKNotify
+		t = Thread(target = observer.run)
+		t.start()
+		gtk.main()
 	elif sys.platform == "darwin":
-		from threading import Thread
 		import Foundation, objc, AppKit
 		from PyObjCTools import AppHelper
 		from platform_dependant.MacOS import MountainLionNotification
-		notification = MountainLionNotification.alloc().init()
-		observer = WillhabenObserver(url, store, assessor, notification, logger = logger, update_interval = 60)
+		MLNotify = MountainLionNotification.alloc().init()
+		observer.notification = MLNotify
 		t = Thread(target = observer.run)
 		t.start()
 		app = AppKit.NSApplication.sharedApplication()

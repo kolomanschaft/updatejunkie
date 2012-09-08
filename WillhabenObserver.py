@@ -6,7 +6,7 @@ from Logger import *
 
 class WillhabenObserver:
 	
-	def __init__(self, url, store, assessor, notification, logger = Logger(), update_interval = 180):
+	def __init__(self, url, store, assessor, notification = None, logger = Logger(), update_interval = 180):
 		self.interval = update_interval
 		self.connector = WillhabenConnector(url)
 		self.store = store
@@ -20,7 +20,8 @@ class WillhabenObserver:
 		new_ads = self.store.add_ads(hit_ads)
 		for ad in new_ads:
 			self.logger.append("Observer Found Ad: " + ad["title"])
-			self.notification.notify(title = "Willhaben Ad spotted!", subtitle = "€ " + str(ad["price"]), text = ad["title"], url = ad["url"])
+			if self.notification:
+				self.notification.notify(title = "Willhaben Ad spotted!", subtitle = "€ " + str(ad["price"]), text = ad["title"], url = ad["url"])
 
 	def run(self):
 		# TODO: don't initialize on number of pages but on ad date!!
