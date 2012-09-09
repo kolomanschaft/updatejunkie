@@ -27,11 +27,11 @@ Willhaben will automatically look for the configuration file `files/willhaben.cf
 
     python main.py path/to/configfile.cfg
 
-This way you can create various config files, one for every kind of ads you want to observe.
+This way you can create various config files, one for each kind of ads you want to observe.
 
 ## Known issues
 
-* GTK notification is currently somewhat broken. __notify2__ uses __Python-dbus__ to schedule GTK user notifications. However, it sometimes causes Willhaben to crash.
+* GTK notification is currently somewhat broken. __notify2__ uses __Python-dbus__ to schedule GTK user notifications which is working fine in most cases. However, it sometimes causes Willhaben to crash.
 * If an ad article is free or the article is already sold the price is not recognized correctly and causes the observer to ignore a set price limit.
 
 ## Outlook
