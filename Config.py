@@ -48,7 +48,17 @@ class Config(object):
 	def ads_store(self, value):
 		if value:
 			self._set("General", "ads.store", "yes")
-	
+
+	@property
+	def update_interval(self):
+		return self._parser.getint("General", "update.interval")
+
+	@update_interval.setter
+	def update_interval(self, interval):
+		if not type(interval) is int:
+			raise ConfigError("Update interval must be an integer number")
+		self._set("General", "update.interval", str(interval))
+		
 	@property
 	def title_keywords_all(self):
 		return eval(self._parser.get("TitleCriteria", "keywords.all"))
@@ -63,7 +73,7 @@ class Config(object):
 	def title_keywords_any(self):
 		return eval(self._parser.get("TitleCriteria", "keywords.any"))
 
-	@title_keywords_all.setter
+	@title_keywords_any.setter
 	def title_keywords_any(self, kwds):
 		if not type(kwds) is list: 
 			raise ConfigError("Keywords argument must be a list")
@@ -81,19 +91,19 @@ class Config(object):
 	
 	@property
 	def price_limit(self):
-		self._parser.getint("TitleCriteria", "price.limit")
+		self._parser.getint("PriceCriteria", "price.limit")
 
 	@price_limit.setter
 	def price_limit(self, price):
 		if not type(price) is int:
 			raise ConfigError("Price must be an integer number")
-		self._set("TitleCriteria", "price.limit", str(price))
+		self._set("PriceCriteria", "price.limit", str(price))
 			
 if __name__ == '__main__':
 	
-	# create default config
+	# create test config
 	
-	path = "./files/sample.cfg"
+	path = "./files/test.cfg"
 	with open(path, "w"): pass
 	c = Config(path)
 	
@@ -103,6 +113,7 @@ if __name__ == '__main__':
 	c.title_keywords_any = ["word-3", "word-4", "word-5"]
 	c.title_keywords_not = ["bad-word-1", "bad-word-2"]
 	c.price_limit = 520
+	c.update_interval = 66
 	
 	c.save()
 	

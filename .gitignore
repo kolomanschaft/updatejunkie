@@ -4,6 +4,7 @@
 .DS_Store
 files/*.save
 files/*.log
+files/*.cfg
 
 # Added by github.com
 

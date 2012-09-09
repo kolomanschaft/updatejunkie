@@ -54,7 +54,9 @@ class AdStore:
 		return True
 	
 	def load(self):
-		if not self.path: return
+		if not self.path: 
+			self.ads = []
+			return
 		sh = shelve.open(self.path, self.flag)
 		try:
 			self.ads = sh["ads"]

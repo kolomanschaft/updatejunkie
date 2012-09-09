@@ -12,6 +12,9 @@ url = http://www.example.com/
 # If this option is 'no' the observer will forget all seen ads after closing
 ads.store = yes
 
+# Time (seconds) between two polls
+update.interval = 120
+
 
 [TitleCriteria]
 
@@ -27,5 +30,9 @@ keywords.any = ['word-3', 'word-4', 'word-5']
 # trigger a notification
 keywords.not = ['bad-word-1', 'bad-word-2']
 
-# The ad's price must be less or equal in order to trigger a notification
+
+[PriceCriteria]
+
+# The ad's price must be less or equal in order to trigger a notification. Set 
+# '0' for unlimited
 price.limit = 520

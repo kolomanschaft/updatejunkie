@@ -3,17 +3,23 @@ from AdStore import *
 from AdAssessor import *
 from WillhabenObserver import *
 from Logger import *
+from Config import *
+from threading import Thread
 import md5
 import sys
 import os
 
 if __name__ == "__main__":
 	
-	# Ads will be observed from this URL
-	url = "http://www.willhaben.at/iad/kaufen-und-verkaufen/marktplatz?ISPRIVATE=1&CATEGORY/SUBCATEGORY=8621&CATEGORY/MAINCATEGORY=73"
-	
 	# Create the 'files/' directory if it doesn't exist yet
 	if not os.path.exists("./files/"): os.mkdir("files")
+	
+	# Load configuration
+	if len(sys.argv) > 1:
+		config_path = sys.argv[1]
+	else:
+		config_path = "./files/willhaben.cfg"
+	config = Config(config_path)
 	
 	# Initialize logging
 	logger = Logger(path = "files/observer.log")
@@ -24,19 +30,29 @@ if __name__ == "__main__":
 	# ----------------------------------------------
 	
 	# Ads that have already been processed are registered in this file
-	save_file = "files/" + md5.new(url).hexdigest() + ".save"	
+	if config.ads_store:
+		save_file = "files/" + md5.new(config.url).hexdigest() + ".save"
+	else: 
+		save_file = None	
 	store = AdStore(path = save_file)
 	
-	# Set up your search criteria here!
-	kwdsAll = AdCriterionTitleKeywordsAll(["galaxy"])
-	kwdsAny = AdCriterionTitleKeywordsAny(["s3", "sIII", "i9300"])
-	kwdsNot = AdCriterionTitleKeywordsNot(["freischalten"])
-	price = AdCriterionPriceLimit(400)
-	
+	# Search criteria setup
 	assessor = AdAssessor()
-	assessor.add_criteria(kwdsAll, kwdsAny, kwdsNot, price)
-	
-	observer = WillhabenObserver(url, store, assessor, logger = logger, update_interval = 60)
+	if len(config.title_keywords_all) > 0:
+		assessor.add_criterion(AdCriterionTitleKeywordsAll(config.title_keywords_all))
+	if len(config.title_keywords_any) > 0:
+		assessor.add_criterion(AdCriterionTitleKeywordsAny(config.title_keywords_any))
+	if len(config.title_keywords_not) > 0:
+		assessor.add_criterion(AdCriterionTitleKeywordsNot(config.title_keywords_not))
+	if config.price_limit > 0:
+		assessor.add_criterion(AdCriterionPriceLimit(config.price_limit))
+
+	# The observer is the core of the system
+	observer = WillhabenObserver(url = config.url, 
+								 store = store, 
+								 assessor = assessor, 
+								 logger = logger, 
+								 update_interval = config.update_interval)
 	
 	# ---------------------------------------------------------------
 	# Set up of the platform dependent components and run event loop
@@ -58,7 +74,6 @@ if __name__ == "__main__":
 		from platform_dependant.MacOS import MountainLionNotification
 		MLNotify = MountainLionNotification.alloc().init()
 		observer.notification = MLNotify
-		t = Thread(target = observer.run)
-		t.start()
+		observer.start()
 		app = AppKit.NSApplication.sharedApplication()
 		AppHelper.runEventLoop()
