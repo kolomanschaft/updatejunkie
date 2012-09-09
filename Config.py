@@ -40,6 +40,14 @@ class Config(object):
 	# -------------------------
 	
 	@property
+	def runmode(self):
+		return self._parser.get("General", "runmode")
+	
+	@runmode.setter
+	def runmode(self, mode):
+		self._set("General", "runmode", mode)
+	
+	@property
 	def url(self):
 		return self._parser.get("General", "url")
 	
@@ -115,6 +123,14 @@ class Config(object):
 		self._set("Email", "smtp.host", host)
 
 	@property
+	def smtp_port(self):
+		return self._parser.get("Email", "smtp.port")
+
+	@smtp_port.setter
+	def smtp_port(self, port):
+		self._set("Email", "smtp.port", port)
+
+	@property
 	def smtp_user(self):
 		return self._parser.get("Email", "smtp.user")
 
@@ -170,6 +186,7 @@ if __name__ == '__main__':
 	with open(path, "w"): pass
 	c = Config(path)
 	
+	c.runmode = "auto"
 	c.url = "http://www.example.com/"
 	c.ads_store = True
 	c.title_keywords_all = ["word-1", "word-2"]
@@ -179,12 +196,13 @@ if __name__ == '__main__':
 	c.update_interval = 66
 	
 	c.smtp_host = "bsmtp.telekom.at"
+	c.smtp_port = "25"
 	c.smtp_user = "martin@hammerschmied.at"
 	c.smtp_pass = "l/1py78f"
 	c.email_from = "Moatl<moatl@marvelous.at>"
 	c.email_to = "Martin Hammerschmied<gestatten@gmail.com>"
-	c.email_subject = "New Ad {0} for € {1}"
-	c.email_body = "Hello there! I found a new ad! The title is\n\n\"{0}\"\n\nand the price is € {1}\n\nbye!"
+	c.email_subject = "New Ad {0} for {2}"
+	c.email_body = "Hello there!\n\nI found a new ad! The title is\n\n\"{0}\"\n\nand the price is {2}\n\nLink: {1}\n\nbye!"
 	
 	c.save()
 	

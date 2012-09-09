@@ -65,7 +65,17 @@ if __name__ == "__main__":
 	# Set up of the platform dependent components and run event loop
 	# ---------------------------------------------------------------
 	
-	if sys.platform == "linux2":
+	if config.runmode == "auto":
+		if sys.platform == "linux2":
+			runmode = "gtk"
+		elif sys.platform == "darwin":
+			runmode = "osx"
+		else:
+			runmode = "server"
+	else:
+		runmode = config.runmode
+
+	if runmode == "gtk":
 		from platform_dependant.Linux import GTKNotification
 		import gtk, gobject
 		GTKNotify = GTKNotification(icon = "./logo.png")
@@ -75,7 +85,7 @@ if __name__ == "__main__":
 		gobject.threads_init()
 		gtk.main()
 
-	elif sys.platform == "darwin":
+	elif runmode == "osx":
 		import Foundation, objc, AppKit
 		from PyObjCTools import AppHelper
 		from platform_dependant.MacOS import MountainLionNotification
@@ -84,3 +94,16 @@ if __name__ == "__main__":
 		observer.start()
 		app = AppKit.NSApplication.sharedApplication()
 		AppHelper.runEventLoop()
+	
+	elif runmode == "server":
+		from platform_dependant.Server import EmailNotification
+		emailNotify = EmailNotification(config.smtp_host,
+										config.smtp_port,
+										config.smtp_user,
+										config.smtp_pass,
+										config.email_from,
+										config.email_to,
+										config.email_subject,
+										config.email_body)
+		observer.notification = emailNotify
+		observer.run()
