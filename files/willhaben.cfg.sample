@@ -61,15 +61,15 @@ smtp.user = user553
 smtp.password = secret678
 
 # From-address in the email notification
-address.from = John Doe<john.doe@example.com>
+address.from = Willhaben<contact@willhaben.at>
 
 # Recipient of the email notification
-address.to = Thats Me<me@example.com>
+address.to = John Doe<john.doe@example.com>
 
 # The subject of the email notification. If you use '{0}' in the subject 
 # string it will be replaced with the ad's title, '{1}' will be replaced with 
 # the ad's URL and '{2}' with the price respectively.
-subject = New Ad {0} for {2}
+subject = {0} for {2}
 
 # The body of the email notification. If you use '{0}' in the email body 
 # it will be replaced with the ad's title, '{1}' will be replaced with the 

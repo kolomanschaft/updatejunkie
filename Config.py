@@ -106,7 +106,7 @@ class Config(object):
 	
 	@property
 	def price_limit(self):
-		self._parser.getint("PriceCriteria", "price.limit")
+		return self._parser.getint("PriceCriteria", "price.limit")
 
 	@price_limit.setter
 	def price_limit(self, price):
