@@ -36,3 +36,38 @@ keywords.not = ['bad-word-1', 'bad-word-2']
 # The ad's price must be less or equal in order to trigger a notification. Set 
 # '0' for unlimited
 price.limit = 520
+
+
+[Email]
+
+# Host name of your ISP's SMTP server
+smtp.host = smtp.example.com
+
+# Username for authentication with the SMTP server
+smtp.user = user553
+
+# Password for authentication with the SMTP server
+smtp.password = secret678
+
+# From-address in the email notification
+address.from = John Doe<john.doe@example.com>
+
+# Recipient of the email notification
+address.to = Thats Me<me@example.com>
+
+# The subject of the email notification. If you use '{0}' in the subject 
+# string it will be replaced with the ad's title, '{1}' will be replaced with 
+# the ad's price
+subject = New Ad {0} for € {1}
+
+# The body of the email notification. If you use '{0}' in the email body 
+# it will be replaced with the ad's title, '{1}' will be replaced with the 
+# ad's price. Be sure to make a tab after *each* line break!
+body = Hello there! I found a new ad! The title is
+	
+	"{0}"
+	
+	and the price is € {1}
+	
+	bye!
+

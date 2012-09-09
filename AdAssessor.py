@@ -1,4 +1,12 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# encoding: utf-8
+"""
+AdAssessor.py
+
+Created by Martin Hammerschmied on 2012-09-09.
+Copyright (c) 2012. All rights reserved.
+"""
+
 class AdCriterion:
 	def check(self,add): return True
 

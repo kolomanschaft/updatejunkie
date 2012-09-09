@@ -1,4 +1,11 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# encoding: utf-8
+"""
+WillhabenConnector.py
+
+Created by Martin Hammerschmied on 2012-09-09.
+Copyright (c) 2012. All rights reserved.
+"""
 import httplib
 from bs4 import BeautifulSoup as bs
 import re

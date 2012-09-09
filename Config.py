@@ -1,4 +1,11 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# encoding: utf-8
+"""
+Config.py
+
+Created by Martin Hammerschmied on 2012-09-09.
+Copyright (c) 2012. All rights reserved.
+"""
 import ConfigParser
 import os
 
@@ -98,7 +105,63 @@ class Config(object):
 		if not type(price) is int:
 			raise ConfigError("Price must be an integer number")
 		self._set("PriceCriteria", "price.limit", str(price))
-			
+
+	@property
+	def smtp_host(self):
+		return self._parser.get("Email", "smtp.host")
+
+	@smtp_host.setter
+	def smtp_host(self, host):
+		self._set("Email", "smtp.host", host)
+
+	@property
+	def smtp_user(self):
+		return self._parser.get("Email", "smtp.user")
+
+	@smtp_user.setter
+	def smtp_user(self, user):
+		self._set("Email", "smtp.user", user)
+
+	@property
+	def smtp_pass(self):
+		return self._parser.get("Email", "smtp.password")
+
+	@smtp_pass.setter
+	def smtp_pass(self, pw):
+		self._set("Email", "smtp.password", pw)
+
+	@property
+	def email_from(self):
+		return self._parser.get("Email", "address.from")
+
+	@email_from.setter
+	def email_from(self, sender):
+		self._set("Email", "address.from", sender)
+
+	@property
+	def email_to(self):
+		return self._parser.get("Email", "address.to")
+
+	@email_to.setter
+	def email_to(self, to):
+		self._set("Email", "address.to", to)
+
+	@property
+	def email_subject(self):
+		return self._parser.get("Email", "subject")
+
+	@email_subject.setter
+	def email_subject(self, subject):
+		self._set("Email", "subject", subject)
+
+	@property
+	def email_body(self):
+		return self._parser.get("Email", "body")
+
+	@email_body.setter
+	def email_body(self, body):
+		self._set("Email", "body", body)
+
 if __name__ == '__main__':
 	
 	# create test config
@@ -114,6 +177,14 @@ if __name__ == '__main__':
 	c.title_keywords_not = ["bad-word-1", "bad-word-2"]
 	c.price_limit = 520
 	c.update_interval = 66
+	
+	c.smtp_host = "bsmtp.telekom.at"
+	c.smtp_user = "martin@hammerschmied.at"
+	c.smtp_pass = "l/1py78f"
+	c.email_from = "Moatl<moatl@marvelous.at>"
+	c.email_to = "Martin Hammerschmied<gestatten@gmail.com>"
+	c.email_subject = "New Ad {0} for € {1}"
+	c.email_body = "Hello there! I found a new ad! The title is\n\n\"{0}\"\n\nand the price is € {1}\n\nbye!"
 	
 	c.save()
 	

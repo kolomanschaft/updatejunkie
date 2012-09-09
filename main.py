@@ -1,4 +1,11 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# encoding: utf-8
+"""
+main.py
+
+Created by Martin Hammerschmied on 2012-09-09.
+Copyright (c) 2012. All rights reserved.
+"""
 from AdStore import *
 from AdAssessor import *
 from WillhabenObserver import *
