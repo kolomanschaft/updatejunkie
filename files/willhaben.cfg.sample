@@ -6,14 +6,6 @@
 
 [General]
 
-# The runmode is the type of service you want to run. The default setting is 
-# 'auto' in which Willhaben tries to establish a local runmode with local 
-# notifications based on the platform it runs on. To use Willhaben as a 
-# webservice or a daemon you need to run it in runmode 'server'. You can also 
-# force a local notification system by using one of the supported runmode 
-# options: 'gtk', 'osx', 'server'
-runmode = auto
-
 # Copy the URL of the willhaben.at listing you want to observe
 url = http://www.example.com/
 
@@ -45,6 +37,17 @@ keywords.not = ['bad-word-1', 'bad-word-2']
 # '0' for unlimited
 price.limit = 520
 
+
+[Notifications]
+
+# Utilize the notification center in OSX >= 10.8
+osx.active = no
+
+# GTK notifications. Requires the python modules PyNotify2 and PyGTK!
+gtk.active = no
+
+# Email notification requires working SMTP settings in the 'Email' section below.
+email.active = yes
 
 [Email]
 

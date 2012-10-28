@@ -1,10 +1,12 @@
 # Willhaben
 
-Willhaben is a platform independent observer for the advertising platform [willhaben.at][]. If new ads match certain pre-defined criteria (e.g. keywords or price) Willhaben triggers a user notification. 
+Willhaben is a platform independent observer for the advertising platform [willhaben.at][]. If new ads match certain pre-defined criteria (e.g. keywords or price) Willhaben instantly triggers a user notification. Willhaben offers different notification options depending on the platform:
 
-There are currently two ways you can run Willhaben:
-* __Local__: It can run locally on MacOSX (>=10.8) or Linux/GTK (>=2.0) utilizing the platform's native notification environment.
-* __Server__: If you run Willhaben on a server it will not use any GUI elements. Notifications are sent via email. Of course you can also run Willhaben locally in server mode. Since server mode does only depend on pure Python modules it should run on a variety of platforms.
+* GTK notifications
+* OSX notification center (>= 10.8)
+* Email notifications
+
+If you only switch on email notifications, Willhaben only depends on pure Python modules and should run on a variety of platforms.
 
 ## Dependencies
 
@@ -13,7 +15,7 @@ There are currently two ways you can run Willhaben:
 * PyObjC (OSX only)
 * Python-notify2 (GTK only)
 
-If you run Willhaben on a server you will only need the upper two.
+If you run Willhaben on a server you will only need the upper two which are pure Python.
 
 ## Setup
 
@@ -38,8 +40,6 @@ This way you can create various config files, one for each kind of ads you want 
 
 #### Short term
 * Atom/RSS feed notifications
-* Multiple types of notifications simultaneously
-* Drop Local/Server distincion and replace with granular settings
 
 #### Long term
 * Support for arbitrary ad-based websites

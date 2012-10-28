@@ -12,6 +12,7 @@ from AdStore import *
 from AdAssessor import *
 from Logger import *
 from Config import *
+from NotificationServer import *
 
 class TestAdStore(unittest.TestCase):
 	
@@ -141,6 +142,29 @@ class TestConfig(unittest.TestCase):
 		self.config.save()
 		c = Config(self.path)
 		self.assertListEqual(kwds, c.title_keywords_all)
+
+class TestNotificationServer(unittest.TestCase):
+    
+    def setUp(self):
+        self.notificationServer = NotificationServer()
+    
+    def tearDown(self):
+        del self.notificationServer
+    
+    def testNotificationTypeError(self):
+        x = 123
+        self.assertRaises(TypeError, self.notificationServer.addNotification, x)
+    
+    def testAddDeleteNotificaions(self):
+        a = Notification()
+        b = Notification()
+        self.notificationServer.addNotifications(a,b)
+        self.assertIs(self.notificationServer[0], a)
+        self.assertIs(self.notificationServer[1], b)
+        self.assertRaises(IndexError, self.notificationServer.__getitem__, 2)
+        del self.notificationServer[0]
+        self.assertIs(self.notificationServer[0], b)        
+        self.assertRaises(IndexError, self.notificationServer.__getitem__, 1)
 
 if __name__ == "__main__":
 	unittest.main()
