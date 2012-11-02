@@ -1,55 +1,12 @@
-# This is a Willhaben observer sample configuration file. Copy 
-# 'willhaben.cfg.sample' to 'willhaben.cfg' and adjust it to your needs. As an 
-# alternative you can store an arbitrary duplicate and pass the path as 
-# argument to 'main.py'
+# This is a Willhaben sample configuration file. Copy 'willhaben.cfg.sample' to 
+# 'willhaben.cfg' and adjust it to your needs. As an alternative you can pass the
+# path to an arbitrary config file as argument to 'main.py'
 
 
 [General]
 
-# Copy the URL of the willhaben.at listing you want to observe
-url = http://www.example.com/
-
-# If this option is 'no' the observer will forget all seen ads after closing
-ads.store = yes
-
-# Time (seconds) between two polls
-update.interval = 120
-
-
-[TitleCriteria]
-
-# All of these keywords must appear in an ad's title in order to trigger a 
-# notification
-keywords.all = ['word-1', 'word-2']
-
-# At least one of these keywords must appear in an ad's title in order to to 
-# trigger a notification
-keywords.any = ['word-3', 'word-4', 'word-5']
-
-# None of these keywords are allowed to appear in an ad's title in order to 
-# trigger a notification
-keywords.not = ['bad-word-1', 'bad-word-2']
-
-
-[PriceCriteria]
-
-# The ad's price must be less or equal in order to trigger a notification. Set 
-# '0' for unlimited
-price.limit = 520
-
-
-[Notifications]
-
-# Utilize the notification center in OSX >= 10.8
-osx.active = no
-
-# GTK notifications. Requires the python modules PyNotify2 and PyGTK!
-gtk.active = no
-
-# Email notification requires working SMTP settings in the 'Email' section below.
-email.active = yes
-
-[Email]
+# SMTP configuration
+# ------------------
 
 # Host name of your ISP's SMTP server
 smtp.host = smtp.example.com
@@ -66,22 +23,126 @@ smtp.password = secret678
 # From-address in the email notification
 address.from = Willhaben<contact@willhaben.at>
 
+
+[Observers]
+
+# The following list of observers are set up in this configuration. Each observer
+# has a config section with the same name.
+observers = ExampleObserver1, ExampleObserver2
+
+
+[ExampleObserver1]
+
+# Copy the URL of the willhaben.at listing you want to observe
+url = http://www.example1.com/
+
+# If this option is 'no' the observer will forget all seen ads after closing
+ads.store = yes
+
+# Time (seconds) between two polls
+update.interval = 60
+
+# Title criteria
+# --------------
+
+# All of these keywords must appear in an ad's title in order to trigger a 
+# notification
+keywords.all = word1, word2
+
+# At least one of these keywords must appear in an ad's title in order to to 
+# trigger a notification
+keywords.any = word3, word4, word5
+
+# None of these keywords are allowed to appear in an ad's title in order to 
+# trigger a notification
+keywords.not = bad-word1, bad-word2
+
+# Price criteria
+# --------------
+
+# The ad's price must be less or equal in order to trigger a notification. Set 
+# '0' for unlimited
+price.limit = 520
+
+# Notifications
+# -------------
+
+# Utilize the notification center in OSX >= 10.8
+osx.active = no
+
+# GTK notifications. Requires the python modules PyNotify2 and PyGTK!
+gtk.active = no
+
+# Email notification requires working SMTP settings in the 'Email' section below.
+email.active = yes
+
 # Recipient of the email notification
-address.to = John Doe<john.doe@example.com>
+email.to = John Doe<john.doe@example1.com>
 
-# The subject of the email notification. If you use '{0}' in the subject 
-# string it will be replaced with the ad's title, '{1}' will be replaced with 
-# the ad's URL and '{2}' with the price respectively.
-subject = {0} for {2}
+# The title used in notifications. For example in emails the title is used for 
+# the email subject. The keys in the curly brackets are replaced with information
+# retrieved from the particular ad. 
+notification.title = {title} for {price}
 
-# The body of the email notification. If you use '{0}' in the email body 
-# it will be replaced with the ad's title, '{1}' will be replaced with the 
-# ad's URL and '{2}' with the price respectively. Be sure to make a tab after 
-# *each* line break!
-body = Hello there!
-	I found a new ad! The title is
-	"{0}"
-	and the price is {2}
-	Link: {1}
-	bye!
+# The body of the notification. The keys in the curly brackets are replaced with 
+# information retrieved from the particular ad. 
+notification.body = I found a new ad! The title is "{title}" and the price is {price}. {url}
 
+
+[ExampleObserver2]
+
+# Copy the URL of the willhaben.at listing you want to observe
+url = http://www.example2.com/
+
+# If this option is 'no' the observer will forget all seen ads after closing
+ads.store = no
+
+# Time (seconds) between two polls
+update.interval = 120
+
+# Title criteria
+# --------------
+
+# All of these keywords must appear in an ad's title in order to trigger a 
+# notification
+keywords.all = word6, word7
+
+# At least one of these keywords must appear in an ad's title in order to to 
+# trigger a notification
+keywords.any = word8, word9, word10
+
+# None of these keywords are allowed to appear in an ad's title in order to 
+# trigger a notification
+keywords.not = bad-word3, bad-word4
+
+
+# Price criteria
+# --------------
+
+# The ad's price must be less or equal in order to trigger a notification. Set 
+# '0' for unlimited
+price.limit = 0
+
+# Notifications
+# -------------
+
+# Utilize the notification center in OSX >= 10.8
+osx.active = yes
+
+# GTK notifications. Requires the python modules PyNotify2 and PyGTK!
+gtk.active = no
+
+# Email notification requires working SMTP settings in the 'Email' section below.
+email.active = no
+
+# Recipient of the email notification
+email.to = Alice Doe<alice.doe@example2.com>
+
+# The title used in notifications. For example in emails the title is used for
+# the email subject. The keys in the curly brackets are replaced with information
+# retrieved from the particular ad.
+notification.title = {title} for {price}
+
+# The body of the notification. The keys in the curly brackets are replaced with
+# information retrieved from the particular ad.
+notification.body = I found a new ad! The title is "{title}" and the price is {price}. {url}
