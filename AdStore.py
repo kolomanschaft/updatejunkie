@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 AdStore.py
 
@@ -12,8 +12,8 @@ class Ad:
 	
 	def __init__(self, aid = None, title = None, url = None, price = None):
 		self.id = aid
-		self.title = title
-		self.url = url
+		if title is not None: self.title = unicode(title, "utf8")
+		if url is not None: self.url = unicode(url, "utf8")
 		self.price = price
 	
 	def __getitem__(self, key):
@@ -30,9 +30,9 @@ class Ad:
 		if key == "id":
 			self.id = value
 		elif key == "title":
-			self.title = value
+			self.title = unicode(value, "utf8")
 		elif key == "url":
-			self.url = value
+			self.url = unicode(value, "utf8")
 		elif key == "price":
 			self.price = value
 	

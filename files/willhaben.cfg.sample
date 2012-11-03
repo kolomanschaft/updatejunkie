@@ -21,7 +21,7 @@ smtp.user = user553
 smtp.password = secret678
 
 # From-address in the email notification
-address.from = Willhaben<contact@willhaben.at>
+email.from = Willhaben<contact@willhaben.at>
 
 
 [Observers]

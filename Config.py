@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 Config.py
 
@@ -11,13 +11,189 @@ import os
 
 class ConfigError(Exception): pass
 
+
+class WillhabenConfigParser(ConfigParser.SafeConfigParser, object):
+    
+    def _probe_section(self, section):
+        if not self.has_section(section):
+            self.add_section(section)
+    
+    def set(self, section, option, value):
+        self._probe_section(section)
+        super(WillhabenConfigParser, self).set(section, option, value)
+    
+    def setint(self, section, option, anint):
+        if not type(anint) is int:
+            raise TypeError("Section {} option {} must be an integer number".format(section, option))
+        self.set(section, option, str(anint))
+    
+    def getlist(self, section, option, rtype = str):
+        v = [rtype(s.strip()) for s in self.get(section, option).split(",")]
+        return v
+    
+    def setlist(self, section, option, alist):
+        if not type(alist) is list:
+            raise TypeError("Section {} option {} must be a list".format(section, option))
+        l = str(alist).replace("[", "").replace("]", "").replace("'", "")
+        self.set(section, option, l)
+
+    def setboolean(self, section, option, abool):
+        if not type(abool) is bool:
+            raise TypeError("Section {} option {} must be a bool".format(section, option))
+        if abool: self.set(section, option, "yes")
+        else: self.set(section, option, "no")
+
+class ObserverConfig(object):
+    
+    def __init__(self, parser, name):
+        self._parser = parser
+        self._name = name
+        if self._parser.has_section(name):
+            self._sanity_check()
+        else:
+            # This observer seems to be new
+            self._setup()
+    
+    def _setup(self):
+        if self._parser.has_section("Observers"):
+            observers = self._parser.getlist("Observers", "observers")
+            if not self._name in observers:
+                observers.append(self._name)
+                self._parser.setlist("Observers", "observers", observers)
+        else:
+            self._parser.add_section("Observers")
+            self._parser.set("Observers", "observers", self._name)
+        self._parser.add_section(self._name)
+        self.url = "http://example.com/"
+        self.ads_store = True
+        self.update_interval = 120
+        self.keywords_all = []
+        self.keywords_any = []
+        self.keywords_not = []
+        self.price_limit = 0
+        self.email_to = "John Doe <john.doe@example.com>"
+        self.notification_title = "{title}"
+        self.notification_body = "{title}"
+        self.osx_active = False
+        self.gtk_active = False
+        self.email_active = True
+
+    def _sanity_check(self):
+        if self.osx_active and self.gtk_active:
+            raise ConfigError("OSX notifications and GTK notifications cannot be active at the same time!")
+
+    @property
+    def url(self):
+        return self._parser.get(self._name, "url")
+    
+    @url.setter
+    def url(self, url):
+        self._parser.set(self._name, "url", url)
+
+    @property
+    def ads_store(self):
+        return self._parser.getboolean(self._name, "ads.store")
+    
+    @ads_store.setter
+    def ads_store(self, value):
+        self._parser.setboolean(self._name, "ads.store", value)
+
+    @property
+    def update_interval(self):
+        return self._parser.getint(self._name, "update.interval")
+
+    @update_interval.setter
+    def update_interval(self, interval):
+        self._parser.setint(self._name, "update.interval", interval)
+        
+    @property
+    def keywords_all(self):
+        return self._parser.getlist(self._name, "keywords.all")
+    
+    @keywords_all.setter
+    def keywords_all(self, kwds):
+        self._parser.setlist(self._name, "keywords.all", kwds)
+
+    @property
+    def keywords_any(self):
+        return self._parser.getlist(self._name, "keywords.any")
+
+    @keywords_any.setter
+    def keywords_any(self, kwds):
+        self._parser.setlist(self._name, "keywords.any", kwds)
+
+    @property
+    def keywords_not(self):
+        return self._parser.getlist(self._name, "keywords.not")
+
+    @keywords_not.setter
+    def keywords_not(self, kwds):
+        self._parser.setlist(self._name, "keywords.not", kwds)
+    
+    @property
+    def price_limit(self):
+        return self._parser.getint(self._name, "price.limit")
+
+    @price_limit.setter
+    def price_limit(self, price):
+        self._parser.setint(self._name, "price.limit", price)
+
+    @property
+    def email_to(self):
+        return self._parser.get(self._name, "email.to")
+
+    @email_to.setter
+    def email_to(self, to):
+        self._parser.set(self._name, "email.to", to)
+
+    @property
+    def notification_title(self):
+        return self._parser.get(self._name, "notification.title")
+
+    @notification_title.setter
+    def notification_title(self, title):
+        self._parser.set(self._name, "notification.title", title)
+
+    @property
+    def notification_body(self):
+        return self._parser.get(self._name, "notification.body")
+
+    @notification_body.setter
+    def notification_body(self, body):
+        self._parser.set(self._name, "notification.body", body)
+
+    @property
+    def osx_active(self):
+        return self._parser.getboolean(self._name, "osx.active")
+
+    @osx_active.setter
+    def osx_active(self, active):
+        self._parser.setboolean(self._name, "osx.active", active)
+
+    @property
+    def gtk_active(self):
+        return self._parser.getboolean(self._name, "gtk.active")
+
+    @gtk_active.setter
+    def gtk_active(self, active):
+        self._parser.setboolean(self._name, "gtk.active", active)
+
+    @property
+    def email_active(self):
+        return self._parser.getboolean(self._name, "email.active")
+
+    @email_active.setter
+    def email_active(self, active):
+        self._parser.setboolean(self._name, "email.active", active)
+
+
 class Config(object):
     
     def __init__(self, path):
         self.path = path
-        self._parser = ConfigParser.SafeConfigParser()
+        self._parser = WillhabenConfigParser()
         self.load()
-    
+
     def save(self):
         with open(self.path, "w") as cfg:
             self._parser.write(cfg)
@@ -26,223 +202,72 @@ class Config(object):
         if os.path.exists(self.path):
             self._parser.read(self.path)
         else:
-            raise ConfigError("Config file '{}' does not exist".format(self.path))
-        self._sanity_check()
-    
-    def _probe_section(self, section):
-        if not self._parser.has_section(section):
-            self._parser.add_section(section)
-    
-    def _set(self, section, option, value):
-        self._probe_section(section)
-        self._parser.set(section, option, value)
-    
-    def _sanity_check(self):
-        if self.notification_osx and self.notification_gtk:
-            raise ConfigError("OSX notifications and GTK notifications cannot be active at the same time!")
-
-    # The actual config options
-    # -------------------------
-    
-    @property
-    def runmode(self):
-        return self._parser.get("General", "runmode")
-    
-    @runmode.setter
-    def runmode(self, mode):
-        self._set("General", "runmode", mode)
-    
-    @property
-    def url(self):
-        return self._parser.get("General", "url")
-    
-    @url.setter
-    def url(self, url):
-        self._set("General", "url", url)
-
-    @property
-    def ads_store(self):
-        return self._parser.getboolean("General", "ads.store")
-    
-    @ads_store.setter
-    def ads_store(self, value):
-        if value: self._set("General", "ads.store", "yes")
-        else: self._set("General", "ads.store", "no")
-
-    @property
-    def update_interval(self):
-        return self._parser.getint("General", "update.interval")
-
-    @update_interval.setter
-    def update_interval(self, interval):
-        if not type(interval) is int:
-            raise ConfigError("Update interval must be an integer number")
-        self._set("General", "update.interval", str(interval))
-        
-    @property
-    def title_keywords_all(self):
-        return eval(self._parser.get("TitleCriteria", "keywords.all"))
-    
-    @title_keywords_all.setter
-    def title_keywords_all(self, kwds):
-        if not type(kwds) is list: 
-            raise ConfigError("Keywords argument must be a list")
-        self._set("TitleCriteria", "keywords.all", str(kwds))
-
-    @property
-    def title_keywords_any(self):
-        return eval(self._parser.get("TitleCriteria", "keywords.any"))
-
-    @title_keywords_any.setter
-    def title_keywords_any(self, kwds):
-        if not type(kwds) is list: 
-            raise ConfigError("Keywords argument must be a list")
-        self._set("TitleCriteria", "keywords.any", str(kwds))
-
-    @property
-    def title_keywords_not(self):
-        return eval(self._parser.get("TitleCriteria", "keywords.not"))
-
-    @title_keywords_not.setter
-    def title_keywords_not(self, kwds):
-        if not type(kwds) is list: 
-            raise ConfigError("Keywords argument must be a list")
-        self._set("TitleCriteria", "keywords.not", str(kwds))
-    
-    @property
-    def price_limit(self):
-        return self._parser.getint("PriceCriteria", "price.limit")
-
-    @price_limit.setter
-    def price_limit(self, price):
-        if not type(price) is int:
-            raise ConfigError("Price must be an integer number")
-        self._set("PriceCriteria", "price.limit", str(price))
+            # This config seems to be new. Setting some defaults.
+            self.smtp_host = "smtp.example.com"
+            self.smtp_port = 25
+            self.smtp_user = "user553"
+            self.smtp_password = "secret678"
+            self.email_from = "Willhaben <contact@willhaben.at>"
+        for observer in self.list_observers():
+            self.add_observer(observer)
 
     @property
     def smtp_host(self):
-        return self._parser.get("Email", "smtp.host")
+        return self._parser.get("General", "smtp.host")
 
     @smtp_host.setter
     def smtp_host(self, host):
-        self._set("Email", "smtp.host", host)
+        self._parser.set("General", "smtp.host", host)
 
     @property
     def smtp_port(self):
-        return self._parser.get("Email", "smtp.port")
+        return self._parser.get("General", "smtp.port")
 
     @smtp_port.setter
     def smtp_port(self, port):
-        self._set("Email", "smtp.port", port)
+        self._parser.setint("General", "smtp.port", port)
 
     @property
     def smtp_user(self):
-        return self._parser.get("Email", "smtp.user")
+        return self._parser.get("General", "smtp.user")
 
     @smtp_user.setter
     def smtp_user(self, user):
-        self._set("Email", "smtp.user", user)
+        self._parser.set("General", "smtp.user", user)
 
     @property
-    def smtp_pass(self):
-        return self._parser.get("Email", "smtp.password")
+    def smtp_password(self):
+        return self._parser.get("General", "smtp.password")
 
-    @smtp_pass.setter
-    def smtp_pass(self, pw):
-        self._set("Email", "smtp.password", pw)
+    @smtp_password.setter
+    def smtp_password(self, pw):
+        self._parser.set("General", "smtp.password", pw)
 
     @property
     def email_from(self):
-        return self._parser.get("Email", "address.from")
+        return self._parser.get("General", "email.from")
 
     @email_from.setter
     def email_from(self, sender):
-        self._set("Email", "address.from", sender)
+        self._parser.set("General", "email.from", sender)
 
-    @property
-    def email_to(self):
-        return self._parser.get("Email", "address.to")
+    def list_observers(self):
+        try:
+            return self._parser.getlist("Observers", "observers")
+        except ConfigParser.NoSectionError:
+            return []
+    
+    def add_observer(self, name):
+        setattr(self, name, ObserverConfig(self._parser, name))
 
-    @email_to.setter
-    def email_to(self, to):
-        self._set("Email", "address.to", to)
-
-    @property
-    def email_subject(self):
-        return self._parser.get("Email", "subject")
-
-    @email_subject.setter
-    def email_subject(self, subject):
-        self._set("Email", "subject", subject)
-
-    @property
-    def email_body(self):
-        return self._parser.get("Email", "body")
-
-    @email_body.setter
-    def email_body(self, body):
-        self._set("Email", "body", body)
-
-    @property
-    def notification_osx(self):
-        return self._parser.getboolean("Notifications", "osx.active")
-
-    @notification_osx.setter
-    def notification_osx(self, active):
-        if not type(active) is bool:
-            raise TypeError("This value must either be True or False")
-        if active: self._set("Notifications", "osx.active", "yes")
-        else: self._set("Notifications", "osx.active", "no")
-
-    @property
-    def notification_gtk(self):
-        return self._parser.getboolean("Notifications", "gtk.active")
-
-    @notification_gtk.setter
-    def notification_gtk(self, active):
-        if not type(active) is bool:
-            raise TypeError("This value must either be True or False")
-        if active: self._set("Notifications", "gtk.active", "yes")
-        else: self._set("Notifications", "gtk.active", "no")
-
-    @property
-    def notification_email(self):
-        return self._parser.getboolean("Notifications", "email.active")
-
-    @notification_email.setter
-    def notification_email(self, active):
-        if not type(active) is bool:
-            raise TypeError("This value must either be True or False")
-        if active: self._set("Notifications", "email.active", "yes")
-        else: self._set("Notifications", "email.active", "no")
 
 if __name__ == '__main__':
     
     # create test config
     
     path = "./files/test.cfg"
-    with open(path, "w"): pass
     c = Config(path)
-    
-    c.runmode = "auto"
-    c.url = "http://www.example.com/"
-    c.ads_store = True
-    c.title_keywords_all = ["word-1", "word-2"]
-    c.title_keywords_any = ["word-3", "word-4", "word-5"]
-    c.title_keywords_not = ["bad-word-1", "bad-word-2"]
-    c.price_limit = 520
-    c.update_interval = 66
-    
-    c.smtp_host = "bsmtp.telekom.at"
-    c.smtp_port = "25"
-    c.smtp_user = "martin@hammerschmied.at"
-    c.smtp_pass = "l/1py78f"
-    c.email_from = "Moatl<moatl@marvelous.at>"
-    c.email_to = "Martin Hammerschmied<gestatten@gmail.com>"
-    c.email_subject = "New Ad {0} for {2}"
-    c.email_body = "Hello there!\n\nI found a new ad! The title is\n\n\"{0}\"\n\nand the price is {2}\n\nLink: {1}\n\nbye!"
-    c.notification_osx = True
-    c.notification_gtk = True
-    c.notification_email = True
+    c.add_observer("woah!")
+    c.add_observer("oag")
     c.save()
     
