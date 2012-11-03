@@ -48,9 +48,7 @@ class ObserverConfig(object):
     def __init__(self, parser, name):
         self._parser = parser
         self._name = name
-        if self._parser.has_section(name):
-            self._sanity_check()
-        else:
+        if not self._parser.has_section(name):
             # This observer seems to be new
             self._setup()
     
@@ -77,10 +75,6 @@ class ObserverConfig(object):
         self.osx_active = False
         self.gtk_active = False
         self.email_active = True
-
-    def _sanity_check(self):
-        if self.osx_active and self.gtk_active:
-            raise ConfigError("OSX notifications and GTK notifications cannot be active at the same time!")
 
     @property
     def url(self):
@@ -210,6 +204,19 @@ class Config(object):
             self.email_from = "Willhaben <contact@willhaben.at>"
         for observer in self.list_observers():
             self.add_observer(observer)
+        self._sanity_check()
+
+    def _sanity_check(self):
+        osx = False
+        gtk = False
+        for observer in self.list_observers():
+            oconfig = self.observer_config(observer)
+            if oconfig.osx_active:
+                osx = True
+            if oconfig.gtk_active:
+                gtk = True
+        if osx and gtk:
+            raise ConfigError("OSX notifications and GTK notifications cannot be active at the same time!")
 
     @property
     def smtp_host(self):
@@ -256,6 +263,9 @@ class Config(object):
             return self._parser.getlist("Observers", "observers")
         except ConfigParser.NoSectionError:
             return []
+    
+    def observer_config(self, name):
+        return getattr(self, name)
     
     def add_observer(self, name):
         setattr(self, name, ObserverConfig(self._parser, name))

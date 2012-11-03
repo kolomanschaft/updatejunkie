@@ -141,6 +141,13 @@ class TestConfig(unittest.TestCase):
         self.config.save()
         c = Config(self.path)
         self.assertListEqual(kwds, c.theObserver.keywords_all)
+    
+    def testSanityCheck(self):
+        self.config.add_observer("oneObserver")
+        self.config.oneObserver.osx_active = True
+        self.config.add_observer("twoObserver")
+        self.config.twoObserver.gtk_active = True
+        self.assertRaises(ConfigError, self.config._sanity_check)
 
 class TestNotificationServer(unittest.TestCase):
     

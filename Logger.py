@@ -7,6 +7,7 @@ Created by Martin Hammerschmied on 2012-09-09.
 Copyright (c) 2012. All rights reserved.
 """
 import time
+import codecs
 
 class Logger:
 	
@@ -17,8 +18,8 @@ class Logger:
 	def append(self, msg):
 		s = time.strftime("[%Y-%m-%d %H:%M:%S] ") + msg
 		if self.path:
-			with open(self.path, "a") as f:
+			with codecs.open(self.path, mode = "a", encoding = "utf-8") as f:
 				f.write(s + "\n")
-		
+
 		if not self.silent:
 			print s

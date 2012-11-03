@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 WillhabenObserver.py
 
@@ -31,7 +31,7 @@ class WillhabenObserver(threading.Thread):
         for ad in new_ads:
             self.logger.append("Observer Found Ad: " + ad["title"])
             if self.notification:
-                self.notification.notifyAll(title = "Willhaben Ad spotted!", subtitle = "€ " + str(ad["price"]), text = ad["title"], url = ad["url"])
+                self.notification.notifyAll(ad)
 
     def run(self):
         # TODO: don't initialize on number of pages but on ad date!!

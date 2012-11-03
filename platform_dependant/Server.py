@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 Server.py
 
@@ -23,12 +23,12 @@ class EmailNotification(Notification):
 		MIMEHeader["From"] = self.sender
 		MIMEHeader["To"] = self.to
 		MIMEHeader["Subject"] = self.subject
-		self.msg = MIMEHeader.as_string() + body
+		self.msg = unicode(MIMEHeader.as_string() + body)
 
-	def notify(self, title, subtitle, text, url):
+	def notify(self, ad):
 		server = smtplib.SMTP(self.host, self.port)
 		server.login(self.user, self.pw)
-		server.sendmail(self.sender, self.to, self.msg.format(text, url, subtitle))
+		server.sendmail(self.sender, self.to, self.msg.format(**ad).encode("utf-8"))
 
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 WillhabenConnector.py
 
@@ -36,7 +36,7 @@ class WillhabenConnector():
             response = willhaben.getresponse()
         except:
             raise WillhabenConnectionError()
-        html = unicode(response.read(), errors = "ignore")
+        html = response.read()
         return html
 
     def __get_adlist_from_html__(self, html):
@@ -46,8 +46,8 @@ class WillhabenConnector():
             try:
                 if "clearfix" in li["class"]:
                     new_ad = Ad(aid = int(li.h2["id"]),
-                                title = unicode(li.h2.a.contents[0]),
-                                url = unicode("http://" + self.host + li.h2.a["href"]))
+                                title = li.h2.a.contents[0],
+                                url = "http://" + self.host + li.h2.a["href"])
                     for content in li.p.contents:
                         m = re.search("[,0-9]+", content.string)
                         if m:

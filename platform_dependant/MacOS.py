@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 MacOS.py
 
@@ -14,23 +14,31 @@ from PyObjCTools import AppHelper
 from threading import Thread
 
 class MountainLionNotification(Foundation.NSObject, Notification):
+    
+    def user_info(self, title, body):
+        self.title = unicode(title)
+        self.body = unicode(body)
 
-	def notify(self, title, subtitle, text, url):
-		NSUserNotification = objc.lookUpClass('NSUserNotification')
-		NSUserNotificationCenter = objc.lookUpClass('NSUserNotificationCenter')
-		notification = NSUserNotification.alloc().init()
-		notification.setTitle_(str(title))
-		notification.setSubtitle_(str(subtitle))
-		notification.setInformativeText_(str(text))
-		notification.setSoundName_("NSUserNotificationDefaultSoundName")
-		notification.setHasActionButton_(True)
-		notification.setOtherButtonTitle_("View")
-		notification.setUserInfo_({"action":"open_url", "value":url})
-		NSUserNotificationCenter.defaultUserNotificationCenter().setDelegate_(self)
-		NSUserNotificationCenter.defaultUserNotificationCenter().scheduleNotification_(notification)
+    def notify(self, ad):
+        NSUserNotification = objc.lookUpClass('NSUserNotification')
+        NSUserNotificationCenter = objc.lookUpClass('NSUserNotificationCenter')
+        notification = NSUserNotification.alloc().init()
+        notification.setTitle_(self.title.format(**ad))
+        try:
+            notification.setSubtitle_(u"for € " + unicode(str(ad["price"])))
+        except KeyError: pass
+        notification.setInformativeText_(self.body.format(**ad))
+        notification.setSoundName_("NSUserNotificationDefaultSoundName")
+        notification.setHasActionButton_(True)
+        notification.setOtherButtonTitle_("View")
+        try:
+            notification.setUserInfo_({"action":"open_url", "value":ad["url"]})
+        except KeyError: pass
+        NSUserNotificationCenter.defaultUserNotificationCenter().setDelegate_(self)
+        NSUserNotificationCenter.defaultUserNotificationCenter().scheduleNotification_(notification)
 
-	def userNotificationCenter_didActivateNotification_(self, center, notification):
-		userInfo = notification.userInfo()
-		if userInfo["action"] == "open_url":
-			import subprocess
-			subprocess.Popen(['open', userInfo["value"]])
+    def userNotificationCenter_didActivateNotification_(self, center, notification):
+        userInfo = notification.userInfo()
+        if userInfo["action"] == "open_url":
+            import subprocess
+            subprocess.Popen(['open', userInfo["value"]])
