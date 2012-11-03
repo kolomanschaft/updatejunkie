@@ -23,23 +23,10 @@ class EmailNotification(Notification):
 		MIMEHeader["From"] = self.sender
 		MIMEHeader["To"] = self.to
 		MIMEHeader["Subject"] = self.subject
-		self.msg = unicode(MIMEHeader.as_string() + body)
+		self.msg = unicode(MIMEHeader.as_string()) + unicode(body, "utf-8")
 
 	def notify(self, ad):
 		server = smtplib.SMTP(self.host, self.port)
 		server.login(self.user, self.pw)
 		server.sendmail(self.sender, self.to, self.msg.format(**ad).encode("utf-8"))
 
-
-if __name__ == '__main__':
-	host = "bsmtp.telekom.at"
-	port = "25"
-	user = "martin@hammerschmied.at"
-	pw = "l/1py78f"
-	sender = "Moatl<moatl@marvelous.at>"
-	to = "Martin Hammerschmied<gestatten@gmail.com>"
-	subject = "New Ad {0} for {2}"
-	body = "Hello there!\n\nI found a new ad! The title is\n\n\"{0}\"\n\nand the price is {2}\n\nLink: {1}\n\nbye!"
-	
-	notiication = EmailNotification(host, port, user, pw, sender, to, subject, body)
-	notiication.notify("HANDY!!!", "€ 500", "", "http://www.hammerschmied.at/")

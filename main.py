@@ -97,7 +97,8 @@ if __name__ == "__main__":
                                      assessor = assessor,
                                      notification = notificationServer,
                                      logger = logger,
-                                     update_interval = observer_config.update_interval)
+                                     update_interval = observer_config.update_interval,
+				     name = observer_name)
         observers.append(observer)
     
     # all done! let's start spinning the wheel
