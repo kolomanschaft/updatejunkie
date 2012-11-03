@@ -33,7 +33,8 @@ observers = ExampleObserver1, ExampleObserver2
 
 [ExampleObserver1]
 
-# Copy the URL of the willhaben.at listing you want to observe
+# Browse the Willhaben website and narrow down the ad listing until you have the
+# listing you want to observe. Then copy the URL and paste it here.
 url = http://www.example1.com/
 
 # If this option is 'no' the observer will forget all seen ads after closing
