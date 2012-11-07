@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<website>
+	<title>Willhaben</title>
+	<baseUrl>http://www.willhaben.at/</baseUrl>
+	<adDefinition>
+		<regex>(even|odd) clearfix.*?id=\&quot;(?P&lt;id&gt;[0-9]+).*?&lt;a href=\&quot;(?P&lt;url&gt;[^\&quot;]+).*?&gt;(?P&lt;title&gt;[^&lt;]+).*?class=\&quot;price.*?(?P&lt;price&gt;[0-9,]+).*?class=\&quot;description.*?&gt;(?P&lt;description&gt;[^&lt;]+).*?class=\&quot;date-time.*?&gt;(?P&lt;datetime&gt;[^&lt;]+)</regex>
+		<tag type="text">dummy</tag>
+		<tag type="integer">id</tag>
+		<tag type="text">url</tag>
+		<tag type="text">title</tag>
+		<tag type="float">price</tag>
+		<tag type="text">description</tag>
+		<tag type="datetime">datetime</tag>
+	</adDefinition>
+	<format>
+		<regex type="filter">(\t|\n| {2,})</regex>
+	</format>
+	<pageParam method="GET" init="0">page</pageParam>
+</website>
