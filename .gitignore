@@ -6,6 +6,12 @@ files/*.save
 files/*.log
 files/*.cfg
 
+# Eclipse / PyDev
+
+.project
+.pydevproject
+.settings
+
 # Added by github.com
 
 *.py[co]

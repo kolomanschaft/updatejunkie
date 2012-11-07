@@ -37,7 +37,7 @@ class WillhabenConnector():
         except:
             raise WillhabenConnectionError()
         html = response.read()
-        return html
+        return unicode(html, "latin1")
 
     def __get_adlist_from_html__(self, html):
         doc = bs(html)

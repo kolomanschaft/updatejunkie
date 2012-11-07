@@ -60,35 +60,35 @@ class TestAdAssessor(unittest.TestCase):
         self.assertFalse(self.assessor.check(ad))
 
     def testAdCriterionTitleKeywordsAll(self):
-        kwdCriterion = AdCriterionTitleKeywordsAll(["schöner", "tag"])
+        kwdCriterion = AdCriterionTitleKeywordsAll([u"schöner", u"tag"])
         self.assessor.add_criterion(kwdCriterion)
-        ad = Ad(title = "Das ist ein schöner Tag")
+        ad = Ad(title = u"Das ist ein schöner Tag")
         self.assertTrue(self.assessor.check(ad))
-        ad = Ad(title = "Das ist ein schöner Wagen")
+        ad = Ad(title = u"Das ist ein schöner Wagen")
         self.assertFalse(self.assessor.check(ad))
 
     def testAdCriterionTitleKeywordsAny(self):
-        kwdCriterion = AdCriterionTitleKeywordsAny(["schöner", "tag"])
+        kwdCriterion = AdCriterionTitleKeywordsAny([u"schöner", u"tag"])
         self.assessor.add_criterion(kwdCriterion)
-        ad = Ad(title = "Das ist ein schöner tag")
+        ad = Ad(title = u"Das ist ein schöner tag")
         self.assertTrue(self.assessor.check(ad))
-        ad = Ad(title = "Das ist ein schöner Wagen")
+        ad = Ad(title = u"Das ist ein schöner Wagen")
         self.assertTrue (self.assessor.check(ad))
-        ad = Ad(title = "Das ist ein schneller Wagen")
+        ad = Ad(title = u"Das ist ein schneller Wagen")
         self.assertFalse(self.assessor.check(ad))
         
     def testAdCriterionTitleKeywordsNot(self):
-        kwdCriterion = AdCriterionTitleKeywordsNot(["schöner", "tag"])
+        kwdCriterion = AdCriterionTitleKeywordsNot([u"schöner", u"tag"])
         self.assessor.add_criterion(kwdCriterion)
-        ad = Ad(title = "Das ist ein schöner tag")
+        ad = Ad(title = u"Das ist ein schöner tag")
         self.assertFalse(self.assessor.check(ad))
-        ad = Ad(title = "Das ist ein schöner Wagen")
+        ad = Ad(title = u"Das ist ein schöner Wagen")
         self.assertFalse (self.assessor.check(ad))
-        ad = Ad(title = "Das ist ein schneller Wagen")
+        ad = Ad(title = u"Das ist ein schneller Wagen")
         self.assertTrue(self.assessor.check(ad))
 
     def testAdAssessorReturnsTrueWhenEmpty(self):
-        ad = Ad(title = "Expensive Blablabla", price = 1e8)
+        ad = Ad(title = u"Expensive Blablabla", price = 1e8)
         self.assertTrue (self.assessor.check(ad))
 
 class TestLogger(unittest.TestCase):

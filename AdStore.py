@@ -7,13 +7,14 @@ Created by Martin Hammerschmied on 2012-09-09.
 Copyright (c) 2012. All rights reserved.
 """
 import shelve
+import sys
 
 class Ad:
     
     def __init__(self, aid = None, title = None, url = None, price = None):
         self.id = aid
-        if title is not None: self.title = unicode(title)
-        if url is not None: self.url = unicode(url)
+        self.title = title
+        self.url = url
         self.price = price
     
     def __getitem__(self, key):
@@ -32,9 +33,9 @@ class Ad:
         if key == "id":
             self.id = value
         elif key == "title":
-            self.title = unicode(value)
+            self.title = value
         elif key == "url":
-            self.url = unicode(value)
+            self.url = value
         elif key == "price":
             self.price = value
         else:
@@ -53,6 +54,7 @@ class AdStore:
         """
         'flag' has the same meaning as the 'flag' parameter in anydbm.open()
         """
+        sys.setrecursionlimit(10000)
         self.path = path
         self.flag = flag
         self.autosave = autosave

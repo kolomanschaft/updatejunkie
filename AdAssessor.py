@@ -24,7 +24,7 @@ class AdCriterionPriceLimit(AdCriterion):
 class AdCriterionTitleKeywordsAll(AdCriterion):
 	
 	def __init__(self, keywords):
-		self.keywords = [unicode(kwd, "utf8") for kwd in keywords]
+		self.keywords = keywords
 	
 	def check(self, ad):
 		for kwd in self.keywords:
@@ -35,7 +35,7 @@ class AdCriterionTitleKeywordsAll(AdCriterion):
 class AdCriterionTitleKeywordsAny(AdCriterion):
 
 	def __init__(self, keywords):
-		self.keywords = [unicode(kwd, "utf8") for kwd in keywords]
+		self.keywords = keywords
 
 	def check(self, ad):
 		for kwd in self.keywords:
@@ -46,7 +46,7 @@ class AdCriterionTitleKeywordsAny(AdCriterion):
 class AdCriterionTitleKeywordsNot(AdCriterion):
 
 	def __init__(self, keywords):
-		self.keywords = [unicode(kwd, "utf8") for kwd in keywords]
+		self.keywords = keywords
 
 	def check(self, ad):
 		for kwd in self.keywords:

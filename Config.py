@@ -22,6 +22,10 @@ class WillhabenConfigParser(ConfigParser.SafeConfigParser, object):
         self._probe_section(section)
         super(WillhabenConfigParser, self).set(section, option, value)
     
+    def get(self, section, option):
+        s = super(WillhabenConfigParser, self).get(section, option)
+        return unicode(s, "utf-8")
+    
     def setint(self, section, option, anint):
         if not type(anint) is int:
             raise TypeError("Section {} option {} must be an integer number".format(section, option))
