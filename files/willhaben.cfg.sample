@@ -33,6 +33,11 @@ observers = ExampleObserver1, ExampleObserver2
 
 [ExampleObserver1]
 
+# Willhaben needs a profile to know how to obtain ads from a certain website.
+# These profiles are stored in the 'connector_profiles' folder. Usually the
+# profile name is the same as the filename of the profile.
+profile = willhaben
+
 # Browse the Willhaben website and narrow down the ad listing until you have the
 # listing you want to observe. Then copy the URL and paste it here.
 url = http://www.example1.com/
@@ -91,6 +96,11 @@ notification.body = I found a new ad! The title is "{title}" and the price is {p
 
 
 [ExampleObserver2]
+
+# Willhaben needs a profile to know how to obtain ads from a certain website.
+# These profiles are stored in the 'connector_profiles' folder. Usually the
+# profile name is the same as the filename of the profile.
+profile = willhaben
 
 # Copy the URL of the willhaben.at listing you want to observe
 url = http://www.example2.com/

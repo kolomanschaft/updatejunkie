@@ -8,6 +8,7 @@ Copyright (c) 2012. All rights reserved.
 """
 import ConfigParser
 import os
+import re
 
 class ConfigError(Exception): pass
 
@@ -47,6 +48,21 @@ class WillhabenConfigParser(ConfigParser.SafeConfigParser, object):
         if abool: self.set(section, option, "yes")
         else: self.set(section, option, "no")
 
+    def options_fitting(self, section, pattern):
+        items = [item[0] for item in self.items(section)]
+        fitting = filter(lambda item: re.match(pattern, item), items)
+        return fitting
+
+    def wildcard_options(self, section, pattern, getter = None):
+        if not getter: getter = self.getlist
+        options = self.options_fitting(section, pattern)
+        all_options = []
+        for option in options:
+            wildcard = re.match(pattern, option).groups()[0]
+            value = getter(section, option)
+            all_options.append({"wildcard": wildcard, "value": value})
+        return all_options
+
 class ObserverConfig(object):
     
     def __init__(self, parser, name):
@@ -69,9 +85,6 @@ class ObserverConfig(object):
         self.url = "http://example.com/"
         self.ads_store = True
         self.update_interval = 120
-        self.keywords_all = []
-        self.keywords_any = []
-        self.keywords_not = []
         self.price_limit = 0
         self.email_to = "John Doe <john.doe@example.com>"
         self.notification_title = "{title}"
@@ -80,6 +93,14 @@ class ObserverConfig(object):
         self.gtk_active = False
         self.email_active = True
 
+    @property
+    def profile(self):
+        return self._parser.get(self._name, "profile")
+    
+    @profile.setter
+    def profile(self, aprofile):
+        self._parser.set(self._name, "profile", aprofile)
+    
     @property
     def url(self):
         return self._parser.get(self._name, "url")
@@ -103,38 +124,50 @@ class ObserverConfig(object):
     @update_interval.setter
     def update_interval(self, interval):
         self._parser.setint(self._name, "update.interval", interval)
-        
+    
     @property
     def keywords_all(self):
-        return self._parser.getlist(self._name, "keywords.all")
-    
+        pattern = r"keywords\.(.+)\.all"
+        return self._parser.wildcard_options(self._name, pattern)
+
     @keywords_all.setter
-    def keywords_all(self, kwds):
-        self._parser.setlist(self._name, "keywords.all", kwds)
+    def keywords_all(self, options):
+        for option in options:
+            option_name = "keywords.{}.all".format(option["wildcard"])
+            self._parser.setlist(self._name, option_name, option["value"])
 
     @property
     def keywords_any(self):
-        return self._parser.getlist(self._name, "keywords.any")
+        pattern = r"keywords\.(.+)\.any"
+        return self._parser.wildcard_options(self._name, pattern)
 
     @keywords_any.setter
-    def keywords_any(self, kwds):
-        self._parser.setlist(self._name, "keywords.any", kwds)
+    def keywords_any(self, options):
+        for option in options:
+            option_name = "keywords.{}.any".format(option["wildcard"])
+            self._parser.setlist(self._name, option_name, option["value"])
 
     @property
     def keywords_not(self):
-        return self._parser.getlist(self._name, "keywords.not")
+        pattern = r"keywords\.(.+)\.not"
+        return self._parser.wildcard_options(self._name, pattern)
 
     @keywords_not.setter
-    def keywords_not(self, kwds):
-        self._parser.setlist(self._name, "keywords.not", kwds)
-    
-    @property
-    def price_limit(self):
-        return self._parser.getint(self._name, "price.limit")
+    def keywords_not(self, options):
+        for option in options:
+            option_name = "keywords.{}.not".format(option["wildcard"])
+            self._parser.setlist(self._name, option_name, option["value"])
 
-    @price_limit.setter
-    def price_limit(self, price):
-        self._parser.setint(self._name, "price.limit", price)
+    @property
+    def limits(self):
+        pattern = r"limit\.(.+)"
+        return self._parser.wildcard_options(self._name, pattern, self._parser.getint)
+
+    @limits.setter
+    def limits(self, options):
+        for option in options:
+            option_name = "limit.{}".format(option["wildcard"])
+            self._parser.setint(self._name, option_name, option["value"])
 
     @property
     def email_to(self):
@@ -207,6 +240,8 @@ class Config(object):
             self.smtp_password = "secret678"
             self.email_from = "Willhaben <contact@willhaben.at>"
         for observer in self.list_observers():
+            if not self._parser.has_section(observer):
+                raise ConfigError("Observer section {} not found!".format(observer))
             self.add_observer(observer)
         self._sanity_check()
 
@@ -232,7 +267,7 @@ class Config(object):
 
     @property
     def smtp_port(self):
-        return self._parser.get("General", "smtp.port")
+        return self._parser.getint("General", "smtp.port")
 
     @smtp_port.setter
     def smtp_port(self, port):
@@ -279,9 +314,9 @@ if __name__ == '__main__':
     
     # create test config
     
-    path = "./files/test.cfg"
-    c = Config(path)
-    c.add_observer("woah!")
-    c.add_observer("oag")
-    c.save()
-    
+    path1 = "./files/willhaben.cfg"
+    c = Config(path1)
+    oc = c.observer_config(u"Galaxy")
+    print oc.limits
+    print oc.keywords_all
+    print oc.keywords_any
