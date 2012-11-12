@@ -20,10 +20,10 @@ class EmailNotification(Notification):
 		self.to = to
 		self.subject = subject
 		MIMEHeader = smtplib.email.mime.Text.MIMEText("")
-		MIMEHeader["From"] = self.sender
-		MIMEHeader["To"] = self.to
-		MIMEHeader["Subject"] = self.subject
-		self.msg = MIMEHeader.as_string() + body
+		MIMEHeader["From"] = self.sender.encode("utf-8")
+		MIMEHeader["To"] = self.to.encode("utf-8")
+		MIMEHeader["Subject"] = self.subject.encode("utf-8")
+		self.msg = MIMEHeader.as_string() + body.encode("utf-8")
 
 	def notify(self, ad):
 		server = smtplib.SMTP(self.host, self.port)

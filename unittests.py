@@ -8,11 +8,13 @@ Copyright (c) 2012. All rights reserved.
 """
 import unittest
 import os
+import datetime
 from AdStore import *
 from AdAssessor import *
 from Logger import *
 from Config import *
 from NotificationServer import *
+from Connector import *
 
 class TestAdStore(unittest.TestCase):
     
@@ -25,23 +27,27 @@ class TestAdStore(unittest.TestCase):
         os.remove(self.path)
         
     def testAddAndRemoveAds(self):
-        some_ads = [Ad(title = "Ad " + str(nr), aid = nr) for nr in range(10)]
+        some_ads = [Ad({"id":nr, "title":u"Ad number {}".format(nr)}) for nr in range(10)]
+        for ad in some_ads:
+            ad.keytag = "id"
         added_ads = self.store.add_ads(some_ads)
         self.assertListEqual(some_ads, added_ads)
         ridx = [2,3,5,6,8]
         ads_to_remove = [some_ads[i] for i in ridx]
         removed = self.store.remove_ads(ads_to_remove)
         self.assertListEqual(ads_to_remove, removed)
-        ads_not_removed = [ad for ad in some_ads if ad["id"] not in ridx]
+        ads_not_removed = [ad for ad in some_ads if ad.key not in ridx]
         self.assertListEqual(ads_not_removed, self.store[:])
     
     def testSaveAndLoadAds(self):
-        some_ads = [Ad(title = "Ad " + str(nr), aid = nr) for nr in range(10)]
+        some_ads = [Ad({"id":nr, "title":u"Ad number {}".format(nr)}) for nr in range(10)]
+        for ad in some_ads:
+            ad.keytag = "id"
         self.store.add_ads(some_ads)
         self.store.save()
         another_store = AdStore(self.path, flag = "r")
-        first_ids = [ad["id"] for ad in some_ads]
-        second_ids = [ad["id"] for ad in another_store]
+        first_ids = [ad.key for ad in some_ads]
+        second_ids = [ad.key for ad in another_store]
         self.assertListEqual(first_ids, second_ids)
 
 class TestAdAssessor(unittest.TestCase):
@@ -52,39 +58,39 @@ class TestAdAssessor(unittest.TestCase):
     def tearDown(self):pass
     
     def testAdCriterionPriceLimit(self):
-        priceCriterion = AdCriterionPriceLimit(50)
+        priceCriterion = AdCriterionLimit(u"price", 50)
         self.assessor.add_criterion(priceCriterion)
-        ad = Ad(price = 30)
+        ad = Ad({"price": 30})
         self.assertTrue(self.assessor.check(ad))
-        ad = Ad(price = 72)
+        ad = Ad({"price": 70})
         self.assertFalse(self.assessor.check(ad))
 
     def testAdCriterionTitleKeywordsAll(self):
-        kwdCriterion = AdCriterionTitleKeywordsAll([u"schöner", u"tag"])
+        kwdCriterion = AdCriterionKeywordsAll(u"title", [u"schöner", u"tag"])
         self.assessor.add_criterion(kwdCriterion)
-        ad = Ad(title = u"Das ist ein schöner Tag")
+        ad = Ad({"title": u"Das ist ein schöner Tag"})
         self.assertTrue(self.assessor.check(ad))
-        ad = Ad(title = u"Das ist ein schöner Wagen")
+        ad = Ad({"title": u"Das ist ein schöner Wagen"})
         self.assertFalse(self.assessor.check(ad))
 
     def testAdCriterionTitleKeywordsAny(self):
-        kwdCriterion = AdCriterionTitleKeywordsAny([u"schöner", u"tag"])
+        kwdCriterion = AdCriterionKeywordsAny(u"title", [u"schöner", u"tag"])
         self.assessor.add_criterion(kwdCriterion)
-        ad = Ad(title = u"Das ist ein schöner tag")
+        ad = Ad({"title": u"Das ist ein schöner tag"})
         self.assertTrue(self.assessor.check(ad))
-        ad = Ad(title = u"Das ist ein schöner Wagen")
+        ad = Ad({"title": u"Das ist ein schöner Wagen"})
         self.assertTrue (self.assessor.check(ad))
-        ad = Ad(title = u"Das ist ein schneller Wagen")
+        ad = Ad({"title": u"Das ist ein schneller Wagen"})
         self.assertFalse(self.assessor.check(ad))
         
     def testAdCriterionTitleKeywordsNot(self):
-        kwdCriterion = AdCriterionTitleKeywordsNot([u"schöner", u"tag"])
+        kwdCriterion = AdCriterionKeywordsNot(u"title", [u"schöner", u"tag"])
         self.assessor.add_criterion(kwdCriterion)
-        ad = Ad(title = u"Das ist ein schöner tag")
+        ad = Ad({"title": u"Das ist ein schöner tag"})
         self.assertFalse(self.assessor.check(ad))
-        ad = Ad(title = u"Das ist ein schöner Wagen")
+        ad = Ad({"title": u"Das ist ein schöner Wagen"})
         self.assertFalse (self.assessor.check(ad))
-        ad = Ad(title = u"Das ist ein schneller Wagen")
+        ad = Ad({"title": u"Das ist ein schneller Wagen"})
         self.assertTrue(self.assessor.check(ad))
 
     def testAdAssessorReturnsTrueWhenEmpty(self):
@@ -137,10 +143,10 @@ class TestConfig(unittest.TestCase):
     def testSaveLoadCriteria(self):
         kwds = ["word-1", "word-2", "word-3"]
         self.config.add_observer("theObserver")
-        self.config.theObserver.keywords_all = kwds
+        self.config.theObserver.keywords_all = [{"wildcard": u"title", "value":kwds}]
         self.config.save()
         c = Config(self.path)
-        self.assertListEqual(kwds, c.theObserver.keywords_all)
+        self.assertListEqual(kwds, c.theObserver.keywords_all[0]["value"])
     
     def testSanityCheck(self):
         self.config.add_observer("oneObserver")
@@ -171,6 +177,27 @@ class TestNotificationServer(unittest.TestCase):
         del self.notificationServer[0]
         self.assertIs(self.notificationServer[0], b)        
         self.assertRaises(IndexError, self.notificationServer.__getitem__, 1)
+
+class TestConnector(unittest.TestCase):
+    
+    def setUp(self):
+        url = u"http://www.willhaben.at/iad/kaufen-und-verkaufen/handy-organizer-telefon/handy-smartphone/"
+        self.connector = Connector(url, "willhaben")
+    
+    def tearDown(self):
+        del self.connector
+    
+    def testAdsAfter(self):
+        timelimit = datetime.datetime.now() - datetime.timedelta(hours = 3)
+        ads = self.connector.ads_after(timelimit)
+        for ad in ads:
+            self.assertTrue(ad.timetag > timelimit)
+    
+    def testAdsIn(self):
+        timedelta = datetime.timedelta(hours = 2)
+        ads = self.connector.ads_in(timedelta)
+        for ad in ads:
+            self.assertTrue(ad.timetag > datetime.datetime.now()-timedelta)
 
 if __name__ == "__main__":
     unittest.main()

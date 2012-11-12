@@ -8,7 +8,7 @@ Copyright (c) 2012. All rights reserved.
 """
 from AdStore import *
 from AdAssessor import *
-from WillhabenObserver import *
+from Observer import *
 from Logger import *
 from Config import *
 from NotificationServer import *
@@ -46,21 +46,25 @@ if __name__ == "__main__":
         observer_config = config.observer_config(observer_name)
         # Ads that have already been processed are registered in this file
         if observer_config.ads_store:
-            save_file = "files/" + md5.new(observer_config.url).hexdigest() + ".save"
+            save_file = "files/" + md5.new(observer_config.url).hexdigest() + ".store"
         else: 
             save_file = None    
         store = AdStore(path = save_file)
     
         # Search criteria setup
         assessor = AdAssessor()
-        if len(observer_config.keywords_all) > 0:
-            assessor.add_criterion(AdCriterionTitleKeywordsAll(observer_config.keywords_all))
-        if len(observer_config.keywords_any) > 0:
-            assessor.add_criterion(AdCriterionTitleKeywordsAny(observer_config.keywords_any))
-        if len(observer_config.keywords_not) > 0:
-            assessor.add_criterion(AdCriterionTitleKeywordsNot(observer_config.keywords_not))
-        if observer_config.price_limit > 0:
-            assessor.add_criterion(AdCriterionPriceLimit(observer_config.price_limit))
+        for keywords in observer_config.keywords_all:
+            criterion = AdCriterionKeywordsAll(keywords["wildcard"], keywords["value"])
+            assessor.add_criterion(criterion)
+        for keywords in observer_config.keywords_any:
+            criterion = AdCriterionKeywordsAny(keywords["wildcard"], keywords["value"])
+            assessor.add_criterion(criterion)
+        for keywords in observer_config.keywords_not:
+            criterion = AdCriterionKeywordsNot(keywords["wildcard"], keywords["value"])
+            assessor.add_criterion(criterion)
+        for limit in observer_config.limits:
+            criterion = AdCriterionLimit(limit["wildcard"], limit["value"])
+            assessor.add_criterion(criterion)
     
         # Notification server setup
         notificationServer = NotificationServer()
@@ -92,13 +96,14 @@ if __name__ == "__main__":
                                             observer_config.notification_body)
             notificationServer.addNotification(emailNotify)
 
-        observer = WillhabenObserver(url = observer_config.url,
-                                     store = store,
-                                     assessor = assessor,
-                                     notification = notificationServer,
-                                     logger = logger,
-                                     update_interval = observer_config.update_interval,
-				     name = observer_name)
+        observer = Observer(url = observer_config.url,
+                            profile = observer_config.profile,
+                            store = store,
+                            assessor = assessor,
+                            notification = notificationServer,
+                            logger = logger,
+                            update_interval = observer_config.update_interval,
+                            name = observer_name)
         observers.append(observer)
     
     # all done! let's start spinning the wheel

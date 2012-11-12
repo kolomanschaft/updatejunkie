@@ -6,45 +6,48 @@ WillhabenObserver.py
 Created by Martin Hammerschmied on 2012-09-09.
 Copyright (c) 2012. All rights reserved.
 """
-import time
+import time, datetime
 from itertools import compress
-from WillhabenConnector import *
+from Connector import *
 from Logger import *
 import threading
 
-class WillhabenObserver(threading.Thread):
+class Observer(threading.Thread):
     
-    def __init__(self, url, store, assessor, notification, logger = Logger(), update_interval = 180, name = "Unnamed"):
-        super(WillhabenObserver, self).__init__()
+    def __init__(self, url, profile, store, assessor, notification, logger = Logger(), update_interval = 180, name = "Unnamed"):
+        super(Observer, self).__init__()
         self.interval = update_interval
-        self.connector = WillhabenConnector(url)
+        self.connector = Connector(url, profile)
         self.store = store
         self.assessor = assessor
         self.notification = notification
         self.logger = logger
         self.daemon = True
-	self.name = name
+        self.name = name
     
     def process_ads(self, ads):
         hits = map(self.assessor.check, ads)
         hit_ads = [ad for ad in compress(ads, hits)]
         new_ads = self.store.add_ads(hit_ads)
         for ad in new_ads:
-            self.logger.append("Observer Found Ad: " + ad["title"])
+            try:
+                self.logger.append("Observer Found Ad: " + ad["title"])
+            except KeyError:
+                self.logger.append("Observer Found Ad: " + ad.key)
             if self.notification:
                 self.notification.notifyAll(ad)
 
     def run(self):
-        # TODO: don't initialize on number of pages but on ad date!!
-        self.logger.append("Observer {} polling 10 pages".format(self.name))
-        ads = self.connector.all_ads(maxpages = 10)
+        timedelta = datetime.timedelta(days = 1)
+        self.logger.append("Observer {} polling {} day(s) of ads".format(self.name, timedelta.days))
+        ads = self.connector.ads_in(timedelta)
         self.process_ads(ads)
-        self.logger.append("Initial poll done")
+        self.logger.append("Observer {} initial poll done".format(self.name))
         while True:
             time.sleep(self.interval)
             self.logger.append("Observer {} polling front page".format(self.name))
             try:
                 frontpage_ads = self.connector.frontpage_ads()
                 self.process_ads(frontpage_ads)
-            except WillhabenConnectionError:
-                self.logger.append("No connection to willhaben.at")
+            except ConnectionError:
+                self.logger.append("No connection to {}".format(self.connector.name))
