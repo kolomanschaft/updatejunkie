@@ -3,8 +3,10 @@
 *~
 .DS_Store
 files/*.save
+files/*.db
 files/*.log
 files/*.cfg
+connector_profiles/*.html
 
 # Eclipse / PyDev
 

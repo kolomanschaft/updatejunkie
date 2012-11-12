@@ -7,46 +7,39 @@ Created by Martin Hammerschmied on 2012-09-09.
 Copyright (c) 2012. All rights reserved.
 """
 import shelve
-import sys
+import datetime
 
-class Ad:
-    
-    def __init__(self, aid = None, title = None, url = None, price = None):
-        self.id = aid
-        self.title = title
-        self.url = url
-        self.price = price
-    
-    def __getitem__(self, key):
-        if key == "id":
-            return self.id
-        elif key == "title":
-            return self.title
-        elif key == "url":
-            return self.url
-        elif key == "price":
-            return self.price
-        else:
-            raise KeyError("Ad has no key {}".format(key))
+class AdKeyError(Exception):pass
 
-    def __setitem__(self, key, value):
-        if key == "id":
-            self.id = value
-        elif key == "title":
-            self.title = value
-        elif key == "url":
-            self.url = value
-        elif key == "price":
-            self.price = value
-        else:
-            raise KeyError("Ad is not allowed a key {}".format(key))
+class Ad(dict):
+
+    @property
+    def keytag(self):
+        return self._keytag
     
-    def __repr__(self):
-        s = "\nAd(aid = \"{0}\",\n   title = \"{1}\",\n   url = \"{2}\",\n   price = \"{3}\")"
-        return s.format(self.id, self.title, self.url, self.price)
+    @keytag.setter
+    def keytag(self, tagname):
+        if not tagname in self.keys():
+            raise AdKeyError("Tag {0} could not be found. Set the tag {0} before using it as key!".format(tagname))
+        self._keytag = tagname
     
-    def keys(self):
-        return ["id", "title", "url", "price"]
+    @property
+    def key(self):
+        if not hasattr(self, "_keytag"):
+            raise AdKeyError("No keytag defined yet!")
+        return self[self._keytag]
+    
+    @property
+    def timetag(self):
+        if not hasattr(self, "_timetag"):
+            raise AdKeyError("No timetag set yet!")
+        return self._timetag
+    
+    @timetag.setter
+    def timetag(self, atime):
+        if not isinstance(atime, datetime.datetime):
+            raise TypeError("The timetag needs to be a valid datetime!")
+        self._timetag = atime
 
 class AdStore:
     
@@ -54,7 +47,6 @@ class AdStore:
         """
         'flag' has the same meaning as the 'flag' parameter in anydbm.open()
         """
-        sys.setrecursionlimit(10000)
         self.path = path
         self.flag = flag
         self.autosave = autosave
@@ -86,10 +78,10 @@ class AdStore:
         'ads' is a list of new ads
         """
         added_ads = []
-        cur_ids = [ad["id"] for ad in self.ads]
-        new_ids = [ad["id"] for ad in ads]
-        for i in range(len(new_ids)):
-            if new_ids[i] not in cur_ids:
+        cur_keys = [ad.key for ad in self.ads]
+        new_keys = [ad.key for ad in ads]
+        for i in range(len(new_keys)):
+            if new_keys[i] not in cur_keys:
                 self.ads.append(ads[i])
                 added_ads.append(ads[i])
         if self.autosave: self.save()
@@ -97,13 +89,13 @@ class AdStore:
     
     def remove_ads(self, ads):
         removed_ads = []
-        cur_ids = [ad["id"] for ad in self.ads]
-        new_ids = [ad["id"] for ad in ads]
-        for i in range(len(new_ids)):
-            if new_ids[i] in cur_ids:
-                idx = cur_ids.index(new_ids[i])
+        cur_keys = [ad.key for ad in self.ads]
+        new_keys = [ad.key for ad in ads]
+        for i in range(len(new_keys)):
+            if new_keys[i] in cur_keys:
+                idx = cur_keys.index(new_keys[i])
                 del self.ads[idx]
-                del cur_ids[idx]
+                del cur_keys[idx]
                 removed_ads.append(ads[i])
         if self.autosave: self.save()
         return removed_ads
