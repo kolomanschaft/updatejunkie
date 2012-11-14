@@ -26,6 +26,7 @@ class Observer(threading.Thread):
         self.name = name
     
     def process_ads(self, ads):
+        if len(ads) == 0: return
         hits = map(self.assessor.check, ads)
         hit_ads = [ad for ad in compress(ads, hits)]
         new_ads = self.store.add_ads(hit_ads)
@@ -36,18 +37,19 @@ class Observer(threading.Thread):
                 self.logger.append("Observer Found Ad: " + ad.key)
             if self.notification:
                 self.notification.notifyAll(ad)
+        self.time_mark = sorted(ads, key = lambda ad: ad.timetag)[-1].timetag
 
     def run(self):
-        timedelta = datetime.timedelta(days = 1)
-        self.logger.append("Observer {} polling {} day(s) of ads".format(self.name, timedelta.days))
-        ads = self.connector.ads_in(timedelta)
+        self.time_mark = datetime.datetime.now() - datetime.timedelta(days = 1)
+        self.logger.append("Observer {} polling ads back to {}".format(self.name, self.time_mark))
+        ads = self.connector.ads_after(self.time_mark)
         self.process_ads(ads)
         self.logger.append("Observer {} initial poll done".format(self.name))
         while True:
             time.sleep(self.interval)
-            self.logger.append("Observer {} polling front page".format(self.name))
+            self.logger.append("Observer {} polling for new ads".format(self.name))
             try:
-                frontpage_ads = self.connector.frontpage_ads()
-                self.process_ads(frontpage_ads)
+                ads = self.connector.ads_after(self.time_mark)
+                self.process_ads(ads)
             except ConnectionError:
                 self.logger.append("No connection to {}".format(self.connector.name))
