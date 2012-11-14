@@ -21,14 +21,12 @@ class EmailNotification(Notification):
 		self.subject = subject
 		MIMEHeader = smtplib.email.mime.Text.MIMEText("", "plain", "utf-8")
 		MIMEHeader["From"] = self.sender.encode("utf-8")
-#		MIMEHeader["To"] = self.to.encode("utf-8")
-		MIMEHeader["To"] = u"Martin Hammerschmüd<gestatten@gmail.com>".encode("utf-8")
+		MIMEHeader["To"] = self.to.encode("utf-8")
 		MIMEHeader["Subject"] = self.subject.encode("utf-8")
 		self.msg = MIMEHeader.as_string() + body.encode("utf-8")
 
 	def notify(self, ad):
 		server = smtplib.SMTP(self.host, self.port)
 		server.login(self.user, self.pw)
-		print self.msg.format(**ad).encode("utf-8")
 		server.sendmail(self.sender, self.to, self.msg.format(**ad).encode("utf-8"))
 
