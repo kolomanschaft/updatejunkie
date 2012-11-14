@@ -14,7 +14,7 @@ import threading
 
 class Observer(threading.Thread):
     
-    def __init__(self, url, profile, store, assessor, notification, logger = Logger(), update_interval = 180, name = "Unnamed"):
+    def __init__(self, url, profile, store, assessor, notification, logger = Logger(), update_interval = 180, name = u"Unnamed Observer"):
         super(Observer, self).__init__()
         self.interval = update_interval
         self.connector = Connector(url, profile)

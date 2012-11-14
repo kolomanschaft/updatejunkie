@@ -23,7 +23,7 @@ class EmailNotification(Notification):
 		MIMEHeader["From"] = self.sender.encode("utf-8")
 		MIMEHeader["To"] = self.to.encode("utf-8")
 		MIMEHeader["Subject"] = self.subject.encode("utf-8")
-		self.msg = MIMEHeader.as_string() + body.encode("utf-8")
+		self.msg = unicode(MIMEHeader.as_string(), "utf-8") + body
 
 	def notify(self, ad):
 		server = smtplib.SMTP(self.host, self.port)
