@@ -32,7 +32,7 @@ class WillhabenConfigParser(ConfigParser.SafeConfigParser, object):
             raise TypeError("Section {} option {} must be an integer number".format(section, option))
         self.set(section, option, str(anint))
     
-    def getlist(self, section, option, rtype = str):
+    def getlist(self, section, option, rtype = unicode):
         v = [rtype(s.strip()) for s in self.get(section, option).split(",")]
         return v
     
