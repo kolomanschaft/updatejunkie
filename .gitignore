@@ -4,6 +4,7 @@
 .DS_Store
 files/*.save
 files/*.db
+files/*.store
 files/*.log
 files/*.cfg
 connector_profiles/*.html
