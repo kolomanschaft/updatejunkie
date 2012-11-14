@@ -41,16 +41,26 @@ class Ad(dict):
             raise TypeError("The timetag needs to be a valid datetime!")
         self._timetag = atime
 
-class AdStore:
+class AdStore(object):
     
-    def __init__(self, path = None, flag = "c", autosave = True):
+    def __init__(self, path = None, flag = "c", autosave = True, autosort = True):
         """
         'flag' has the same meaning as the 'flag' parameter in anydbm.open()
         """
         self.path = path
         self.flag = flag
         self.autosave = autosave
+        self.autosort = autosort
         self.load()
+    
+    def _sort_by_date(self):
+        try:
+            self.ads = sorted(self.ads, key = lambda ad: ad.timetag)
+        except AdKeyError:
+            pass
+    
+    def length(self):
+        return len(self.ads)
     
     def save(self):
         if not self.path: return
@@ -84,6 +94,7 @@ class AdStore:
             if new_keys[i] not in cur_keys:
                 self.ads.append(ads[i])
                 added_ads.append(ads[i])
+        if self.autosort: self._sort_by_date()
         if self.autosave: self.save()
         return added_ads
     
@@ -97,6 +108,7 @@ class AdStore:
                 del self.ads[idx]
                 del cur_keys[idx]
                 removed_ads.append(ads[i])
+        if self.autosort: self._sort_by_date()
         if self.autosave: self.save()
         return removed_ads
     

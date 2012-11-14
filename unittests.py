@@ -9,6 +9,7 @@ Copyright (c) 2012. All rights reserved.
 import unittest
 import os
 import datetime
+import random
 from AdStore import *
 from AdAssessor import *
 from Logger import *
@@ -22,33 +23,38 @@ class TestAdStore(unittest.TestCase):
     
     def setUp(self):
         self.store = AdStore(self.path, flag = "n")
+        self.some_ads = [Ad({"id":nr, "title":u"Ad number {}".format(nr)}) for nr in range(10)]
+        for ad in self.some_ads:
+            ad.keytag = "id"
         
     def tearDown(self):
         os.remove(self.path)
         
     def testAddAndRemoveAds(self):
-        some_ads = [Ad({"id":nr, "title":u"Ad number {}".format(nr)}) for nr in range(10)]
-        for ad in some_ads:
-            ad.keytag = "id"
-        added_ads = self.store.add_ads(some_ads)
-        self.assertListEqual(some_ads, added_ads)
+        added_ads = self.store.add_ads(self.some_ads)
+        self.assertListEqual(self.some_ads, added_ads)
         ridx = [2,3,5,6,8]
-        ads_to_remove = [some_ads[i] for i in ridx]
+        ads_to_remove = [self.some_ads[i] for i in ridx]
         removed = self.store.remove_ads(ads_to_remove)
         self.assertListEqual(ads_to_remove, removed)
-        ads_not_removed = [ad for ad in some_ads if ad.key not in ridx]
+        ads_not_removed = [ad for ad in self.some_ads if ad.key not in ridx]
         self.assertListEqual(ads_not_removed, self.store[:])
     
     def testSaveAndLoadAds(self):
-        some_ads = [Ad({"id":nr, "title":u"Ad number {}".format(nr)}) for nr in range(10)]
-        for ad in some_ads:
-            ad.keytag = "id"
-        self.store.add_ads(some_ads)
+        self.store.add_ads(self.some_ads)
         self.store.save()
         another_store = AdStore(self.path, flag = "r")
-        first_ids = [ad.key for ad in some_ads]
+        first_ids = [ad.key for ad in self.some_ads]
         second_ids = [ad.key for ad in another_store]
         self.assertListEqual(first_ids, second_ids)
+
+    def testSortByDate(self):
+        delta = datetime.timedelta(hours = 2)
+        for ad in self.some_ads:
+            ad.timetag = datetime.datetime.now() + random.randint(0,20) * delta
+        self.store.add_ads(self.some_ads)
+        for i in xrange(1,self.store.length()):
+            self.assertGreaterEqual(self.store[i].timetag, self.store[i-1].timetag)            
 
 class TestAdAssessor(unittest.TestCase):
     
@@ -188,13 +194,13 @@ class TestConnector(unittest.TestCase):
         del self.connector
     
     def testAdsAfter(self):
-        timelimit = datetime.datetime.now() - datetime.timedelta(hours = 3)
+        timelimit = datetime.datetime.now() - datetime.timedelta(hours = 1)
         ads = self.connector.ads_after(timelimit)
         for ad in ads:
             self.assertTrue(ad.timetag > timelimit)
     
     def testAdsIn(self):
-        timedelta = datetime.timedelta(hours = 2)
+        timedelta = datetime.timedelta(hours = 1)
         ads = self.connector.ads_in(timedelta)
         for ad in ads:
             self.assertTrue(ad.timetag > datetime.datetime.now()-timedelta)
