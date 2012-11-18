@@ -32,24 +32,24 @@ class Observer(threading.Thread):
         new_ads = self.store.add_ads(hit_ads)
         for ad in new_ads:
             try:
-                self.logger.append("Observer {} Found Ad: {}".format(self.name, ad["title"]))
+                self.logger.append(u"Observer {} Found Ad: {}".format(self.name, ad["title"]))
             except KeyError:
-                self.logger.append("Observer {} Found Ad: {}".format(self.name, ad.key))
+                self.logger.append(u"Observer {} Found Ad: {}".format(self.name, ad.key))
             if self.notification:
                 self.notification.notifyAll(ad)
         self.time_mark = sorted(ads, key = lambda ad: ad.timetag)[-1].timetag
 
     def run(self):
         self.time_mark = datetime.datetime.now() - datetime.timedelta(days = 1)
-        self.logger.append("Observer {} polling ads back to {}".format(self.name, self.time_mark))
+        self.logger.append(u"Observer {} polling ads back to {}".format(self.name, self.time_mark))
         ads = self.connector.ads_after(self.time_mark)
         self.process_ads(ads)
-        self.logger.append("Observer {} initial poll done".format(self.name))
+        self.logger.append(u"Observer {} initial poll done".format(self.name))
         while True:
             time.sleep(self.interval)
-            self.logger.append("Observer {} polling for new ads".format(self.name))
+            self.logger.append(u"Observer {} polling for new ads".format(self.name))
             try:
                 ads = self.connector.ads_after(self.time_mark)
                 self.process_ads(ads)
             except ConnectionError:
-                self.logger.append("No connection to {}".format(self.connector.name))
+                self.logger.append(u"No connection to {}".format(self.connector.name))
