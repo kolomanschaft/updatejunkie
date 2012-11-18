@@ -33,19 +33,20 @@ class Connector():
             self._profile = get_profile(profile)
 
     def __get_page__(self, page):
-        page_param = self._profile.page_param
-        new_encoded = urlencode({page_param["name"]: page})
         data = None
-        if page_param["method"] == u"GET":
-            page_match = re.search(u"{}=[0-9]+".format(page_param["name"]), self._url)
-            if page_match:
-                self._url = self._url.replace(page_match.group(), new_encoded)
-            elif self._url.find(u"?") >= 0:
-                self._url = self._url + u"&" + new_encoded
+        if page is not None:
+            page_param = self._profile.page_param
+            new_encoded = urlencode({page_param["name"]: page})
+            if page_param["method"] == u"GET":
+                page_match = re.search(u"{}=[0-9]+".format(page_param["name"]), self._url)
+                if page_match:
+                    self._url = self._url.replace(page_match.group(), new_encoded)
+                elif self._url.find(u"?") >= 0:
+                    self._url = self._url + u"&" + new_encoded
+                else:
+                    self._url = self._url + u"?" + new_encoded
             else:
-                self._url = self._url + u"?" + new_encoded
-        else:
-            data = new_encoded
+                data = new_encoded
         
         f = urllib2.urlopen(self._url, data)
         html = unicode(f.read(), "ISO-8859-1")
@@ -73,7 +74,6 @@ class Connector():
             
         ad_tuples = re.findall(self._profile.ad_regex, html)
         tags = self._profile.ad_tags
-        time_tag = self._profile.time_tag
         
         ads = []
         for ad_tuple in ad_tuples:
@@ -95,7 +95,10 @@ class Connector():
             
     
     def frontpage_ads(self):
-        html = self.__get_page__(self._profile.page_param["init"])
+        if not self._profile.page_param:
+            html = self.__get_page__(None)
+        else:
+            html = self.__get_page__(self._profile.page_param["init"])
         return self.__get_adlist_from_html__(html)
     
     def ads_all(self, pagestart = None, maxpages = 100):
@@ -109,6 +112,9 @@ class Connector():
         return self.ads_after(timelimit, maxpages)
     
     def ads_after(self, timelimit, maxpages = 100):
+        if not self._profile.page_param:
+            ads = self.frontpage_ads()
+            return filter(lambda ad: ad.timetag > timelimit, ads)
         pagestart = self._profile.page_param["init"]
         if not isinstance(timelimit, datetime.datetime):
             raise ConnectionError("timelimit needs to be a datetime instance")

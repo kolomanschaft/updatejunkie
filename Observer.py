@@ -32,9 +32,9 @@ class Observer(threading.Thread):
         new_ads = self.store.add_ads(hit_ads)
         for ad in new_ads:
             try:
-                self.logger.append("Observer Found Ad: " + ad["title"])
+                self.logger.append("Observer {} Found Ad: {}".format(self.name, ad["title"]))
             except KeyError:
-                self.logger.append("Observer Found Ad: " + ad.key)
+                self.logger.append("Observer {} Found Ad: {}".format(self.name, ad.key))
             if self.notification:
                 self.notification.notifyAll(ad)
         self.time_mark = sorted(ads, key = lambda ad: ad.timetag)[-1].timetag
