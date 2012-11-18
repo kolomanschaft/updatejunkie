@@ -22,7 +22,7 @@ class TestAdStore(unittest.TestCase):
     path = "./testStore.save"
     
     def setUp(self):
-        self.store = AdStore(self.path, flag = "n")
+        self.store = AdStore(self.path)
         self.some_ads = [Ad({"id":nr, "title":u"Ad number {}".format(nr)}) for nr in range(10)]
         for ad in self.some_ads:
             ad.keytag = "id"
@@ -43,7 +43,7 @@ class TestAdStore(unittest.TestCase):
     def testSaveAndLoadAds(self):
         self.store.add_ads(self.some_ads)
         self.store.save()
-        another_store = AdStore(self.path, flag = "r")
+        another_store = AdStore(self.path)
         first_ids = [ad.key for ad in self.some_ads]
         second_ids = [ad.key for ad in another_store]
         self.assertListEqual(first_ids, second_ids)
@@ -130,7 +130,7 @@ class TestLogger(unittest.TestCase):
 
 class TestConfig(unittest.TestCase):
     
-    path = "./test.cfg"
+    path = u"./test.cfg"
     
     def setUp(self):
         self.config = Config(self.path)
@@ -140,24 +140,24 @@ class TestConfig(unittest.TestCase):
             os.remove(self.path)
     
     def testSafeLoadOptions(self):
-        testsmtp = "smtp.example.com"
+        testsmtp = u"smtp.example.com"
         self.config.smtp_host = testsmtp
         self.config.save()
         c = Config(self.path)
         self.assertTrue(testsmtp == c.smtp_host)
     
     def testSaveLoadCriteria(self):
-        kwds = ["word-1", "word-2", "word-3"]
-        self.config.add_observer("theObserver")
+        kwds = [u"word-1", u"word-2", u"word-3"]
+        self.config.add_observer(u"theObserver")
         self.config.theObserver.keywords_all = [{"wildcard": u"title", "value":kwds}]
         self.config.save()
         c = Config(self.path)
         self.assertListEqual(kwds, c.theObserver.keywords_all[0]["value"])
     
     def testSanityCheck(self):
-        self.config.add_observer("oneObserver")
+        self.config.add_observer(u"oneObserver")
         self.config.oneObserver.osx_active = True
-        self.config.add_observer("twoObserver")
+        self.config.add_observer(u"twoObserver")
         self.config.twoObserver.gtk_active = True
         self.assertRaises(ConfigError, self.config._sanity_check)
 

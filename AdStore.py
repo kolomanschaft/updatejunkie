@@ -6,7 +6,7 @@ AdStore.py
 Created by Martin Hammerschmied on 2012-09-09.
 Copyright (c) 2012. All rights reserved.
 """
-import shelve
+import pickle
 import datetime
 
 class AdKeyError(Exception):pass
@@ -43,12 +43,11 @@ class Ad(dict):
 
 class AdStore(object):
     
-    def __init__(self, path = None, flag = "c", autosave = True, autosort = True):
+    def __init__(self, path = None, autosave = True, autosort = True):
         """
         'flag' has the same meaning as the 'flag' parameter in anydbm.open()
         """
         self.path = path
-        self.flag = flag
         self.autosave = autosave
         self.autosort = autosort
         self.load()
@@ -64,24 +63,25 @@ class AdStore(object):
     
     def save(self):
         if not self.path: return
-        sh = shelve.open(self.path, self.flag)
         try:
-            sh["ads"] = self.ads
-        finally:
-            sh.close()
+            with open(self.path, "w") as f:
+                pickler = pickle.Pickler(f)
+                pickler.dump(self.ads)
+        except: raise
         return True
     
     def load(self):
-        if not self.path: 
+        if not self.path:
             self.ads = []
             return
-        sh = shelve.open(self.path, self.flag)
         try:
-            self.ads = sh["ads"]
-        except KeyError:
-            self.ads = []
+            with open(self.path, "r") as f:
+                unpickler = pickle.Unpickler(f)
+                self.ads = unpickler.load()
+        except EOFError: pass
+        except IOError: pass
         finally:
-            sh.close()
+            if not hasattr(self, "ads"): self.ads = []
     
     def add_ads(self, ads):
         """
