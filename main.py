@@ -93,6 +93,7 @@ if __name__ == "__main__":
                                             config.smtp_password,
                                             config.email_from,
                                             observer_config.email_to,
+                                            observer_config.email_mimetype,
                                             observer_config.notification_title,
                                             observer_config.notification_body)
             notificationServer.addNotification(emailNotify)

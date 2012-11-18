@@ -25,6 +25,8 @@ class WillhabenConfigParser(ConfigParser.SafeConfigParser, object):
     
     def get(self, section, option):
         s = super(WillhabenConfigParser, self).get(section, option)
+        if type(s) == unicode:
+            return s
         return unicode(s, "utf-8")
     
     def setint(self, section, option, anint):
@@ -39,8 +41,7 @@ class WillhabenConfigParser(ConfigParser.SafeConfigParser, object):
     def setlist(self, section, option, alist):
         if not type(alist) is list:
             raise TypeError("Section {} option {} must be a list".format(section, option))
-        l = str(alist).replace("[", "").replace("]", "").replace("'", "")
-        self.set(section, option, l)
+        self.set(section, option, ", ".join(alist))
 
     def setboolean(self, section, option, abool):
         if not type(abool) is bool:
@@ -86,7 +87,7 @@ class ObserverConfig(object):
         self.ads_store = True
         self.update_interval = 120
         self.price_limit = 0
-        self.email_to = "John Doe <john.doe@example.com>"
+        self.email_to = ["John Doe <john.doe@example.com>"]
         self.notification_title = "{title}"
         self.notification_body = "{title}"
         self.osx_active = False
@@ -171,11 +172,19 @@ class ObserverConfig(object):
 
     @property
     def email_to(self):
-        return self._parser.get(self._name, "email.to")
+        return self._parser.getlist(self._name, "email.to")
 
     @email_to.setter
     def email_to(self, to):
-        self._parser.set(self._name, "email.to", to)
+        self._parser.setlist(self._name, "email.to", to)
+
+    @property
+    def email_mimetype(self):
+        return self._parser.get(self._name, "email.mimetype")
+
+    @email_mimetype.setter
+    def email_mimetype(self, mimetype):
+        self._parser.setlist(self._name, "email.mimetype", mimetype)
 
     @property
     def notification_title(self):
