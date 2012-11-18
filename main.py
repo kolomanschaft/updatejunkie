@@ -47,7 +47,7 @@ if __name__ == "__main__":
         observer_config = config.observer_config(observer_name)
         # Ads that have already been processed are registered in this file
         if observer_config.ads_store:
-            save_file = "files/" + md5.new(observer_config.url).hexdigest() + ".store"
+            save_file = u"files/adstore.{}.db".format(observer_name)
         else: 
             save_file = None    
         store = AdStore(path = save_file)
