@@ -40,6 +40,7 @@ if __name__ == "__main__":
                 print "No timetag!"
 
     c = Connector(url, profile)
+    print "Ad REGEX:", c._profile.ad_regex
     ads = c.frontpage_ads()
     print_ads(ads)
 

@@ -98,7 +98,10 @@ class Profile(object):
     
     @property
     def page_param(self):
-        pageParamNode = self._childNode(u"pageParam")
+        try:
+            pageParamNode = self._childNode(u"pageParam")
+        except ProfileError:
+            return None
         return {"name": self._firstTextChild(pageParamNode).nodeValue, "method": pageParamNode.getAttribute(u"method"), "init": int(pageParamNode.getAttribute(u"init"))} 
 
 if __name__ == '__main__':

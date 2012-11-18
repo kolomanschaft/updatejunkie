@@ -11,7 +11,7 @@ import smtplib
 
 class EmailNotification(Notification):
 	"""Sends email notification using python's smtplib module"""
-	def __init__(self, host, port, user, pw, sender, to, subject, body):
+	def __init__(self, host, port, user, pw, sender, to, mimetype, subject, body):
 		self.host = host
 		self.port = port
 		self.user = user
@@ -19,14 +19,18 @@ class EmailNotification(Notification):
 		self.sender = sender
 		self.to = to
 		self.subject = subject
-		MIMEHeader = smtplib.email.mime.Text.MIMEText("", "plain", "utf-8")
+		MIMEHeader = smtplib.email.mime.Text.MIMEText("", mimetype, "utf-8")
 		MIMEHeader["From"] = self.sender.encode("utf-8")
-		MIMEHeader["To"] = self.to.encode("utf-8")
+		#MIMEHeader["To"] = self.to.encode("utf-8")
 		MIMEHeader["Subject"] = self.subject.encode("utf-8")
 		self.msg = unicode(MIMEHeader.as_string(), "utf-8") + body
 
 	def notify(self, ad):
 		server = smtplib.SMTP(self.host, self.port)
 		server.login(self.user, self.pw)
-		server.sendmail(self.sender, self.to, self.msg.format(**ad).encode("utf-8"))
+		for to in self.to:
+			try:
+				server.sendmail(self.sender, to, self.msg.format(**ad).encode("utf-8"))
+			except KeyError as expn:
+				raise NotificationError("Profile doesn't support tagname '{}'".format(expn.message))
 
