@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<profile>
+	<name>DoodleComments</name>
+	<website>
+		<baseUrl>http://doodle.com/</baseUrl>
+		<adDefinition>
+			<regex>"id":([0-9]+?),"commentator":"(.+?)","commentHTML":"(.+?)",(?:"emailHash":".{32}",)?"commentedDateTime":"([0-9/AMP :]+?)"</regex>
+			<tag type="integer">id</tag>
+			<tag type="text">name</tag>
+			<tag type="text">comment</tag>
+			<tag type="text">datetime</tag>
+			<keyTag>
+				<tagName>id</tagName>
+			</keyTag>
+			<timeTag>
+				<tagName>datetime</tagName>
+				<format>%m/%d/%y %I:%M %p</format>
+			</timeTag>
+		</adDefinition>
+		<format>
+			<regex type="filter">(\r|\t|\n| {2,})</regex>
+		</format>
+	</website>
+</profile>
