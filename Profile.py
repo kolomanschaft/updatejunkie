@@ -104,14 +104,45 @@ class Profile(object):
             return None
         return {"name": self._firstTextChild(pageParamNode).nodeValue, "method": pageParamNode.getAttribute(u"method"), "init": int(pageParamNode.getAttribute(u"init"))} 
 
+    @property
+    def notification_email(self):
+        try:
+            notificationNode = self._childNode(u"notification", self._profile)
+            emailNode = self._childNode(u"email", notificationNode)
+        except ProfileError:
+            return None
+        emailSubject = self._firstTextChild(self._childNode(u"subject", emailNode)).nodeValue
+        bodyHtml = [node.toxml().strip() for node in self._childNode(u"body", emailNode).childNodes]
+        type = emailNode.getAttribute(u"type")
+        email = {u"subject": emailSubject, u"body": u"\n".join(bodyHtml), u"type": type}
+        return email
+
+    @property
+    def notification_desktop(self):
+        try:
+            notificationNode = self._childNode(u"notification", self._profile)
+            desktopNode = self._childNode(u"desktop", notificationNode)
+        except ProfileError:
+            return None
+        title = self._firstTextChild(self._childNode(u"title", desktopNode)).nodeValue
+        body = [node.toxml().strip() for node in self._childNode(u"body", desktopNode).childNodes]
+        try:
+            url = self._firstTextChild(self._childNode(u"url", desktopNode)).nodeValue
+        except ProfileError:
+            url = None
+        return {u"title": title, u"body": u"\n".join(body), u"url": url}
+
 if __name__ == '__main__':
-    profile = get_profile(u"willhaben")
-    print "Profile Name:", profile.name()
-    print "baseUrl", profile.base_url()
-    print "adRegex", profile.ad_regex()
-    print "tags", profile.ad_tags()
-    print "timeTag", profile.time_tag()
-    print "keyTag", profile.key_tag()
-    print "format", profile.format_regexes()
-    print "pageParam", profile.page_param()
+    profile = get_profile(u"DoodleComments")
+    print "Profile Name:", profile.name
+    print "baseUrl", profile.base_url
+    print "adRegex", profile.ad_regex
+    print "tags", profile.ad_tags
+    print "timeTag", profile.time_tag
+    print "keyTag", profile.key_tag
+    print "format", profile.format_regexes
+    print "pageParam", profile.page_param
+    print "Email notification", profile.notification_email
+    print "Desktop notification", profile.notification_desktop
+    
     

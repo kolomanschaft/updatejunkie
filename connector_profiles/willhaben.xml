@@ -26,4 +26,21 @@
 		</format>
 		<pageParam method="GET" init="1">page</pageParam>
 	</website>
+	<notification>
+		<email type="html">
+			<subject>{title} for {price}</subject>
+			<body>
+				I found a new ad ({datetime}):<br/><br/>
+				<b>{title}</b><br/>
+				for € <b>{price}</b><br/><br/>
+				<a href="{url}">{url}</a><br/><br/>
+				bye!
+			</body>
+		</email>
+		<desktop>
+			<title>Found an Ad!</title>
+			<body>{title} for € {price}</body>
+			<url>{url}</url>
+		</desktop>
+	</notification>
 </profile>

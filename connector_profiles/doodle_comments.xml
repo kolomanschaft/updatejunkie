@@ -22,4 +22,18 @@
 			<regex type="filter">(\r|\t|\n| {2,})</regex>
 		</format>
 	</website>
+	<notification>
+		<email type="html">
+			<subject>{name} schrieb um {datetime}</subject>
+			<body>
+				{comment}<br/><br/>
+				<a href="{listingUrl}">{listingUrl}</a>
+			</body>
+		</email>
+		<desktop>
+			<title>{name} wrote:</title>
+			<body>{comment}</body>
+			<url>{listingUrl}</url>
+		</desktop>
+	</notification>
 </profile>

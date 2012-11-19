@@ -90,6 +90,7 @@ class Connector():
             ad.keytag = self._profile.key_tag
             timetag_info = self._profile.time_tag
             ad.timetag = datetime.datetime.strptime(ad[timetag_info["name"]], timetag_info["format"])
+            ad[u"listingUrl"] = self._url
             ads.append(ad)
         return ads
             
