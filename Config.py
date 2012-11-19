@@ -274,14 +274,6 @@ class Config(object):
     def smtp_password(self, pw):
         self._parser.set("General", "smtp.password", pw)
 
-    @property
-    def email_from(self):
-        return self._parser.get("General", "email.from")
-
-    @email_from.setter
-    def email_from(self, sender):
-        self._parser.set("General", "email.from", sender)
-
     def list_observers(self):
         try:
             return self._parser.getlist("Observers", "observers")

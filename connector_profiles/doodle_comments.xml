@@ -24,7 +24,8 @@
 	</website>
 	<notification>
 		<email type="html">
-			<subject>{name} schrieb um {datetime}</subject>
+			<from>Doodle Comment &lt;contact@doodle.com&gt;</from>
+			<subject>{name} wrote at {datetime}</subject>
 			<body>
 				{comment}<br/><br/>
 				<a href="{listingUrl}">{listingUrl}</a>

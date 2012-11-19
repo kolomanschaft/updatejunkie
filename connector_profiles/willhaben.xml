@@ -28,6 +28,7 @@
 	</website>
 	<notification>
 		<email type="html">
+			<from>Willhaben &lt;contact@willhaben.com&gt;</from>
 			<subject>{title} for {price}</subject>
 			<body>
 				I found a new ad ({datetime}):<br/><br/>

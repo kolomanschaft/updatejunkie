@@ -95,7 +95,7 @@ if __name__ == "__main__":
                                             config.smtp_port,
                                             config.smtp_user,
                                             config.smtp_password,
-                                            config.email_from,
+                                            formatting[u"from"],
                                             observer_config.email_to,
                                             formatting[u"type"],
                                             formatting[u"subject"],

@@ -113,8 +113,9 @@ class Profile(object):
             return None
         emailSubject = self._firstTextChild(self._childNode(u"subject", emailNode)).nodeValue
         bodyHtml = [node.toxml().strip() for node in self._childNode(u"body", emailNode).childNodes]
+        emailFrom = self._firstTextChild(self._childNode(u"from", emailNode)).nodeValue
         type = emailNode.getAttribute(u"type")
-        email = {u"subject": emailSubject, u"body": u"\n".join(bodyHtml), u"type": type}
+        email = {u"from": emailFrom, u"subject": emailSubject, u"body": u"\n".join(bodyHtml), u"type": type}
         return email
 
     @property
@@ -133,7 +134,7 @@ class Profile(object):
         return {u"title": title, u"body": u"\n".join(body), u"url": url}
 
 if __name__ == '__main__':
-    profile = get_profile(u"DoodleComments")
+    profile = get_profile(u"Willhaben")
     print "Profile Name:", profile.name
     print "baseUrl", profile.base_url
     print "adRegex", profile.ad_regex
