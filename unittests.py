@@ -188,7 +188,7 @@ class TestConnector(unittest.TestCase):
     
     def setUp(self):
         url = u"http://www.willhaben.at/iad/kaufen-und-verkaufen/handy-organizer-telefon/handy-smartphone/"
-        self.connector = Connector(url, "willhaben")
+        self.connector = Connector(url, "Willhaben")
     
     def tearDown(self):
         del self.connector

@@ -15,9 +15,10 @@ from threading import Thread
 
 class MountainLionNotification(Foundation.NSObject, Notification):
     
-    def user_info(self, title, body):
+    def formatting(self, title, body, url):
         self.title = unicode(title)
         self.body = unicode(body)
+        self.url = url
 
     def notify(self, ad):
         NSUserNotification = objc.lookUpClass('NSUserNotification')
@@ -32,7 +33,7 @@ class MountainLionNotification(Foundation.NSObject, Notification):
         notification.setHasActionButton_(True)
         notification.setOtherButtonTitle_("View")
         try:
-            notification.setUserInfo_({"action":"open_url", "value":ad["url"]})
+            notification.setUserInfo_({"action":"open_url", "value":self.url.format(**ad)})
         except KeyError: pass
         NSUserNotificationCenter.defaultUserNotificationCenter().setDelegate_(self)
         NSUserNotificationCenter.defaultUserNotificationCenter().scheduleNotification_(notification)

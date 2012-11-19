@@ -12,6 +12,7 @@ from Observer import *
 from Logger import *
 from Config import *
 from NotificationServer import *
+from Profile import *
 from threading import Thread
 import md5
 import sys
@@ -45,6 +46,7 @@ if __name__ == "__main__":
     for observer_name in config.list_observers():
         logger.append("Setting up observer " + observer_name)
         observer_config = config.observer_config(observer_name)
+        profile = get_profile(observer_config.profile)
         # Ads that have already been processed are registered in this file
         if observer_config.ads_store:
             save_file = u"files/adstore.{}.db".format(observer_name)
@@ -80,26 +82,28 @@ if __name__ == "__main__":
             import Foundation, objc, AppKit
             from PyObjCTools import AppHelper
             from platform_dependant.MacOS import MountainLionNotification
+            formatting = profile.notification_desktop
             MLNotify = MountainLionNotification.alloc().init()
-            MLNotify.user_info(observer_config.notification_title, observer_config.notification_body)
+            MLNotify.formatting(formatting[u"title"], formatting[u"body"], formatting[u"url"])
             notificationServer.addNotification(MLNotify)
             app = AppKit.NSApplication.sharedApplication()
             gui_event_loop = AppHelper.runEventLoop
         if observer_config.email_active:
             from platform_dependant.Server import EmailNotification
+            formatting = profile.notification_email
             emailNotify = EmailNotification(config.smtp_host,
                                             config.smtp_port,
                                             config.smtp_user,
                                             config.smtp_password,
                                             config.email_from,
                                             observer_config.email_to,
-                                            observer_config.email_mimetype,
-                                            observer_config.notification_title,
-                                            observer_config.notification_body)
+                                            formatting[u"type"],
+                                            formatting[u"subject"],
+                                            formatting[u"body"])
             notificationServer.addNotification(emailNotify)
 
         observer = Observer(url = observer_config.url,
-                            profile = observer_config.profile,
+                            profile = profile,
                             store = store,
                             assessor = assessor,
                             notification = notificationServer,

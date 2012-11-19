@@ -179,30 +179,6 @@ class ObserverConfig(object):
         self._parser.setlist(self._name, "email.to", to)
 
     @property
-    def email_mimetype(self):
-        return self._parser.get(self._name, "email.mimetype")
-
-    @email_mimetype.setter
-    def email_mimetype(self, mimetype):
-        self._parser.setlist(self._name, "email.mimetype", mimetype)
-
-    @property
-    def notification_title(self):
-        return self._parser.get(self._name, "notification.title")
-
-    @notification_title.setter
-    def notification_title(self, title):
-        self._parser.set(self._name, "notification.title", title)
-
-    @property
-    def notification_body(self):
-        return self._parser.get(self._name, "notification.body")
-
-    @notification_body.setter
-    def notification_body(self, body):
-        self._parser.set(self._name, "notification.body", body)
-
-    @property
     def osx_active(self):
         return self._parser.getboolean(self._name, "osx.active")
 
