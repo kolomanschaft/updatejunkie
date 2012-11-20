@@ -63,15 +63,21 @@ class Connector():
         def text_tag(value):
             return HTMLParser.HTMLParser().unescape(value)
         def integer_tag(value):
-            return int(value)
+            try:
+                return int(value)
+            except ValueError:
+                return float("nan")
         def float_tag(value):
-            return float(value.replace(",", "."))
+            try:
+                return float(value.replace(",", "."))
+            except ValueError:
+                return float("nan")
         def url_tag(value):
             if value[0] == u"/":
                 return self._profile.base_url + value[1:]
             else:
                 return value
-            
+
         ad_tuples = re.findall(self._profile.ad_regex, html)
         tags = self._profile.ad_tags
         
