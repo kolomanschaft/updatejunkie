@@ -72,17 +72,17 @@ class AdCriterionKeywordsNot(AdCriterion):
 class AdAssessor:
     
     def __init__(self):
-        self.criterions = []
+        self.criteria = []
     
     def add_criterion(self, criterion):
         if not isinstance(criterion, AdCriterion):
             raise TypeError("Expected type AdCriterion. Got {}".format(type(criterion)))
-        self.criterions.append(criterion)
+        self.criteria.append(criterion)
     
     def add_criteria(self, *args):
         for arg in args:
             self.add_criterion(arg)
     
     def check(self, ad):
-        return all([criterion.check(ad) for criterion in self.criterions])
+        return all([criterion.check(ad) for criterion in self.criteria])
 
