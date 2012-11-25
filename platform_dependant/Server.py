@@ -8,6 +8,7 @@ Copyright (c) 2012. All rights reserved.
 """
 from Notification import *
 import smtplib
+from email.mime.text import MIMEText
 
 class EmailNotification(Notification):
 	"""Sends email notification using python's smtplib module"""
@@ -20,18 +21,25 @@ class EmailNotification(Notification):
 		self.to = to
 		self.subject = subject
 		self.body = body
-		self.headers = smtplib.email.mime.Text.MIMEText("", mimetype, "utf-8")
-		self.headers["From"] = self.sender.encode("utf-8")
-		self.headers["Subject"] = self.subject.encode("utf-8")
+		self.mimetype = mimetype
+	
+	def _get_mime_string(self, to, subject, body):
+		mimetext = MIMEText(body.encode("utf-8"), self.mimetype, "utf-8")
+		mimetext["From"] = self.sender.encode("utf-8")
+		mimetext["Subject"] = subject.encode("utf-8")
+		mimetext["To"] = to.encode("utf-8")
+		return mimetext.as_string().encode("utf-8")
+
 
 	def notify(self, ad):
 		server = smtplib.SMTP(self.host, self.port)
 		server.login(self.user, self.pw)
 		for to in self.to:
 			try:
-				self.headers["To"] = to.encode("utf-8")
-				msg = unicode(self.headers.as_string(), "utf-8") + self.body
-				server.sendmail(self.sender, to, msg.format(**ad).encode("utf-8"))
+				body = self.body.format(**ad)
+				subject = self.subject.format(**ad)
+				msg = self._get_mime_string(to, subject, body)
+				server.sendmail(self.sender, to, msg)
 			except KeyError as expn:
 				raise NotificationError("Profile doesn't support tagname '{}'".format(expn.message))
 
