@@ -13,6 +13,7 @@ from AdStore import Ad
 from Profile import *
 import datetime
 import HTMLParser
+from threading import Lock
 
 class ConnectionError(Exception): pass
 
@@ -48,7 +49,11 @@ class Connector():
             else:
                 data = new_encoded
         
-        f = urllib2.urlopen(self._url, data)
+        try:
+            f = urllib2.urlopen(self._url, data)
+        except urllib2.URLError:
+            raise ConnectionError("Could not connect to {}".format(self._url))
+        
         html = unicode(f.read(), "ISO-8859-1")
         f.close()
         for regex in self._profile.format_regexes:

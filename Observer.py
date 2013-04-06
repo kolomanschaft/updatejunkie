@@ -24,7 +24,7 @@ class Observer(threading.Thread):
         self.logger = logger
         self.daemon = True
         self.name = name
-    
+
     def process_ads(self, ads):
         if len(ads) == 0: return
         hits = map(self.assessor.check, ads)
@@ -51,5 +51,5 @@ class Observer(threading.Thread):
             try:
                 ads = self.connector.ads_after(self.time_mark)
                 self.process_ads(ads)
-            except ConnectionError:
-                self.logger.append(u"No connection to {}".format(self.connector.name))
+            except ConnectionError as ex:
+                self.logger.append(u"Observer {} connection failed with message: {}".format(self.name, ex.message))

@@ -13,7 +13,7 @@ from Logger import *
 from Config import *
 from NotificationServer import *
 from Profile import *
-from threading import Thread
+from threading import Thread, Lock
 import md5
 import sys
 import os
@@ -23,6 +23,10 @@ import datetime
 def pseudo_gui():
     while True:
         time.sleep(1)
+
+def setup_lock(name):
+    lock = Lock()
+    globals()[name] = lock
 
 if __name__ == "__main__":
     
@@ -38,6 +42,9 @@ if __name__ == "__main__":
     
     # Initialize logging
     logger = Logger(path = "files/observer.log")
+    
+    # Initialize some locks
+    setup_lock(u"strptime")
     
     # Setting up the observers
     # ------------------------
