@@ -90,8 +90,6 @@ class ObserverConfig(object):
         self.email_to = ["John Doe <john.doe@example.com>"]
         self.notification_title = "{title}"
         self.notification_body = "{title}"
-        self.osx_active = False
-        self.gtk_active = False
         self.email_active = True
 
     @property
@@ -179,22 +177,6 @@ class ObserverConfig(object):
         self._parser.setlist(self._name, "email.to", to)
 
     @property
-    def osx_active(self):
-        return self._parser.getboolean(self._name, "osx.active")
-
-    @osx_active.setter
-    def osx_active(self, active):
-        self._parser.setboolean(self._name, "osx.active", active)
-
-    @property
-    def gtk_active(self):
-        return self._parser.getboolean(self._name, "gtk.active")
-
-    @gtk_active.setter
-    def gtk_active(self, active):
-        self._parser.setboolean(self._name, "gtk.active", active)
-
-    @property
     def email_active(self):
         return self._parser.getboolean(self._name, "email.active")
 
@@ -228,19 +210,6 @@ class Config(object):
             if not self._parser.has_section(observer):
                 raise ConfigError("Observer section {} not found!".format(observer))
             self.add_observer(observer)
-        self._sanity_check()
-
-    def _sanity_check(self):
-        osx = False
-        gtk = False
-        for observer in self.list_observers():
-            oconfig = self.observer_config(observer)
-            if oconfig.osx_active:
-                osx = True
-            if oconfig.gtk_active:
-                gtk = True
-        if osx and gtk:
-            raise ConfigError("OSX notifications and GTK notifications cannot be active at the same time!")
 
     @property
     def smtp_host(self):

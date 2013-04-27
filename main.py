@@ -49,7 +49,6 @@ if __name__ == "__main__":
     # Setting up the observers
     # ------------------------
     observers = []
-    gui_event_loop = None
     for observer_name in config.list_observers():
         logger.append("Setting up observer " + observer_name)
         observer_config = config.observer_config(observer_name)
@@ -78,23 +77,6 @@ if __name__ == "__main__":
     
         # Notification server setup
         notificationServer = NotificationServer()
-        if observer_config.gtk_active:
-            from platform_dependant.Linux import GTKNotification
-            import gtk, gobject
-            GTKNotify = GTKNotification(icon = "./logo.png")
-            notificationServer.addNotification(GTKNotify)
-            gobject.threads_init()
-            gui_event_loop = gtk.main
-        if observer_config.osx_active:
-            import Foundation, objc, AppKit
-            from PyObjCTools import AppHelper
-            from platform_dependant.MacOS import MountainLionNotification
-            formatting = profile.notification_desktop
-            MLNotify = MountainLionNotification.alloc().init()
-            MLNotify.formatting(formatting[u"title"], formatting[u"body"], formatting[u"url"])
-            notificationServer.addNotification(MLNotify)
-            app = AppKit.NSApplication.sharedApplication()
-            gui_event_loop = AppHelper.runEventLoop
         if observer_config.email_active:
             from platform_dependant.Server import EmailNotification
             formatting = profile.notification_email
@@ -121,7 +103,4 @@ if __name__ == "__main__":
     
     # all done! let's start spinning the wheel
     for observer in observers: observer.start()
-    if gui_event_loop:
-        gui_event_loop()
-    else:
-        pseudo_gui()
+    pseudo_gui()
