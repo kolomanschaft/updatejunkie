@@ -1,6 +1,11 @@
 # Willhaben
 
-Willhaben is a platform independent observer for the advertising platform [willhaben.at][]. If new ads match certain pre-defined criteria (e.g. keywords or price) Willhaben instantly triggers a user notification. Willhaben offers different notification options depending on the platform:
+Willhaben is a platform independent observer for content-based websites. It started out as an observer for the advertising-platform [willhaben.at]. But by adding *profiles* one can observe all kinds of content-based websites. The following list shows an overview of the profiles that are currently supported:
+
+* Willhaben: willhaben.at is an advertising service in Austria
+* DoodleComments: Observes the comments section of Doodle schedule pages
+
+There are different kinds of notifications available in Willhaben. Although the focus is on email notification
 
 * GTK notifications
 * OSX notification center (>= 10.8)

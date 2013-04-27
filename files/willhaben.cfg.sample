@@ -20,9 +20,6 @@ smtp.user = user553
 # Password for authentication with the SMTP server
 smtp.password = secret678
 
-# From-address in the email notification
-email.from = Willhaben<contact@willhaben.at>
-
 
 [Observers]
 
@@ -34,40 +31,40 @@ observers = ExampleObserver1, ExampleObserver2
 [ExampleObserver1]
 
 # Willhaben needs a profile to know how to obtain ads from a certain website.
-# These profiles are stored in the 'connector_profiles' folder. Usually the
-# profile name is the same as the filename of the profile.
-profile = willhaben
+# These profiles are stored in the 'connector_profiles' folder.
+profile = Willhaben
 
-# Browse the Willhaben website and narrow down the ad listing until you have the
-# listing you want to observe. Then copy the URL and paste it here.
+# Got to the website and browse until you get the listing you want to observe.
+# Then copy the URL and paste it here.
 url = http://www.example1.com/
 
-# If this option is 'no' the observer will forget all seen ads after closing
+# If this option is 'no' the observer will forget all seen ads after close.
 ads.store = yes
 
-# Time (seconds) between two polls
+# Time interval (seconds) between two polls
 update.interval = 60
 
-# Title criteria
-# --------------
+# Trigger criteria
+# ----------------
 
-# All of these keywords must appear in an ad's title in order to trigger a 
-# notification
-keywords.all = word1, word2
+# This section is completely optional. Whenever Willhaben finds an ad it will
+# extract tags from it (e.g. {title}, {price}, etc). These tags are specified
+# in the used profile. Based on the tags' content Willhaben allows you to set
+# up certain criteria new ads have to satisfy in order to trigger a
+# notification. There is an example for each available type of criteria.
 
-# At least one of these keywords must appear in an ad's title in order to to 
-# trigger a notification
-keywords.any = word3, word4, word5
+# In this example the tag named 'title' must contain all the words from the list
+keywords.title.all = word1, word2
 
-# None of these keywords are allowed to appear in an ad's title in order to 
-# trigger a notification
-keywords.not = bad-word1, bad-word2
+# In this example the tag named 'description' must contain any of the words
+# from the list
+keywords.description.any = word3, word4, word5
 
-# Price criteria
-# --------------
+# None of these keywords are allowed to appear in the tag named 'title'
+keywords.title.not = bad-word1, bad-word2
 
-# The ad's price must be less or equal in order to trigger a notification. Set 
-# '0' for unlimited
+# The value of the tag 'price' must be equal or less than 520 (price needs to
+# be an integer or a float type)
 price.limit = 520
 
 # Notifications
@@ -76,84 +73,70 @@ price.limit = 520
 # Utilize the notification center in OSX >= 10.8
 osx.active = no
 
-# GTK notifications. Requires the python modules PyNotify2 and PyGTK!
+# GTK notifications. Requires the python modules PyNotify2 and PyGTK.
+# !DEPRECATED! (and most probably broken)
 gtk.active = no
 
-# Email notification requires working SMTP settings in the 'Email' section below.
+# Email notification requires a working SMTP configuration in the [General]
+# section.
 email.active = yes
 
 # Recipient of the email notification
 email.to = John Doe<john.doe@example1.com>
 
-# The title used in notifications. For example in emails the title is used for 
-# the email subject. The keys in the curly brackets are replaced with information
-# retrieved from the particular ad. 
-notification.title = {title} for {price}
-
-# The body of the notification. The keys in the curly brackets are replaced with 
-# information retrieved from the particular ad. 
-notification.body = I found a new ad! The title is "{title}" and the price is {price}. {url}
-
 
 [ExampleObserver2]
 
 # Willhaben needs a profile to know how to obtain ads from a certain website.
-# These profiles are stored in the 'connector_profiles' folder. Usually the
-# profile name is the same as the filename of the profile.
-profile = willhaben
+# These profiles are stored in the 'connector_profiles' folder.
+profile = DoodleComments
 
-# Copy the URL of the willhaben.at listing you want to observe
+# Got to the website and browse until you get the listing you want to observe.
+# Then copy the URL and paste it here.
 url = http://www.example2.com/
 
-# If this option is 'no' the observer will forget all seen ads after closing
-ads.store = no
+# If this option is 'no' the observer will forget all seen ads after close.
+ads.store = yes
 
-# Time (seconds) between two polls
-update.interval = 120
+# Time interval (seconds) between two polls
+update.interval = 180
 
-# Title criteria
-# --------------
+# Trigger criteria
+# ----------------
 
-# All of these keywords must appear in an ad's title in order to trigger a 
-# notification
-keywords.all = word6, word7
+# This section is completely optional. Whenever Willhaben finds an ad it will
+# extract tags from it (e.g. {title}, {price}, etc). These tags are specified
+# in the used profile. Based on the tags' content Willhaben allows you to set
+# up certain criteria new ads have to satisfy in order to trigger a
+# notification. There is an example for each available type of criteria.
 
-# At least one of these keywords must appear in an ad's title in order to to 
-# trigger a notification
-keywords.any = word8, word9, word10
+# In this example the tag named 'title' must contain all the words from the list
+keywords.title.all = word1, word2
 
-# None of these keywords are allowed to appear in an ad's title in order to 
-# trigger a notification
-keywords.not = bad-word3, bad-word4
+# In this example the tag named 'description' must contain any of the words
+# from the list
+keywords.description.any = word3, word4, word5
 
+# None of these keywords are allowed to appear in the tag named 'title'
+keywords.title.not = bad-word1, bad-word2
 
-# Price criteria
-# --------------
-
-# The ad's price must be less or equal in order to trigger a notification. Set 
-# '0' for unlimited
-price.limit = 0
+# The value of the tag 'price' must be equal or less than 520 (price needs to
+# be an integer or a float type)
+price.limit = 520
 
 # Notifications
 # -------------
 
 # Utilize the notification center in OSX >= 10.8
-osx.active = yes
+osx.active = no
 
-# GTK notifications. Requires the python modules PyNotify2 and PyGTK!
+# GTK notifications. Requires the python modules PyNotify2 and PyGTK.
+# !DEPRECATED! (and most probably broken)
 gtk.active = no
 
-# Email notification requires working SMTP settings in the 'Email' section below.
-email.active = no
+# Email notification requires a working SMTP configuration in the [General]
+# section.
+email.active = yes
 
 # Recipient of the email notification
-email.to = Alice Doe<alice.doe@example2.com>
-
-# The title used in notifications. For example in emails the title is used for
-# the email subject. The keys in the curly brackets are replaced with information
-# retrieved from the particular ad.
-notification.title = {title} for {price}
-
-# The body of the notification. The keys in the curly brackets are replaced with
-# information retrieved from the particular ad.
-notification.body = I found a new ad! The title is "{title}" and the price is {price}. {url}
+email.to = John Doe<john.doe@example1.com>
