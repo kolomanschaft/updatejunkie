@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # encoding: utf-8
 """
 main.py
@@ -44,7 +44,7 @@ if __name__ == "__main__":
     logger = Logger(path = "files/observer.log")
     
     # Initialize some locks
-    setup_lock(u"strptime")
+    setup_lock("strptime")
     
     # Setting up the observers
     # ------------------------
@@ -55,7 +55,7 @@ if __name__ == "__main__":
         profile = get_profile(observer_config.profile)
         # Ads that have already been processed are registered in this file
         if observer_config.ads_store:
-            save_file = u"files/adstore.{}.db".format(observer_name)
+            save_file = "files/adstore.{}.db".format(observer_name)
         else: 
             save_file = None    
         store = AdStore(path = save_file)
@@ -84,11 +84,11 @@ if __name__ == "__main__":
                                             config.smtp_port,
                                             config.smtp_user,
                                             config.smtp_password,
-                                            formatting[u"from"],
+                                            formatting["from"],
                                             observer_config.email_to,
-                                            formatting[u"type"],
-                                            formatting[u"subject"],
-                                            formatting[u"body"])
+                                            formatting["type"],
+                                            formatting["subject"],
+                                            formatting["body"])
             notificationServer.addNotification(emailNotify)
 
         observer = Observer(url = observer_config.url,

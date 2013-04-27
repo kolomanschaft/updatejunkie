@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 unittests.py
@@ -23,7 +23,7 @@ class TestAdStore(unittest.TestCase):
     
     def setUp(self):
         self.store = AdStore(self.path)
-        self.some_ads = [Ad({"id":nr, "title":u"Ad number {}".format(nr)}) for nr in range(10)]
+        self.some_ads = [Ad({"id":nr, "title":"Ad number {}".format(nr)}) for nr in range(10)]
         for ad in self.some_ads:
             ad.keytag = "id"
         
@@ -53,7 +53,7 @@ class TestAdStore(unittest.TestCase):
         for ad in self.some_ads:
             ad.timetag = datetime.datetime.now() + random.randint(0,20) * delta
         self.store.add_ads(self.some_ads)
-        for i in xrange(1,self.store.length()):
+        for i in range(1,self.store.length()):
             self.assertGreaterEqual(self.store[i].timetag, self.store[i-1].timetag)            
 
 class TestAdAssessor(unittest.TestCase):
@@ -64,7 +64,7 @@ class TestAdAssessor(unittest.TestCase):
     def tearDown(self):pass
     
     def testAdCriterionPriceLimit(self):
-        priceCriterion = AdCriterionLimit(u"price", 50)
+        priceCriterion = AdCriterionLimit("price", 50)
         self.assessor.add_criterion(priceCriterion)
         ad = Ad({"price": 30})
         self.assertTrue(self.assessor.check(ad))
@@ -72,35 +72,35 @@ class TestAdAssessor(unittest.TestCase):
         self.assertFalse(self.assessor.check(ad))
 
     def testAdCriterionTitleKeywordsAll(self):
-        kwdCriterion = AdCriterionKeywordsAll(u"title", [u"schöner", u"tag"])
+        kwdCriterion = AdCriterionKeywordsAll("title", ["schöner", "tag"])
         self.assessor.add_criterion(kwdCriterion)
-        ad = Ad({"title": u"Das ist ein schöner Tag"})
+        ad = Ad({"title": "Das ist ein schöner Tag"})
         self.assertTrue(self.assessor.check(ad))
-        ad = Ad({"title": u"Das ist ein schöner Wagen"})
+        ad = Ad({"title": "Das ist ein schöner Wagen"})
         self.assertFalse(self.assessor.check(ad))
 
     def testAdCriterionTitleKeywordsAny(self):
-        kwdCriterion = AdCriterionKeywordsAny(u"title", [u"schöner", u"tag"])
+        kwdCriterion = AdCriterionKeywordsAny("title", ["schöner", "tag"])
         self.assessor.add_criterion(kwdCriterion)
-        ad = Ad({"title": u"Das ist ein schöner tag"})
+        ad = Ad({"title": "Das ist ein schöner tag"})
         self.assertTrue(self.assessor.check(ad))
-        ad = Ad({"title": u"Das ist ein schöner Wagen"})
+        ad = Ad({"title": "Das ist ein schöner Wagen"})
         self.assertTrue (self.assessor.check(ad))
-        ad = Ad({"title": u"Das ist ein schneller Wagen"})
+        ad = Ad({"title": "Das ist ein schneller Wagen"})
         self.assertFalse(self.assessor.check(ad))
         
     def testAdCriterionTitleKeywordsNot(self):
-        kwdCriterion = AdCriterionKeywordsNot(u"title", [u"schöner", u"tag"])
+        kwdCriterion = AdCriterionKeywordsNot("title", ["schöner", "tag"])
         self.assessor.add_criterion(kwdCriterion)
-        ad = Ad({"title": u"Das ist ein schöner tag"})
+        ad = Ad({"title": "Das ist ein schöner tag"})
         self.assertFalse(self.assessor.check(ad))
-        ad = Ad({"title": u"Das ist ein schöner Wagen"})
+        ad = Ad({"title": "Das ist ein schöner Wagen"})
         self.assertFalse (self.assessor.check(ad))
-        ad = Ad({"title": u"Das ist ein schneller Wagen"})
+        ad = Ad({"title": "Das ist ein schneller Wagen"})
         self.assertTrue(self.assessor.check(ad))
 
     def testAdAssessorReturnsTrueWhenEmpty(self):
-        ad = Ad(title = u"Expensive Blablabla", price = 1e8)
+        ad = Ad(title = "Expensive Blablabla", price = 1e8)
         self.assertTrue (self.assessor.check(ad))
 
 class TestLogger(unittest.TestCase):
@@ -119,18 +119,18 @@ class TestLogger(unittest.TestCase):
         self.logger.append(s1)
         with open(self.path, "r") as f:
             l = f.readline()
-            self.assertRegexpMatches(l, s1)
+            self.assertRegex(l, s1)
         self.logger.append(s2)
         with open(self.path, "r") as f:
             l = f.readline()
-            self.assertRegexpMatches(l, s1)
+            self.assertRegex(l, s1)
             l = f.readline()
             self.assertNotRegexpMatches(l, s1)
-            self.assertRegexpMatches(l, s2)
+            self.assertRegex(l, s2)
 
 class TestConfig(unittest.TestCase):
     
-    path = u"./test.cfg"
+    path = "./test.cfg"
     
     def setUp(self):
         self.config = Config(self.path)
@@ -140,16 +140,16 @@ class TestConfig(unittest.TestCase):
             os.remove(self.path)
     
     def testSafeLoadOptions(self):
-        testsmtp = u"smtp.example.com"
+        testsmtp = "smtp.example.com"
         self.config.smtp_host = testsmtp
         self.config.save()
         c = Config(self.path)
         self.assertTrue(testsmtp == c.smtp_host)
     
     def testSaveLoadCriteria(self):
-        kwds = [u"word-1", u"word-2", u"word-3"]
-        self.config.add_observer(u"theObserver")
-        self.config.theObserver.keywords_all = [{"wildcard": u"title", "value":kwds}]
+        kwds = ["word-1", "word-2", "word-3"]
+        self.config.add_observer("theObserver")
+        self.config.theObserver.keywords_all = [{"wildcard": "title", "value":kwds}]
         self.config.save()
         c = Config(self.path)
         self.assertListEqual(kwds, c.theObserver.keywords_all[0]["value"])
@@ -180,7 +180,7 @@ class TestNotificationServer(unittest.TestCase):
 class TestConnector(unittest.TestCase):
     
     def setUp(self):
-        url = u"http://www.willhaben.at/iad/kaufen-und-verkaufen/handy-organizer-telefon/handy-smartphone/"
+        url = "http://www.willhaben.at/iad/kaufen-und-verkaufen/handy-organizer-telefon/handy-smartphone/"
         self.connector = Connector(url, "Willhaben")
     
     def tearDown(self):

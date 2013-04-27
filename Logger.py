@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # encoding: utf-8
 """
 Logger.py
@@ -22,4 +22,4 @@ class Logger:
 				f.write(s + "\n")
 
 		if not self.silent:
-			print s
+			print(s)

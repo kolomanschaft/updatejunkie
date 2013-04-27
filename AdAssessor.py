@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 AdAssessor.py
@@ -33,7 +33,7 @@ class AdCriterionKeywordsAll(AdCriterion):
         super(AdCriterionKeywordsAll, self).__init__(tagname)
         if not isinstance(keywords, list):
             raise TypeError("Keywords must be a list!")
-        self._keywords = [unicode(keyword) for keyword in keywords]
+        self._keywords = [str(keyword) for keyword in keywords]
     
     def check(self, ad):
         for kwd in self._keywords:
@@ -47,7 +47,7 @@ class AdCriterionKeywordsAny(AdCriterion):
         super(AdCriterionKeywordsAny, self).__init__(tagname)
         if not isinstance(keywords, list):
             raise TypeError("Keywords must be a list!")
-        self._keywords = [unicode(keyword) for keyword in keywords]
+        self._keywords = [str(keyword) for keyword in keywords]
 
     def check(self, ad):
         for kwd in self._keywords:
@@ -61,7 +61,7 @@ class AdCriterionKeywordsNot(AdCriterion):
         super(AdCriterionKeywordsNot, self).__init__(tagname)
         if not isinstance(keywords, list):
             TypeError("Keywords must be a list!")
-        self._keywords = [unicode(keyword) for keyword in keywords]
+        self._keywords = [str(keyword) for keyword in keywords]
 
     def check(self, ad):
         for kwd in self._keywords:

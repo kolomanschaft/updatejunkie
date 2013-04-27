@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 WillhabenObserver.py
@@ -14,7 +14,7 @@ import threading
 
 class Observer(threading.Thread):
     
-    def __init__(self, url, profile, store, assessor, notification, logger = Logger(), update_interval = 180, name = u"Unnamed Observer"):
+    def __init__(self, url, profile, store, assessor, notification, logger = Logger(), update_interval = 180, name = "Unnamed Observer"):
         super(Observer, self).__init__()
         self.interval = update_interval
         self.connector = Connector(url, profile)
@@ -32,24 +32,24 @@ class Observer(threading.Thread):
         new_ads = self.store.add_ads(hit_ads)
         for ad in new_ads:
             try:
-                self.logger.append(u"Observer {} Found Ad: {}".format(self.name, ad["title"]))
+                self.logger.append("Observer {} Found Ad: {}".format(self.name, ad["title"]))
             except KeyError:
-                self.logger.append(u"Observer {} Found Ad: {}".format(self.name, ad.key))
+                self.logger.append("Observer {} Found Ad: {}".format(self.name, ad.key))
             if self.notification:
                 self.notification.notifyAll(ad)
         self.time_mark = sorted(ads, key = lambda ad: ad.timetag)[-1].timetag
 
     def run(self):
         self.time_mark = datetime.datetime.now() - datetime.timedelta(days = 1)
-        self.logger.append(u"Observer {} polling ads back to {}".format(self.name, self.time_mark))
+        self.logger.append("Observer {} polling ads back to {}".format(self.name, self.time_mark))
         ads = self.connector.ads_after(self.time_mark)
         self.process_ads(ads)
-        self.logger.append(u"Observer {} initial poll done".format(self.name))
+        self.logger.append("Observer {} initial poll done".format(self.name))
         while True:
             time.sleep(self.interval)
-            self.logger.append(u"Observer {} polling for new ads".format(self.name))
+            self.logger.append("Observer {} polling for new ads".format(self.name))
             try:
                 ads = self.connector.ads_after(self.time_mark)
                 self.process_ads(ads)
             except ConnectionError as ex:
-                self.logger.append(u"Observer {} connection failed with message: {}".format(self.name, ex.message))
+                self.logger.append("Observer {} connection failed with message: {}".format(self.name, ex.message))

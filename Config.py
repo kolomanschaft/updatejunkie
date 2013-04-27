@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Config.py
@@ -6,14 +6,14 @@ Config.py
 Created by Martin Hammerschmied on 2012-09-09.
 Copyright (c) 2012. All rights reserved.
 """
-import ConfigParser
+import configparser
 import os
 import re
 
 class ConfigError(Exception): pass
 
 
-class WillhabenConfigParser(ConfigParser.SafeConfigParser, object):
+class WillhabenConfigParser(configparser.ConfigParser, object):
     
     def _probe_section(self, section):
         if not self.has_section(section):
@@ -25,16 +25,16 @@ class WillhabenConfigParser(ConfigParser.SafeConfigParser, object):
     
     def get(self, section, option):
         s = super(WillhabenConfigParser, self).get(section, option)
-        if type(s) == unicode:
+        if type(s) == str:
             return s
-        return unicode(s, "utf-8")
+        return str(s, "utf-8")
     
     def setint(self, section, option, anint):
         if not type(anint) is int:
             raise TypeError("Section {} option {} must be an integer number".format(section, option))
         self.set(section, option, str(anint))
     
-    def getlist(self, section, option, rtype = unicode):
+    def getlist(self, section, option, rtype = str):
         v = [rtype(s.strip()) for s in self.get(section, option).split(",")]
         return v
     
@@ -51,7 +51,7 @@ class WillhabenConfigParser(ConfigParser.SafeConfigParser, object):
 
     def options_fitting(self, section, pattern):
         items = [item[0] for item in self.items(section)]
-        fitting = filter(lambda item: re.match(pattern, item), items)
+        fitting = [item for item in items if re.match(pattern, item)]
         return fitting
 
     def wildcard_options(self, section, pattern, getter = None):
@@ -246,7 +246,7 @@ class Config(object):
     def list_observers(self):
         try:
             return self._parser.getlist("Observers", "observers")
-        except ConfigParser.NoSectionError:
+        except configparser.NoSectionError:
             return []
     
     def observer_config(self, name):
@@ -262,7 +262,7 @@ if __name__ == '__main__':
     
     path1 = "./files/willhaben.cfg"
     c = Config(path1)
-    oc = c.observer_config(u"Galaxy")
-    print oc.limits
-    print oc.keywords_all
-    print oc.keywords_any
+    oc = c.observer_config("Galaxy")
+    print(oc.limits)
+    print(oc.keywords_all)
+    print(oc.keywords_any)

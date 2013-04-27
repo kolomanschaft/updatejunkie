@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 AdStore.py
@@ -64,7 +64,7 @@ class AdStore(object):
     def save(self):
         if not self.path: return
         try:
-            with open(self.path, "w") as f:
+            with open(self.path, "wb") as f:
                 pickler = pickle.Pickler(f)
                 pickler.dump(self.ads)
         except: raise
