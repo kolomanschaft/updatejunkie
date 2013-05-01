@@ -15,6 +15,7 @@ from AdAssessor import *
 from Logger import *
 from Config import *
 from NotificationServer import *
+from platform_dependant.Notification import *
 from Connector import *
 
 class TestAdStore(unittest.TestCase):
@@ -198,5 +199,28 @@ class TestConnector(unittest.TestCase):
         for ad in ads:
             self.assertTrue(ad.timetag > datetime.datetime.now()-timedelta)
 
+class TestEmailNotification(unittest.TestCase):
+    
+    def setUp(self):
+        with open("test.html", "r", encoding="UTF-8") as htmlfile:
+            html = htmlfile.read()
+        connector = Connector("http://example.com/", "Willhaben")
+        self.ads = connector.__get_adlist_from_html__(html)
+
+    def testMIMEStringGeneration(self):
+        sender = "Gustl Hemmer <gustl@example.com>"
+        to = "Moatl Hemmer <moatl@example.com>"
+        mimetype = "plain"
+        subject = "$Rückenschmerzen sind öfters schlächt$"
+        body = "{datetime}{title}€{price}{url}"
+        notification = EmailNotification(host = None, port = 25, user = None, 
+                          pw = None, sender = sender, to = to, 
+                          mimetype = mimetype, subject = subject, body = body)
+        for ad in self.ads:
+            notification._get_mail(ad, to)
+
 if __name__ == "__main__":
-    unittest.main()
+    #unittest.main()
+    test = TestEmailNotification()
+    test.setUp()
+    test.testMIMEStringGeneration()

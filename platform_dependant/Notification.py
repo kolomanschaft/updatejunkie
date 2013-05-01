@@ -8,6 +8,7 @@ Copyright (c) 2012. All rights reserved.
 """
 import smtplib
 from email.mime.text import MIMEText
+from email.header import Header
 
 class NotificationError(Exception):pass
 
@@ -28,22 +29,26 @@ class EmailNotification(Notification):
 		self.mimetype = mimetype
 	
 	def _get_mime_string(self, to, subject, body):
-		mimetext = MIMEText(body.encode("utf-8"), self.mimetype, "utf-8")
-		mimetext["From"] = self.sender.encode("utf-8")
-		mimetext["Subject"] = subject.encode("utf-8")
-		mimetext["To"] = to.encode("utf-8")
-		return mimetext.as_string().encode("utf-8")
+		mimetext = MIMEText(body, self.mimetype, _charset = "utf-8")
+		mimetext["From"] = self.sender
+		mimetext["Subject"] = Header(subject, "utf-8")
+		mimetext["To"] = Header(to, "utf-8")
+		return mimetext.as_string()
+	
+	def _get_mail(self, ad, to):
+		try:
+			body = self.body.format(**ad)
+			subject = self.subject.format(**ad)
+			msg = self._get_mime_string(to, subject, body)
+		except KeyError as expn:
+			raise NotificationError("Profile doesn't support tagname '{}'".format(expn.message))
+		return msg
 
 
 	def notify(self, ad):
 		server = smtplib.SMTP(self.host, self.port)
 		server.login(self.user, self.pw)
 		for to in self.to:
-			try:
-				body = self.body.format(**ad)
-				subject = self.subject.format(**ad)
-				msg = self._get_mime_string(to, subject, body)
-				server.sendmail(self.sender, to, msg)
-			except KeyError as expn:
-				raise NotificationError("Profile doesn't support tagname '{}'".format(expn.message))
+			msg = self._get_mail(ad, to)
+			server.sendmail(self.sender, to, msg)
 

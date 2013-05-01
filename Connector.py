@@ -141,7 +141,7 @@ class Connector():
 
 if __name__ == "__main__":
     url = "http://www.willhaben.at/iad/kaufen-und-verkaufen/moebel-wohnen-buero/regale-schraenke-vitrinen-kommoden/"
-    c = Connector(url, "willhaben")
+    c = Connector(url, "Willhaben")
     #html = c.__get_page__(1)
     #print c.__get_adlist_from_html__(html)
     #print [ad.key for ad in c.__get_adlist_from_html__(html)]
