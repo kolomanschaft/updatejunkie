@@ -14,7 +14,6 @@ from Config import *
 from NotificationServer import *
 from Profile import *
 from threading import Thread, Lock
-import md5
 import sys
 import os
 import time
@@ -78,7 +77,7 @@ if __name__ == "__main__":
         # Notification server setup
         notificationServer = NotificationServer()
         if observer_config.email_active:
-            from platform_dependant.Server import EmailNotification
+            from platform_dependant.Notification import EmailNotification
             formatting = profile.notification_email
             emailNotify = EmailNotification(config.smtp_host,
                                             config.smtp_port,
