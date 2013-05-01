@@ -125,7 +125,7 @@ class TestLogger(unittest.TestCase):
             l = f.readline()
             self.assertRegex(l, s1)
             l = f.readline()
-            self.assertNotRegexpMatches(l, s1)
+            self.assertNotRegex(l, s1)
             self.assertRegex(l, s2)
 
 class TestConfig(unittest.TestCase):

@@ -262,7 +262,7 @@ if __name__ == '__main__':
     
     path1 = "./files/willhaben.cfg"
     c = Config(path1)
-    oc = c.observer_config("Galaxy")
+    oc = c.observer_config("Fritzbox")
     print(oc.limits)
     print(oc.keywords_all)
     print(oc.keywords_any)

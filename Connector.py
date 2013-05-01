@@ -12,7 +12,7 @@ import re
 from AdStore import Ad
 from Profile import *
 import datetime
-import html.parser
+import html.parser as htmlparser
 from threading import Lock
 
 class ConnectionError(Exception): pass
@@ -66,7 +66,7 @@ class Connector():
 
     def __get_adlist_from_html__(self, html):
         def text_tag(value):
-            return html.parser.HTMLParser().unescape(value)
+            return htmlparser.HTMLParser().unescape(value)
         def integer_tag(value):
             try:
                 return int(value)

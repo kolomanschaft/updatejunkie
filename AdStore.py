@@ -75,7 +75,7 @@ class AdStore(object):
             self.ads = []
             return
         try:
-            with open(self.path, "r") as f:
+            with open(self.path, "rb") as f:
                 unpickler = pickle.Unpickler(f)
                 self.ads = unpickler.load()
         except EOFError: pass
