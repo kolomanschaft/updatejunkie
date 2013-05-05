@@ -28,7 +28,10 @@ def setup_lock(name):
     globals()[name] = lock
 
 if __name__ == "__main__":
-    
+ 
+    dtime = "01.05.2013 23:27"
+    format = "%d.%m.%Y %H:%M"
+    datetime.datetime.strptime(dtime, format)
     # Create the 'files/' directory if it doesn't exist yet
     if not os.path.exists("./files/"): os.mkdir("files")
     
