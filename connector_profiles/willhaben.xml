@@ -4,11 +4,31 @@
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://marvelous.at/2013/WillhabenProfile profile.xsd">
 
+	<!-- The name of the profile as it is referenced in the Willhaben config -->
 	<Name>Willhaben</Name>
+	
+	<!-- This element contains information about how to access the website -->
 	<Website>
+	
+		<!-- Used in various places to construct absolut URLs -->
 		<BaseUrl>http://www.willhaben.at/</BaseUrl>
+		
+		<!-- All about how to find ads on the webpage -->
 		<AdDefinition>
+		
+			<!-- Willhaben matches this giant regular expression in the HTML 
+			code it gets from the website. All relevant information that should 
+			be extracted from a single ad should be encapsulated in regex 
+			groups (...). These groups are later used to extract the ad tags 
+			-->
 			<Regex>(even|odd) clearfix.*?id=\&quot;([0-9]+).*?&lt;a href=\&quot;([^\&quot;]+).*?&gt;([^&lt;]+).*?class=\&quot;price.*?([0-9]+,[0-9]{2}|verkauft).*?class=\&quot;description.*?&gt;(.+?)&lt;a.*?class=\&quot;date-time.*?&gt;([^&lt;]+)</Regex>
+			
+			<!-- What follows is a list of ad tags. Each tag represents a group 
+			from the regular expression in the same order of appearance. It is 
+			important to specify the correct data type. Willhaben can later use 
+			this information for notification trigger conditions specified in 
+			the configuration.
+			-->
 			<AdTag type="text">dummy</AdTag>
 			<AdTag type="integer">id</AdTag>
 			<AdTag type="url">url</AdTag>
@@ -16,27 +36,65 @@ xsi:schemaLocation="http://marvelous.at/2013/WillhabenProfile profile.xsd">
 			<AdTag type="float">price</AdTag>
 			<AdTag type="text">description</AdTag>
 			<AdTag type="text">datetime</AdTag>
+
+			<!-- This should be the name of one of the ad tags. It is used to 
+			identify the ad so it only triggers a notification once.
+			-->
 			<KeyTag>
 				<TagName>id</TagName>
 			</KeyTag>
+
+			<!-- One of the ad tags should contain information about the 
+			post-time of the ad. You should also specify the format of the 
+			time-tag. The format string must comply with Python's strptime() 
+			function from the datetime package: 
+			http://docs.python.org/2/library/datetime.html#strftime-strptime-behavior
+			-->
 			<TimeTag>
 				<TagName>datetime</TagName>
 				<DateTimeFormat>%d.%m.%Y %H:%M</DateTimeFormat>
 			</TimeTag>
 		</AdDefinition>
+
+		<!-- You might want to pre-process the raw HTML code Willhaben gets 
+		back from the webpage. It can make the construction of the ad regex 
+		easier. The only pre-processing types that are available at the moment 
+		are filters. Willhaben will find matches of the format regex and sort 
+		them out.
+		-->
 		<HtmlFormat>
 			<FormatRegex type="filter">(\r|\t|\n| {2,})</FormatRegex>
 		</HtmlFormat>
+		
+		<!-- Most article-based websites have a paging mechanism as the list of 
+		articles grows bigger. Usually the current page is specified in the URL 
+		as GET parameter. If you specify this paging parameter here, Willhaben 
+		will support your paged website out of the box.
+		-->
 		<PagingParameter>
 			<Name>page</Name>
 			<Method>GET</Method>
 			<InitialValue>1</InitialValue>
 		</PagingParameter>
+		
 	</Website>
+	
+	<!-- This element contains information about how to notify you whenever 
+	Willhaben finds a new ad that matches the specified criteria.
+	-->
 	<Notifications>
+	
+		<!-- All about sending notification emails. Everything in here should 
+		be pretty straight forward.
+		-->
 		<Email>
 			<ContentType>text/html</ContentType>
 			<From>Willhaben &lt;contact@willhaben.com&gt;</From>
+			
+			<!-- You can embed any ad tag (that you specified in the 
+			AdDefinition element) in the subject text and/or the body. Just use 
+			the format {<tagname>}.
+			-->
 			<Subject>{title} for {price}</Subject>
 			<Body>
 				I found a new ad ({datetime}):<br/><br/>
