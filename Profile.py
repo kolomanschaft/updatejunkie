@@ -1,149 +1,1950 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Config.py
 
-Created by Martin Hammerschmied on 2012-11-06.
-Copyright (c) 2012. All rights reserved.
-"""
+#
+# Generated Sun Oct 20 15:28:11 2013 by generateDS.py version 2.11a.
+#
 
-from xml.dom.minidom import parse
+import sys
+import getopt
+import re as re_
+import base64
+import datetime as datetime_
 import os
-
-class ProfileError(Exception):pass
 
 def get_profile(name):
     folder = "connector_profiles/"
     filenames = os.listdir(folder)
     for filename in filenames:
         if filename[-3:] == "xml":
-            p = Profile(folder+filename)
-            if p.name == name:
+            p = parse(folder+filename, silence = True)
+            if p.Name == name:
                 return p
-    raise ProfileError("No connector profile with the name of {} found".format(name))
+    raise Exception("No connector profile with the name of {} found".format(name))
 
-class Profile(object):
-    
-    def __init__(self, path):
-        if not os.path.exists(path):
-            raise ProfileError("File {} does not exist!".format(path))
-        dom = parse(path)
-        self._profile = self._childNode("profile", dom)
-        self._website = self._childNode("website", self._profile)
-    
-    def _childNodes(self, tag, node = None):
-        if not node:
-            node = self._website
-        return [child for child in node.childNodes if child.nodeName == tag]
-    
-    def _childNode(self, tag, node = None):
-        tags = self._childNodes(tag, node)
-        if len(tags) != 1:
-            raise ProfileError("Exactly one {} tag allowed! Found {}".format(tag, len(tags)))
-        return tags[0]
-    
-    def _firstTextChild(self, node):
-        tags = self._childNodes("#text", node)
-        return tags[0]
-    
-    @property
-    def name(self):
-        nameNode = self._childNode("name", self._profile)
-        return self._firstTextChild(nameNode).nodeValue
-    
-    @property
-    def base_url(self):
-        baseUrlNode = self._childNode("baseUrl")
-        if not baseUrlNode.hasChildNodes:
-            raise ProfileError("Profile baseUrl is empty!")
-        return self._firstTextChild(baseUrlNode).nodeValue
-    
-    @property
-    def ad_regex(self):
-        adDefinitionNode = self._childNode("adDefinition")
-        regexNode = self._childNode("regex", adDefinitionNode)
-        if not regexNode.hasChildNodes:
-            raise ProfileError("Profile adDefinition lacks a regex!")
-        return self._firstTextChild(regexNode).nodeValue
-    
-    @property
-    def ad_tags(self):
-        adDefinitionNode = self._childNode("adDefinition")
-        tagNodes = self._childNodes("tag", adDefinitionNode)
-        tags = [{"name": self._firstTextChild(tagNode).nodeValue, "type": tagNode.getAttribute("type")} for tagNode in tagNodes]
-        return tags
-    
-    @property
-    def time_tag(self):
-        adDefinitionNode = self._childNode("adDefinition")
-        timeTagNode = self._childNode("timeTag", adDefinitionNode)
-        tagNameNode = self._childNode("tagName", timeTagNode)
-        formatNode = self._childNode("format", timeTagNode)
-        return {"name": self._firstTextChild(tagNameNode).nodeValue, "format": self._firstTextChild(formatNode).nodeValue}
-    
-    @property
-    def key_tag(self):
-        adDefinitionNode = self._childNode("adDefinition")
-        keyTagNode = self._childNode("keyTag", adDefinitionNode)
-        tagNameNode = self._childNode("tagName", keyTagNode)
-        return self._firstTextChild(tagNameNode).nodeValue
-       
-    
-    @property
-    def format_regexes(self):
-        def make_dict(regexNode):
-            return {"regex": self._firstTextChild(regexNode).nodeValue, "type": regexNode.getAttribute("type")}
-        formatNode = self._childNode("format")
-        return [make_dict(regexNode) for regexNode in self._childNodes("regex", formatNode)]
-    
-    @property
-    def page_param(self):
-        try:
-            pageParamNode = self._childNode("pageParam")
-        except ProfileError:
-            return None
-        return {"name": self._firstTextChild(pageParamNode).nodeValue, "method": pageParamNode.getAttribute("method"), "init": int(pageParamNode.getAttribute("init"))} 
 
-    @property
-    def notification_email(self):
+etree_ = None
+Verbose_import_ = False
+(
+    XMLParser_import_none, XMLParser_import_lxml,
+    XMLParser_import_elementtree
+) = list(range(3))
+XMLParser_import_library = None
+try:
+    # lxml
+    from lxml import etree as etree_
+    XMLParser_import_library = XMLParser_import_lxml
+    if Verbose_import_:
+        print("running with lxml.etree")
+except ImportError:
+    try:
+        # cElementTree from Python 2.5+
+        import xml.etree.cElementTree as etree_
+        XMLParser_import_library = XMLParser_import_elementtree
+        if Verbose_import_:
+            print("running with cElementTree on Python 2.5+")
+    except ImportError:
         try:
-            notificationNode = self._childNode("notification", self._profile)
-            emailNode = self._childNode("email", notificationNode)
-        except ProfileError:
-            return None
-        emailSubject = self._firstTextChild(self._childNode("subject", emailNode)).nodeValue
-        bodyHtml = [node.toxml().strip() for node in self._childNode("body", emailNode).childNodes]
-        emailFrom = self._firstTextChild(self._childNode("from", emailNode)).nodeValue
-        type = emailNode.getAttribute("type")
-        email = {"from": emailFrom, "subject": emailSubject, "body": "\n".join(bodyHtml), "type": type}
-        return email
+            # ElementTree from Python 2.5+
+            import xml.etree.ElementTree as etree_
+            XMLParser_import_library = XMLParser_import_elementtree
+            if Verbose_import_:
+                print("running with ElementTree on Python 2.5+")
+        except ImportError:
+            try:
+                # normal cElementTree install
+                import cElementTree as etree_
+                XMLParser_import_library = XMLParser_import_elementtree
+                if Verbose_import_:
+                    print("running with cElementTree")
+            except ImportError:
+                try:
+                    # normal ElementTree install
+                    import elementtree.ElementTree as etree_
+                    XMLParser_import_library = XMLParser_import_elementtree
+                    if Verbose_import_:
+                        print("running with ElementTree")
+                except ImportError:
+                    raise ImportError(
+                        "Failed to import ElementTree from any known place")
 
-    @property
-    def notification_desktop(self):
-        try:
-            notificationNode = self._childNode("notification", self._profile)
-            desktopNode = self._childNode("desktop", notificationNode)
-        except ProfileError:
+
+def parsexml_(*args, **kwargs):
+    if (XMLParser_import_library == XMLParser_import_lxml and
+            'parser' not in kwargs):
+        # Use the lxml ElementTree compatible parser so that, e.g.,
+        #   we ignore comments.
+        kwargs['parser'] = etree_.ETCompatXMLParser()
+    doc = etree_.parse(*args, **kwargs)
+    return doc
+
+#
+# User methods
+#
+# Calls to the methods in these classes are generated by generateDS.py.
+# You can replace these methods by re-implementing the following class
+#   in a module named generatedssuper.py.
+
+try:
+    from generatedssuper import GeneratedsSuper
+except ImportError as exp:
+
+    class GeneratedsSuper(object):
+        tzoff_pattern = re_.compile(r'(\+|-)((0\d|1[0-3]):[0-5]\d|14:00)$')
+        class _FixedOffsetTZ(datetime_.tzinfo):
+            def __init__(self, offset, name):
+                self.__offset = datetime_.timedelta(minutes=offset)
+                self.__name = name
+            def utcoffset(self, dt):
+                return self.__offset
+            def tzname(self, dt):
+                return self.__name
+            def dst(self, dt):
+                return None
+        def gds_format_string(self, input_data, input_name=''):
+            return input_data
+        def gds_validate_string(self, input_data, node, input_name=''):
+            return input_data
+        def gds_format_base64(self, input_data, input_name=''):
+            return base64.b64encode(input_data)
+        def gds_validate_base64(self, input_data, node, input_name=''):
+            return input_data
+        def gds_format_integer(self, input_data, input_name=''):
+            return '%d' % input_data
+        def gds_validate_integer(self, input_data, node, input_name=''):
+            return input_data
+        def gds_format_integer_list(self, input_data, input_name=''):
+            return '%s' % input_data
+        def gds_validate_integer_list(self, input_data, node, input_name=''):
+            values = input_data.split()
+            for value in values:
+                try:
+                    float(value)
+                except (TypeError, ValueError):
+                    raise_parse_error(node, 'Requires sequence of integers')
+            return input_data
+        def gds_format_float(self, input_data, input_name=''):
+            return ('%.15f' % input_data).rstrip('0')
+        def gds_validate_float(self, input_data, node, input_name=''):
+            return input_data
+        def gds_format_float_list(self, input_data, input_name=''):
+            return '%s' % input_data
+        def gds_validate_float_list(self, input_data, node, input_name=''):
+            values = input_data.split()
+            for value in values:
+                try:
+                    float(value)
+                except (TypeError, ValueError):
+                    raise_parse_error(node, 'Requires sequence of floats')
+            return input_data
+        def gds_format_double(self, input_data, input_name=''):
+            return '%e' % input_data
+        def gds_validate_double(self, input_data, node, input_name=''):
+            return input_data
+        def gds_format_double_list(self, input_data, input_name=''):
+            return '%s' % input_data
+        def gds_validate_double_list(self, input_data, node, input_name=''):
+            values = input_data.split()
+            for value in values:
+                try:
+                    float(value)
+                except (TypeError, ValueError):
+                    raise_parse_error(node, 'Requires sequence of doubles')
+            return input_data
+        def gds_format_boolean(self, input_data, input_name=''):
+            return ('%s' % input_data).lower()
+        def gds_validate_boolean(self, input_data, node, input_name=''):
+            return input_data
+        def gds_format_boolean_list(self, input_data, input_name=''):
+            return '%s' % input_data
+        def gds_validate_boolean_list(self, input_data, node, input_name=''):
+            values = input_data.split()
+            for value in values:
+                if value not in ('true', '1', 'false', '0', ):
+                    raise_parse_error(
+                        node,
+                        'Requires sequence of booleans '
+                        '("true", "1", "false", "0")')
+            return input_data
+        def gds_validate_datetime(self, input_data, node, input_name=''):
+            return input_data
+        def gds_format_datetime(self, input_data, input_name=''):
+            if input_data.microsecond == 0:
+                _svalue = '%04d-%02d-%02dT%02d:%02d:%02d' % (
+                    input_data.year,
+                    input_data.month,
+                    input_data.day,
+                    input_data.hour,
+                    input_data.minute,
+                    input_data.second,
+                )
+            else:
+                _svalue = '%04d-%02d-%02dT%02d:%02d:%02d.%s' % (
+                    input_data.year,
+                    input_data.month,
+                    input_data.day,
+                    input_data.hour,
+                    input_data.minute,
+                    input_data.second,
+                    ('%f' % (float(input_data.microsecond) / 1000000))[2:],
+                )
+            if input_data.tzinfo is not None:
+                tzoff = input_data.tzinfo.utcoffset(input_data)
+                if tzoff is not None:
+                    total_seconds = tzoff.seconds + (86400 * tzoff.days)
+                    if total_seconds == 0:
+                        _svalue += 'Z'
+                    else:
+                        if total_seconds < 0:
+                            _svalue += '-'
+                            total_seconds *= -1
+                        else:
+                            _svalue += '+'
+                        hours = total_seconds // 3600
+                        minutes = (total_seconds - (hours * 3600)) // 60
+                        _svalue += '{0:02d}:{1:02d}'.format(hours, minutes)
+            return _svalue
+        @classmethod
+        def gds_parse_datetime(cls, input_data):
+            tz = None
+            if input_data[-1] == 'Z':
+                tz = GeneratedsSuper._FixedOffsetTZ(0, 'UTC')
+                input_data = input_data[:-1]
+            else:
+                results = GeneratedsSuper.tzoff_pattern.search(input_data)
+                if results is not None:
+                    tzoff_parts = results.group(2).split(':')
+                    tzoff = int(tzoff_parts[0]) * 60 + int(tzoff_parts[1])
+                    if results.group(1) == '-':
+                        tzoff *= -1
+                    tz = GeneratedsSuper._FixedOffsetTZ(
+                        tzoff, results.group(0))
+                    input_data = input_data[:-6]
+            if len(input_data.split('.')) > 1:
+                dt = datetime_.datetime.strptime(
+                    input_data, '%Y-%m-%dT%H:%M:%S.%f')
+            else:
+                dt = datetime_.datetime.strptime(
+                    input_data, '%Y-%m-%dT%H:%M:%S')
+            dt = dt.replace(tzinfo=tz)
+            return dt
+        def gds_validate_date(self, input_data, node, input_name=''):
+            return input_data
+        def gds_format_date(self, input_data, input_name=''):
+            _svalue = '%04d-%02d-%02d' % (
+                input_data.year,
+                input_data.month,
+                input_data.day,
+            )
+            try:
+                if input_data.tzinfo is not None:
+                    tzoff = input_data.tzinfo.utcoffset(input_data)
+                    if tzoff is not None:
+                        total_seconds = tzoff.seconds + (86400 * tzoff.days)
+                        if total_seconds == 0:
+                            _svalue += 'Z'
+                        else:
+                            if total_seconds < 0:
+                                _svalue += '-'
+                                total_seconds *= -1
+                            else:
+                                _svalue += '+'
+                            hours = total_seconds // 3600
+                            minutes = (total_seconds - (hours * 3600)) // 60
+                            _svalue += '{0:02d}:{1:02d}'.format(hours, minutes)
+            except AttributeError:
+                pass
+            return _svalue
+        @classmethod
+        def gds_parse_date(cls, input_data):
+            tz = None
+            if input_data[-1] == 'Z':
+                tz = GeneratedsSuper._FixedOffsetTZ(0, 'UTC')
+                input_data = input_data[:-1]
+            else:
+                results = GeneratedsSuper.tzoff_pattern.search(input_data)
+                if results is not None:
+                    tzoff_parts = results.group(2).split(':')
+                    tzoff = int(tzoff_parts[0]) * 60 + int(tzoff_parts[1])
+                    if results.group(1) == '-':
+                        tzoff *= -1
+                    tz = GeneratedsSuper._FixedOffsetTZ(
+                        tzoff, results.group(0))
+                    input_data = input_data[:-6]
+            dt = datetime_.datetime.strptime(input_data, '%Y-%m-%d')
+            dt = dt.replace(tzinfo=tz)
+            return dt.date()
+        def gds_validate_time(self, input_data, node, input_name=''):
+            return input_data
+        def gds_format_time(self, input_data, input_name=''):
+            if input_data.microsecond == 0:
+                _svalue = '%02d:%02d:%02d' % (
+                    input_data.hour,
+                    input_data.minute,
+                    input_data.second,
+                )
+            else:
+                _svalue = '%02d:%02d:%02d.%s' % (
+                    input_data.hour,
+                    input_data.minute,
+                    input_data.second,
+                    ('%f' % (float(input_data.microsecond) / 1000000))[2:],
+                )
+            if input_data.tzinfo is not None:
+                tzoff = input_data.tzinfo.utcoffset(input_data)
+                if tzoff is not None:
+                    total_seconds = tzoff.seconds + (86400 * tzoff.days)
+                    if total_seconds == 0:
+                        _svalue += 'Z'
+                    else:
+                        if total_seconds < 0:
+                            _svalue += '-'
+                            total_seconds *= -1
+                        else:
+                            _svalue += '+'
+                        hours = total_seconds // 3600
+                        minutes = (total_seconds - (hours * 3600)) // 60
+                        _svalue += '{0:02d}:{1:02d}'.format(hours, minutes)
+            return _svalue
+        @classmethod
+        def gds_parse_time(cls, input_data):
+            tz = None
+            if input_data[-1] == 'Z':
+                tz = GeneratedsSuper._FixedOffsetTZ(0, 'UTC')
+                input_data = input_data[:-1]
+            else:
+                results = GeneratedsSuper.tzoff_pattern.search(input_data)
+                if results is not None:
+                    tzoff_parts = results.group(2).split(':')
+                    tzoff = int(tzoff_parts[0]) * 60 + int(tzoff_parts[1])
+                    if results.group(1) == '-':
+                        tzoff *= -1
+                    tz = GeneratedsSuper._FixedOffsetTZ(
+                        tzoff, results.group(0))
+                    input_data = input_data[:-6]
+            if len(input_data.split('.')) > 1:
+                dt = datetime_.datetime.strptime(input_data, '%H:%M:%S.%f')
+            else:
+                dt = datetime_.datetime.strptime(input_data, '%H:%M:%S')
+            dt = dt.replace(tzinfo=tz)
+            return dt.time()
+        def gds_str_lower(self, instring):
+            return instring.lower()
+        def get_path_(self, node):
+            path_list = []
+            self.get_path_list_(node, path_list)
+            path_list.reverse()
+            path = '/'.join(path_list)
+            return path
+        Tag_strip_pattern_ = re_.compile(r'\{.*\}')
+        def get_path_list_(self, node, path_list):
+            if node is None:
+                return
+            tag = GeneratedsSuper.Tag_strip_pattern_.sub('', node.tag)
+            if tag:
+                path_list.append(tag)
+            self.get_path_list_(node.getparent(), path_list)
+        def get_class_obj_(self, node, default_class=None):
+            class_obj1 = default_class
+            if 'xsi' in node.nsmap:
+                classname = node.get('{%s}type' % node.nsmap['xsi'])
+                if classname is not None:
+                    names = classname.split(':')
+                    if len(names) == 2:
+                        classname = names[1]
+                    class_obj2 = globals().get(classname)
+                    if class_obj2 is not None:
+                        class_obj1 = class_obj2
+            return class_obj1
+        def gds_build_any(self, node, type_name=None):
             return None
-        title = self._firstTextChild(self._childNode("title", desktopNode)).nodeValue
-        body = [node.toxml().strip() for node in self._childNode("body", desktopNode).childNodes]
-        try:
-            url = self._firstTextChild(self._childNode("url", desktopNode)).nodeValue
-        except ProfileError:
-            url = None
-        return {"title": title, "body": "\n".join(body), "url": url}
+        @classmethod
+        def gds_reverse_node_mapping(cls, mapping):
+            return dict(((v, k) for k, v in mapping.items()))
+
+
+#
+# If you have installed IPython you can uncomment and use the following.
+# IPython is available from http://ipython.scipy.org/.
+#
+
+## from IPython.Shell import IPShellEmbed
+## args = ''
+## ipshell = IPShellEmbed(args,
+##     banner = 'Dropping into IPython',
+##     exit_msg = 'Leaving Interpreter, back to program.')
+
+# Then use the following line where and when you want to drop into the
+# IPython shell:
+#    ipshell('<some message> -- Entering ipshell.\nHit Ctrl-D to exit')
+
+#
+# Globals
+#
+
+ExternalEncoding = 'ascii'
+Tag_pattern_ = re_.compile(r'({.*})?(.*)')
+String_cleanup_pat_ = re_.compile(r"[\n\r\s]+")
+Namespace_extract_pat_ = re_.compile(r'{(.*)}(.*)')
+
+#
+# Support/utility functions.
+#
+
+
+def showIndent(outfile, level, pretty_print=True):
+    if pretty_print:
+        for idx in range(level):
+            outfile.write('    ')
+
+
+def quote_xml(inStr):
+    if not inStr:
+        return ''
+    s1 = (isinstance(inStr, str) and inStr or
+          '%s' % inStr)
+    s1 = s1.replace('&', '&amp;')
+    s1 = s1.replace('<', '&lt;')
+    s1 = s1.replace('>', '&gt;')
+    return s1
+
+
+def quote_attrib(inStr):
+    s1 = (isinstance(inStr, str) and inStr or
+          '%s' % inStr)
+    s1 = s1.replace('&', '&amp;')
+    s1 = s1.replace('<', '&lt;')
+    s1 = s1.replace('>', '&gt;')
+    if '"' in s1:
+        if "'" in s1:
+            s1 = '"%s"' % s1.replace('"', "&quot;")
+        else:
+            s1 = "'%s'" % s1
+    else:
+        s1 = '"%s"' % s1
+    return s1
+
+
+def quote_python(inStr):
+    s1 = inStr
+    if s1.find("'") == -1:
+        if s1.find('\n') == -1:
+            return "'%s'" % s1
+        else:
+            return "'''%s'''" % s1
+    else:
+        if s1.find('"') != -1:
+            s1 = s1.replace('"', '\\"')
+        if s1.find('\n') == -1:
+            return '"%s"' % s1
+        else:
+            return '"""%s"""' % s1
+
+
+def get_all_text_(node):
+    if node.text is not None:
+        text = node.text
+    else:
+        text = ''
+    for child in node:
+        if child.tail is not None:
+            text += child.tail
+    return text
+
+
+def find_attr_value_(attr_name, node):
+    attrs = node.attrib
+    attr_parts = attr_name.split(':')
+    value = None
+    if len(attr_parts) == 1:
+        value = attrs.get(attr_name)
+    elif len(attr_parts) == 2:
+        prefix, name = attr_parts
+        namespace = node.nsmap.get(prefix)
+        if namespace is not None:
+            value = attrs.get('{%s}%s' % (namespace, name, ))
+    return value
+
+
+class GDSParseError(Exception):
+    pass
+
+
+def raise_parse_error(node, msg):
+    if XMLParser_import_library == XMLParser_import_lxml:
+        msg = '%s (element %s/line %d)' % (
+            msg, node.tag, node.sourceline, )
+    else:
+        msg = '%s (element %s)' % (msg, node.tag, )
+    raise GDSParseError(msg)
+
+
+class MixedContainer:
+    # Constants for category:
+    CategoryNone = 0
+    CategoryText = 1
+    CategorySimple = 2
+    CategoryComplex = 3
+    # Constants for content_type:
+    TypeNone = 0
+    TypeText = 1
+    TypeString = 2
+    TypeInteger = 3
+    TypeFloat = 4
+    TypeDecimal = 5
+    TypeDouble = 6
+    TypeBoolean = 7
+    TypeBase64 = 8
+    def __init__(self, category, content_type, name, value):
+        self.category = category
+        self.content_type = content_type
+        self.name = name
+        self.value = value
+    def getCategory(self):
+        return self.category
+    def getContenttype(self, content_type):
+        return self.content_type
+    def getValue(self):
+        return self.value
+    def getName(self):
+        return self.name
+    def export(self, outfile, level, name, namespace, pretty_print=True):
+        if self.category == MixedContainer.CategoryText:
+            # Prevent exporting empty content as empty lines.
+            if self.value.strip():
+                outfile.write(self.value)
+        elif self.category == MixedContainer.CategorySimple:
+            self.exportSimple(outfile, level, name)
+        else:    # category == MixedContainer.CategoryComplex
+            self.value.export(outfile, level, namespace, name, pretty_print)
+    def exportSimple(self, outfile, level, name):
+        if self.content_type == MixedContainer.TypeString:
+            outfile.write('<%s>%s</%s>' % (
+                self.name, self.value, self.name))
+        elif self.content_type == MixedContainer.TypeInteger or \
+                self.content_type == MixedContainer.TypeBoolean:
+            outfile.write('<%s>%d</%s>' % (
+                self.name, self.value, self.name))
+        elif self.content_type == MixedContainer.TypeFloat or \
+                self.content_type == MixedContainer.TypeDecimal:
+            outfile.write('<%s>%f</%s>' % (
+                self.name, self.value, self.name))
+        elif self.content_type == MixedContainer.TypeDouble:
+            outfile.write('<%s>%g</%s>' % (
+                self.name, self.value, self.name))
+        elif self.content_type == MixedContainer.TypeBase64:
+            outfile.write('<%s>%s</%s>' % (
+                self.name, base64.b64encode(self.value), self.name))
+    def to_etree(self, element):
+        if self.category == MixedContainer.CategoryText:
+            # Prevent exporting empty content as empty lines.
+            if self.value.strip():
+                if len(element) > 0:
+                    if element[-1].tail is None:
+                        element[-1].tail = self.value
+                    else:
+                        element[-1].tail += self.value
+                else:
+                    if element.text is None:
+                        element.text = self.value
+                    else:
+                        element.text += self.value
+        elif self.category == MixedContainer.CategorySimple:
+            subelement = etree_.SubElement(element, '%s' % self.name)
+            subelement.text = self.to_etree_simple()
+        else:    # category == MixedContainer.CategoryComplex
+            self.value.to_etree(element)
+    def to_etree_simple(self):
+        if self.content_type == MixedContainer.TypeString:
+            text = self.value
+        elif (self.content_type == MixedContainer.TypeInteger or
+                self.content_type == MixedContainer.TypeBoolean):
+            text = '%d' % self.value
+        elif (self.content_type == MixedContainer.TypeFloat or
+                self.content_type == MixedContainer.TypeDecimal):
+            text = '%f' % self.value
+        elif self.content_type == MixedContainer.TypeDouble:
+            text = '%g' % self.value
+        elif self.content_type == MixedContainer.TypeBase64:
+            text = '%s' % base64.b64encode(self.value)
+        return text
+    def exportLiteral(self, outfile, level, name):
+        if self.category == MixedContainer.CategoryText:
+            showIndent(outfile, level)
+            outfile.write(
+                'model_.MixedContainer(%d, %d, "%s", "%s"),\n' % (
+                    self.category, self.content_type, self.name, self.value))
+        elif self.category == MixedContainer.CategorySimple:
+            showIndent(outfile, level)
+            outfile.write(
+                'model_.MixedContainer(%d, %d, "%s", "%s"),\n' % (
+                    self.category, self.content_type, self.name, self.value))
+        else:    # category == MixedContainer.CategoryComplex
+            showIndent(outfile, level)
+            outfile.write(
+                'model_.MixedContainer(%d, %d, "%s",\n' % (
+                    self.category, self.content_type, self.name,))
+            self.value.exportLiteral(outfile, level + 1)
+            showIndent(outfile, level)
+            outfile.write(')\n')
+
+
+class MemberSpec_(object):
+    def __init__(self, name='', data_type='', container=0):
+        self.name = name
+        self.data_type = data_type
+        self.container = container
+    def set_name(self, name): self.name = name
+    def get_name(self): return self.name
+    def set_data_type(self, data_type): self.data_type = data_type
+    def get_data_type_chain(self): return self.data_type
+    def get_data_type(self):
+        if isinstance(self.data_type, list):
+            if len(self.data_type) > 0:
+                return self.data_type[-1]
+            else:
+                return 'xs:string'
+        else:
+            return self.data_type
+    def set_container(self, container): self.container = container
+    def get_container(self): return self.container
+
+
+def _cast(typ, value):
+    if typ is None or value is None:
+        return value
+    return typ(value)
+
+#
+# Data representation classes.
+#
+
+
+class Profile(GeneratedsSuper):
+    subclass = None
+    superclass = None
+    def __init__(self, Name=None, Website=None, Notifications=None):
+        self.Name = Name
+        self.Website = Website
+        self.Notifications = Notifications
+    def factory(*args_, **kwargs_):
+        if Profile.subclass:
+            return Profile.subclass(*args_, **kwargs_)
+        else:
+            return Profile(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_Name(self): return self.Name
+    def set_Name(self, Name): self.Name = Name
+    def get_Website(self): return self.Website
+    def set_Website(self, Website): self.Website = Website
+    def get_Notifications(self): return self.Notifications
+    def set_Notifications(self, Notifications): self.Notifications = Notifications
+    def hasContent_(self):
+        if (
+            self.Name is not None or
+            self.Website is not None or
+            self.Notifications is not None
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespace_='', name_='Profile', namespacedef_='', pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self.exportAttributes(outfile, level, already_processed, namespace_, name_='Profile')
+        if self.hasContent_():
+            outfile.write('>%s' % (eol_, ))
+            self.exportChildren(outfile, level + 1, namespace_, name_, pretty_print=pretty_print)
+            showIndent(outfile, level, pretty_print)
+            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def exportAttributes(self, outfile, level, already_processed, namespace_='', name_='Profile'):
+        pass
+    def exportChildren(self, outfile, level, namespace_='', name_='Profile', fromsubclass_=False, pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.Name is not None:
+            showIndent(outfile, level, pretty_print)
+            outfile.write('<%sName>%s</%sName>%s' % (namespace_, self.gds_format_string(quote_xml(self.Name).encode(ExternalEncoding), input_name='Name'), namespace_, eol_))
+        if self.Website is not None:
+            self.Website.export(outfile, level, namespace_, name_='Website', pretty_print=pretty_print)
+        if self.Notifications is not None:
+            self.Notifications.export(outfile, level, namespace_, name_='Notifications', pretty_print=pretty_print)
+    def exportLiteral(self, outfile, level, name_='Profile'):
+        level += 1
+        already_processed = set()
+        self.exportLiteralAttributes(outfile, level, already_processed, name_)
+        if self.hasContent_():
+            self.exportLiteralChildren(outfile, level, name_)
+    def exportLiteralAttributes(self, outfile, level, already_processed, name_):
+        pass
+    def exportLiteralChildren(self, outfile, level, name_):
+        if self.Name is not None:
+            showIndent(outfile, level)
+            outfile.write('Name=%s,\n' % quote_python(self.Name).encode(ExternalEncoding))
+        if self.Website is not None:
+            showIndent(outfile, level)
+            outfile.write('Website=model_.XmlWebsite(\n')
+            self.Website.exportLiteral(outfile, level, name_='Website')
+            showIndent(outfile, level)
+            outfile.write('),\n')
+        if self.Notifications is not None:
+            showIndent(outfile, level)
+            outfile.write('Notifications=model_.XmlNotifications(\n')
+            self.Notifications.exportLiteral(outfile, level, name_='Notifications')
+            showIndent(outfile, level)
+            outfile.write('),\n')
+    def build(self, node):
+        already_processed = set()
+        self.buildAttributes(node, node.attrib, already_processed)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self.buildChildren(child, node, nodeName_)
+    def buildAttributes(self, node, attrs, already_processed):
+        pass
+    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
+        if nodeName_ == 'Name':
+            Name_ = child_.text
+            Name_ = self.gds_validate_string(Name_, node, 'Name')
+            self.Name = Name_
+        elif nodeName_ == 'Website':
+            obj_ = XmlWebsite.factory()
+            obj_.build(child_)
+            self.Website = obj_
+        elif nodeName_ == 'Notifications':
+            obj_ = XmlNotifications.factory()
+            obj_.build(child_)
+            self.Notifications = obj_
+# end class Profile
+
+
+class XmlWebsite(GeneratedsSuper):
+    subclass = None
+    superclass = None
+    def __init__(self, BaseUrl=None, AdDefinition=None, HtmlFormat=None, PagingParameter=None):
+        self.BaseUrl = BaseUrl
+        self.AdDefinition = AdDefinition
+        self.HtmlFormat = HtmlFormat
+        self.PagingParameter = PagingParameter
+    def factory(*args_, **kwargs_):
+        if XmlWebsite.subclass:
+            return XmlWebsite.subclass(*args_, **kwargs_)
+        else:
+            return XmlWebsite(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_BaseUrl(self): return self.BaseUrl
+    def set_BaseUrl(self, BaseUrl): self.BaseUrl = BaseUrl
+    def get_AdDefinition(self): return self.AdDefinition
+    def set_AdDefinition(self, AdDefinition): self.AdDefinition = AdDefinition
+    def get_HtmlFormat(self): return self.HtmlFormat
+    def set_HtmlFormat(self, HtmlFormat): self.HtmlFormat = HtmlFormat
+    def get_PagingParameter(self): return self.PagingParameter
+    def set_PagingParameter(self, PagingParameter): self.PagingParameter = PagingParameter
+    def hasContent_(self):
+        if (
+            self.BaseUrl is not None or
+            self.AdDefinition is not None or
+            self.HtmlFormat is not None or
+            self.PagingParameter is not None
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespace_='', name_='XmlWebsite', namespacedef_='', pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self.exportAttributes(outfile, level, already_processed, namespace_, name_='XmlWebsite')
+        if self.hasContent_():
+            outfile.write('>%s' % (eol_, ))
+            self.exportChildren(outfile, level + 1, namespace_, name_, pretty_print=pretty_print)
+            showIndent(outfile, level, pretty_print)
+            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def exportAttributes(self, outfile, level, already_processed, namespace_='', name_='XmlWebsite'):
+        pass
+    def exportChildren(self, outfile, level, namespace_='', name_='XmlWebsite', fromsubclass_=False, pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.BaseUrl is not None:
+            showIndent(outfile, level, pretty_print)
+            outfile.write('<%sBaseUrl>%s</%sBaseUrl>%s' % (namespace_, self.gds_format_string(quote_xml(self.BaseUrl).encode(ExternalEncoding), input_name='BaseUrl'), namespace_, eol_))
+        if self.AdDefinition is not None:
+            self.AdDefinition.export(outfile, level, namespace_, name_='AdDefinition', pretty_print=pretty_print)
+        if self.HtmlFormat is not None:
+            self.HtmlFormat.export(outfile, level, namespace_, name_='HtmlFormat', pretty_print=pretty_print)
+        if self.PagingParameter is not None:
+            self.PagingParameter.export(outfile, level, namespace_, name_='PagingParameter', pretty_print=pretty_print)
+    def exportLiteral(self, outfile, level, name_='XmlWebsite'):
+        level += 1
+        already_processed = set()
+        self.exportLiteralAttributes(outfile, level, already_processed, name_)
+        if self.hasContent_():
+            self.exportLiteralChildren(outfile, level, name_)
+    def exportLiteralAttributes(self, outfile, level, already_processed, name_):
+        pass
+    def exportLiteralChildren(self, outfile, level, name_):
+        if self.BaseUrl is not None:
+            showIndent(outfile, level)
+            outfile.write('BaseUrl=%s,\n' % quote_python(self.BaseUrl).encode(ExternalEncoding))
+        if self.AdDefinition is not None:
+            showIndent(outfile, level)
+            outfile.write('AdDefinition=model_.XmlAdDefinition(\n')
+            self.AdDefinition.exportLiteral(outfile, level, name_='AdDefinition')
+            showIndent(outfile, level)
+            outfile.write('),\n')
+        if self.HtmlFormat is not None:
+            showIndent(outfile, level)
+            outfile.write('HtmlFormat=model_.XmlHtmlFormat(\n')
+            self.HtmlFormat.exportLiteral(outfile, level, name_='HtmlFormat')
+            showIndent(outfile, level)
+            outfile.write('),\n')
+        if self.PagingParameter is not None:
+            showIndent(outfile, level)
+            outfile.write('PagingParameter=model_.XmlHttpParameter(\n')
+            self.PagingParameter.exportLiteral(outfile, level, name_='PagingParameter')
+            showIndent(outfile, level)
+            outfile.write('),\n')
+    def build(self, node):
+        already_processed = set()
+        self.buildAttributes(node, node.attrib, already_processed)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self.buildChildren(child, node, nodeName_)
+    def buildAttributes(self, node, attrs, already_processed):
+        pass
+    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
+        if nodeName_ == 'BaseUrl':
+            BaseUrl_ = child_.text
+            BaseUrl_ = self.gds_validate_string(BaseUrl_, node, 'BaseUrl')
+            self.BaseUrl = BaseUrl_
+        elif nodeName_ == 'AdDefinition':
+            obj_ = XmlAdDefinition.factory()
+            obj_.build(child_)
+            self.AdDefinition = obj_
+        elif nodeName_ == 'HtmlFormat':
+            obj_ = XmlHtmlFormat.factory()
+            obj_.build(child_)
+            self.HtmlFormat = obj_
+        elif nodeName_ == 'PagingParameter':
+            obj_ = XmlHttpParameter.factory()
+            obj_.build(child_)
+            self.PagingParameter = obj_
+# end class XmlWebsite
+
+
+class XmlAdDefinition(GeneratedsSuper):
+    subclass = None
+    superclass = None
+    def __init__(self, Regex=None, AdTag=None, KeyTag=None, TimeTag=None):
+        self.Regex = Regex
+        if AdTag is None:
+            self.AdTag = []
+        else:
+            self.AdTag = AdTag
+        self.KeyTag = KeyTag
+        self.TimeTag = TimeTag
+    def factory(*args_, **kwargs_):
+        if XmlAdDefinition.subclass:
+            return XmlAdDefinition.subclass(*args_, **kwargs_)
+        else:
+            return XmlAdDefinition(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_Regex(self): return self.Regex
+    def set_Regex(self, Regex): self.Regex = Regex
+    def get_AdTag(self): return self.AdTag
+    def set_AdTag(self, AdTag): self.AdTag = AdTag
+    def add_AdTag(self, value): self.AdTag.append(value)
+    def insert_AdTag(self, index, value): self.AdTag[index] = value
+    def get_KeyTag(self): return self.KeyTag
+    def set_KeyTag(self, KeyTag): self.KeyTag = KeyTag
+    def get_TimeTag(self): return self.TimeTag
+    def set_TimeTag(self, TimeTag): self.TimeTag = TimeTag
+    def hasContent_(self):
+        if (
+            self.Regex is not None or
+            self.AdTag or
+            self.KeyTag is not None or
+            self.TimeTag is not None
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespace_='', name_='XmlAdDefinition', namespacedef_='', pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self.exportAttributes(outfile, level, already_processed, namespace_, name_='XmlAdDefinition')
+        if self.hasContent_():
+            outfile.write('>%s' % (eol_, ))
+            self.exportChildren(outfile, level + 1, namespace_, name_, pretty_print=pretty_print)
+            showIndent(outfile, level, pretty_print)
+            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def exportAttributes(self, outfile, level, already_processed, namespace_='', name_='XmlAdDefinition'):
+        pass
+    def exportChildren(self, outfile, level, namespace_='', name_='XmlAdDefinition', fromsubclass_=False, pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.Regex is not None:
+            showIndent(outfile, level, pretty_print)
+            outfile.write('<%sRegex>%s</%sRegex>%s' % (namespace_, self.gds_format_string(quote_xml(self.Regex).encode(ExternalEncoding), input_name='Regex'), namespace_, eol_))
+        for AdTag_ in self.AdTag:
+            AdTag_.export(outfile, level, namespace_, name_='AdTag', pretty_print=pretty_print)
+        if self.KeyTag is not None:
+            self.KeyTag.export(outfile, level, namespace_, name_='KeyTag', pretty_print=pretty_print)
+        if self.TimeTag is not None:
+            self.TimeTag.export(outfile, level, namespace_, name_='TimeTag', pretty_print=pretty_print)
+    def exportLiteral(self, outfile, level, name_='XmlAdDefinition'):
+        level += 1
+        already_processed = set()
+        self.exportLiteralAttributes(outfile, level, already_processed, name_)
+        if self.hasContent_():
+            self.exportLiteralChildren(outfile, level, name_)
+    def exportLiteralAttributes(self, outfile, level, already_processed, name_):
+        pass
+    def exportLiteralChildren(self, outfile, level, name_):
+        if self.Regex is not None:
+            showIndent(outfile, level)
+            outfile.write('Regex=%s,\n' % quote_python(self.Regex).encode(ExternalEncoding))
+        showIndent(outfile, level)
+        outfile.write('AdTag=[\n')
+        level += 1
+        for AdTag_ in self.AdTag:
+            showIndent(outfile, level)
+            outfile.write('model_.XmlAdTag(\n')
+            AdTag_.exportLiteral(outfile, level, name_='XmlAdTag')
+            showIndent(outfile, level)
+            outfile.write('),\n')
+        level -= 1
+        showIndent(outfile, level)
+        outfile.write('],\n')
+        if self.KeyTag is not None:
+            showIndent(outfile, level)
+            outfile.write('KeyTag=model_.XmlKeyTag(\n')
+            self.KeyTag.exportLiteral(outfile, level, name_='KeyTag')
+            showIndent(outfile, level)
+            outfile.write('),\n')
+        if self.TimeTag is not None:
+            showIndent(outfile, level)
+            outfile.write('TimeTag=model_.XmlTimeTag(\n')
+            self.TimeTag.exportLiteral(outfile, level, name_='TimeTag')
+            showIndent(outfile, level)
+            outfile.write('),\n')
+    def build(self, node):
+        already_processed = set()
+        self.buildAttributes(node, node.attrib, already_processed)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self.buildChildren(child, node, nodeName_)
+    def buildAttributes(self, node, attrs, already_processed):
+        pass
+    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
+        if nodeName_ == 'Regex':
+            Regex_ = child_.text
+            Regex_ = self.gds_validate_string(Regex_, node, 'Regex')
+            self.Regex = Regex_
+        elif nodeName_ == 'AdTag':
+            obj_ = XmlAdTag.factory()
+            obj_.build(child_)
+            self.AdTag.append(obj_)
+        elif nodeName_ == 'KeyTag':
+            obj_ = XmlKeyTag.factory()
+            obj_.build(child_)
+            self.KeyTag = obj_
+        elif nodeName_ == 'TimeTag':
+            obj_ = XmlTimeTag.factory()
+            obj_.build(child_)
+            self.TimeTag = obj_
+# end class XmlAdDefinition
+
+
+class XmlAdTag(GeneratedsSuper):
+    subclass = None
+    superclass = None
+    def __init__(self, type_=None, valueOf_=None):
+        self.type_ = _cast(None, type_)
+        self.valueOf_ = valueOf_
+    def factory(*args_, **kwargs_):
+        if XmlAdTag.subclass:
+            return XmlAdTag.subclass(*args_, **kwargs_)
+        else:
+            return XmlAdTag(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_type(self): return self.type_
+    def set_type(self, type_): self.type_ = type_
+    def get_valueOf_(self): return self.valueOf_
+    def set_valueOf_(self, valueOf_): self.valueOf_ = valueOf_
+    def validate_XmlAdTagType(self, value):
+        # Validate type XmlAdTagType, a restriction on xs:string.
+        pass
+    def hasContent_(self):
+        if (
+            self.valueOf_
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespace_='', name_='XmlAdTag', namespacedef_='', pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self.exportAttributes(outfile, level, already_processed, namespace_, name_='XmlAdTag')
+        if self.hasContent_():
+            outfile.write('>')
+            outfile.write(str(self.valueOf_))
+            self.exportChildren(outfile, level + 1, namespace_, name_, pretty_print=pretty_print)
+            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def exportAttributes(self, outfile, level, already_processed, namespace_='', name_='XmlAdTag'):
+        if self.type_ is not None and 'type_' not in already_processed:
+            already_processed.add('type_')
+            outfile.write(' type=%s' % (quote_attrib(self.type_), ))
+    def exportChildren(self, outfile, level, namespace_='', name_='XmlAdTag', fromsubclass_=False, pretty_print=True):
+        pass
+    def exportLiteral(self, outfile, level, name_='XmlAdTag'):
+        level += 1
+        already_processed = set()
+        self.exportLiteralAttributes(outfile, level, already_processed, name_)
+        if self.hasContent_():
+            self.exportLiteralChildren(outfile, level, name_)
+        showIndent(outfile, level)
+        outfile.write('valueOf_ = """%s""",\n' % (self.valueOf_,))
+    def exportLiteralAttributes(self, outfile, level, already_processed, name_):
+        if self.type_ is not None and 'type_' not in already_processed:
+            already_processed.add('type_')
+            showIndent(outfile, level)
+            outfile.write('type_="%s",\n' % (self.type_,))
+    def exportLiteralChildren(self, outfile, level, name_):
+        pass
+    def build(self, node):
+        already_processed = set()
+        self.buildAttributes(node, node.attrib, already_processed)
+        self.valueOf_ = get_all_text_(node)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self.buildChildren(child, node, nodeName_)
+    def buildAttributes(self, node, attrs, already_processed):
+        value = find_attr_value_('type', node)
+        if value is not None and 'type' not in already_processed:
+            already_processed.add('type')
+            self.type_ = value
+            self.validate_XmlAdTagType(self.type_)    # validate type XmlAdTagType
+    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
+        pass
+# end class XmlAdTag
+
+
+class XmlKeyTag(GeneratedsSuper):
+    subclass = None
+    superclass = None
+    def __init__(self, TagName=None):
+        self.TagName = TagName
+    def factory(*args_, **kwargs_):
+        if XmlKeyTag.subclass:
+            return XmlKeyTag.subclass(*args_, **kwargs_)
+        else:
+            return XmlKeyTag(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_TagName(self): return self.TagName
+    def set_TagName(self, TagName): self.TagName = TagName
+    def hasContent_(self):
+        if (
+            self.TagName is not None
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespace_='', name_='XmlKeyTag', namespacedef_='', pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self.exportAttributes(outfile, level, already_processed, namespace_, name_='XmlKeyTag')
+        if self.hasContent_():
+            outfile.write('>%s' % (eol_, ))
+            self.exportChildren(outfile, level + 1, namespace_, name_, pretty_print=pretty_print)
+            showIndent(outfile, level, pretty_print)
+            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def exportAttributes(self, outfile, level, already_processed, namespace_='', name_='XmlKeyTag'):
+        pass
+    def exportChildren(self, outfile, level, namespace_='', name_='XmlKeyTag', fromsubclass_=False, pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.TagName is not None:
+            showIndent(outfile, level, pretty_print)
+            outfile.write('<%sTagName>%s</%sTagName>%s' % (namespace_, self.gds_format_string(quote_xml(self.TagName).encode(ExternalEncoding), input_name='TagName'), namespace_, eol_))
+    def exportLiteral(self, outfile, level, name_='XmlKeyTag'):
+        level += 1
+        already_processed = set()
+        self.exportLiteralAttributes(outfile, level, already_processed, name_)
+        if self.hasContent_():
+            self.exportLiteralChildren(outfile, level, name_)
+    def exportLiteralAttributes(self, outfile, level, already_processed, name_):
+        pass
+    def exportLiteralChildren(self, outfile, level, name_):
+        if self.TagName is not None:
+            showIndent(outfile, level)
+            outfile.write('TagName=%s,\n' % quote_python(self.TagName).encode(ExternalEncoding))
+    def build(self, node):
+        already_processed = set()
+        self.buildAttributes(node, node.attrib, already_processed)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self.buildChildren(child, node, nodeName_)
+    def buildAttributes(self, node, attrs, already_processed):
+        pass
+    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
+        if nodeName_ == 'TagName':
+            TagName_ = child_.text
+            TagName_ = self.gds_validate_string(TagName_, node, 'TagName')
+            self.TagName = TagName_
+# end class XmlKeyTag
+
+
+class XmlTimeTag(GeneratedsSuper):
+    subclass = None
+    superclass = None
+    def __init__(self, TagName=None, DateTimeFormat=None):
+        self.TagName = TagName
+        self.DateTimeFormat = DateTimeFormat
+    def factory(*args_, **kwargs_):
+        if XmlTimeTag.subclass:
+            return XmlTimeTag.subclass(*args_, **kwargs_)
+        else:
+            return XmlTimeTag(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_TagName(self): return self.TagName
+    def set_TagName(self, TagName): self.TagName = TagName
+    def get_DateTimeFormat(self): return self.DateTimeFormat
+    def set_DateTimeFormat(self, DateTimeFormat): self.DateTimeFormat = DateTimeFormat
+    def hasContent_(self):
+        if (
+            self.TagName is not None or
+            self.DateTimeFormat is not None
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespace_='', name_='XmlTimeTag', namespacedef_='', pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self.exportAttributes(outfile, level, already_processed, namespace_, name_='XmlTimeTag')
+        if self.hasContent_():
+            outfile.write('>%s' % (eol_, ))
+            self.exportChildren(outfile, level + 1, namespace_, name_, pretty_print=pretty_print)
+            showIndent(outfile, level, pretty_print)
+            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def exportAttributes(self, outfile, level, already_processed, namespace_='', name_='XmlTimeTag'):
+        pass
+    def exportChildren(self, outfile, level, namespace_='', name_='XmlTimeTag', fromsubclass_=False, pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.TagName is not None:
+            showIndent(outfile, level, pretty_print)
+            outfile.write('<%sTagName>%s</%sTagName>%s' % (namespace_, self.gds_format_string(quote_xml(self.TagName).encode(ExternalEncoding), input_name='TagName'), namespace_, eol_))
+        if self.DateTimeFormat is not None:
+            showIndent(outfile, level, pretty_print)
+            outfile.write('<%sDateTimeFormat>%s</%sDateTimeFormat>%s' % (namespace_, self.gds_format_string(quote_xml(self.DateTimeFormat).encode(ExternalEncoding), input_name='DateTimeFormat'), namespace_, eol_))
+    def exportLiteral(self, outfile, level, name_='XmlTimeTag'):
+        level += 1
+        already_processed = set()
+        self.exportLiteralAttributes(outfile, level, already_processed, name_)
+        if self.hasContent_():
+            self.exportLiteralChildren(outfile, level, name_)
+    def exportLiteralAttributes(self, outfile, level, already_processed, name_):
+        pass
+    def exportLiteralChildren(self, outfile, level, name_):
+        if self.TagName is not None:
+            showIndent(outfile, level)
+            outfile.write('TagName=%s,\n' % quote_python(self.TagName).encode(ExternalEncoding))
+        if self.DateTimeFormat is not None:
+            showIndent(outfile, level)
+            outfile.write('DateTimeFormat=%s,\n' % quote_python(self.DateTimeFormat).encode(ExternalEncoding))
+    def build(self, node):
+        already_processed = set()
+        self.buildAttributes(node, node.attrib, already_processed)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self.buildChildren(child, node, nodeName_)
+    def buildAttributes(self, node, attrs, already_processed):
+        pass
+    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
+        if nodeName_ == 'TagName':
+            TagName_ = child_.text
+            TagName_ = self.gds_validate_string(TagName_, node, 'TagName')
+            self.TagName = TagName_
+        elif nodeName_ == 'DateTimeFormat':
+            DateTimeFormat_ = child_.text
+            DateTimeFormat_ = self.gds_validate_string(DateTimeFormat_, node, 'DateTimeFormat')
+            self.DateTimeFormat = DateTimeFormat_
+# end class XmlTimeTag
+
+
+class XmlHtmlFormat(GeneratedsSuper):
+    subclass = None
+    superclass = None
+    def __init__(self, FormatRegex=None):
+        if FormatRegex is None:
+            self.FormatRegex = []
+        else:
+            self.FormatRegex = FormatRegex
+    def factory(*args_, **kwargs_):
+        if XmlHtmlFormat.subclass:
+            return XmlHtmlFormat.subclass(*args_, **kwargs_)
+        else:
+            return XmlHtmlFormat(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_FormatRegex(self): return self.FormatRegex
+    def set_FormatRegex(self, FormatRegex): self.FormatRegex = FormatRegex
+    def add_FormatRegex(self, value): self.FormatRegex.append(value)
+    def insert_FormatRegex(self, index, value): self.FormatRegex[index] = value
+    def hasContent_(self):
+        if (
+            self.FormatRegex
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespace_='', name_='XmlHtmlFormat', namespacedef_='', pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self.exportAttributes(outfile, level, already_processed, namespace_, name_='XmlHtmlFormat')
+        if self.hasContent_():
+            outfile.write('>%s' % (eol_, ))
+            self.exportChildren(outfile, level + 1, namespace_, name_, pretty_print=pretty_print)
+            showIndent(outfile, level, pretty_print)
+            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def exportAttributes(self, outfile, level, already_processed, namespace_='', name_='XmlHtmlFormat'):
+        pass
+    def exportChildren(self, outfile, level, namespace_='', name_='XmlHtmlFormat', fromsubclass_=False, pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        for FormatRegex_ in self.FormatRegex:
+            FormatRegex_.export(outfile, level, namespace_, name_='FormatRegex', pretty_print=pretty_print)
+    def exportLiteral(self, outfile, level, name_='XmlHtmlFormat'):
+        level += 1
+        already_processed = set()
+        self.exportLiteralAttributes(outfile, level, already_processed, name_)
+        if self.hasContent_():
+            self.exportLiteralChildren(outfile, level, name_)
+    def exportLiteralAttributes(self, outfile, level, already_processed, name_):
+        pass
+    def exportLiteralChildren(self, outfile, level, name_):
+        showIndent(outfile, level)
+        outfile.write('FormatRegex=[\n')
+        level += 1
+        for FormatRegex_ in self.FormatRegex:
+            showIndent(outfile, level)
+            outfile.write('model_.XmlFormatRegex(\n')
+            FormatRegex_.exportLiteral(outfile, level, name_='XmlFormatRegex')
+            showIndent(outfile, level)
+            outfile.write('),\n')
+        level -= 1
+        showIndent(outfile, level)
+        outfile.write('],\n')
+    def build(self, node):
+        already_processed = set()
+        self.buildAttributes(node, node.attrib, already_processed)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self.buildChildren(child, node, nodeName_)
+    def buildAttributes(self, node, attrs, already_processed):
+        pass
+    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
+        if nodeName_ == 'FormatRegex':
+            obj_ = XmlFormatRegex.factory()
+            obj_.build(child_)
+            self.FormatRegex.append(obj_)
+# end class XmlHtmlFormat
+
+
+class XmlFormatRegex(GeneratedsSuper):
+    subclass = None
+    superclass = None
+    def __init__(self, type_=None, valueOf_=None):
+        self.type_ = _cast(None, type_)
+        self.valueOf_ = valueOf_
+    def factory(*args_, **kwargs_):
+        if XmlFormatRegex.subclass:
+            return XmlFormatRegex.subclass(*args_, **kwargs_)
+        else:
+            return XmlFormatRegex(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_type(self): return self.type_
+    def set_type(self, type_): self.type_ = type_
+    def get_valueOf_(self): return self.valueOf_
+    def set_valueOf_(self, valueOf_): self.valueOf_ = valueOf_
+    def validate_XmlFormatRegexType(self, value):
+        # Validate type XmlFormatRegexType, a restriction on xs:string.
+        pass
+    def hasContent_(self):
+        if (
+            self.valueOf_
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespace_='', name_='XmlFormatRegex', namespacedef_='', pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self.exportAttributes(outfile, level, already_processed, namespace_, name_='XmlFormatRegex')
+        if self.hasContent_():
+            outfile.write('>')
+            outfile.write(str(self.valueOf_))
+            self.exportChildren(outfile, level + 1, namespace_, name_, pretty_print=pretty_print)
+            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def exportAttributes(self, outfile, level, already_processed, namespace_='', name_='XmlFormatRegex'):
+        if self.type_ is not None and 'type_' not in already_processed:
+            already_processed.add('type_')
+            outfile.write(' type=%s' % (quote_attrib(self.type_), ))
+    def exportChildren(self, outfile, level, namespace_='', name_='XmlFormatRegex', fromsubclass_=False, pretty_print=True):
+        pass
+    def exportLiteral(self, outfile, level, name_='XmlFormatRegex'):
+        level += 1
+        already_processed = set()
+        self.exportLiteralAttributes(outfile, level, already_processed, name_)
+        if self.hasContent_():
+            self.exportLiteralChildren(outfile, level, name_)
+        showIndent(outfile, level)
+        outfile.write('valueOf_ = """%s""",\n' % (self.valueOf_,))
+    def exportLiteralAttributes(self, outfile, level, already_processed, name_):
+        if self.type_ is not None and 'type_' not in already_processed:
+            already_processed.add('type_')
+            showIndent(outfile, level)
+            outfile.write('type_="%s",\n' % (self.type_,))
+    def exportLiteralChildren(self, outfile, level, name_):
+        pass
+    def build(self, node):
+        already_processed = set()
+        self.buildAttributes(node, node.attrib, already_processed)
+        self.valueOf_ = get_all_text_(node)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self.buildChildren(child, node, nodeName_)
+    def buildAttributes(self, node, attrs, already_processed):
+        value = find_attr_value_('type', node)
+        if value is not None and 'type' not in already_processed:
+            already_processed.add('type')
+            self.type_ = value
+            self.validate_XmlFormatRegexType(self.type_)    # validate type XmlFormatRegexType
+    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
+        pass
+# end class XmlFormatRegex
+
+
+class XmlHttpParameter(GeneratedsSuper):
+    subclass = None
+    superclass = None
+    def __init__(self, Name=None, Method=None, InitialValue=None):
+        self.Name = Name
+        self.Method = Method
+        self.InitialValue = InitialValue
+    def factory(*args_, **kwargs_):
+        if XmlHttpParameter.subclass:
+            return XmlHttpParameter.subclass(*args_, **kwargs_)
+        else:
+            return XmlHttpParameter(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_Name(self): return self.Name
+    def set_Name(self, Name): self.Name = Name
+    def get_Method(self): return self.Method
+    def set_Method(self, Method): self.Method = Method
+    def get_InitialValue(self): return self.InitialValue
+    def set_InitialValue(self, InitialValue): self.InitialValue = InitialValue
+    def validate_XmlHttpMethod(self, value):
+        # Validate type XmlHttpMethod, a restriction on xs:string.
+        pass
+    def hasContent_(self):
+        if (
+            self.Name is not None or
+            self.Method is not None or
+            self.InitialValue is not None
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespace_='', name_='XmlHttpParameter', namespacedef_='', pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self.exportAttributes(outfile, level, already_processed, namespace_, name_='XmlHttpParameter')
+        if self.hasContent_():
+            outfile.write('>%s' % (eol_, ))
+            self.exportChildren(outfile, level + 1, namespace_, name_, pretty_print=pretty_print)
+            showIndent(outfile, level, pretty_print)
+            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def exportAttributes(self, outfile, level, already_processed, namespace_='', name_='XmlHttpParameter'):
+        pass
+    def exportChildren(self, outfile, level, namespace_='', name_='XmlHttpParameter', fromsubclass_=False, pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.Name is not None:
+            showIndent(outfile, level, pretty_print)
+            outfile.write('<%sName>%s</%sName>%s' % (namespace_, self.gds_format_string(quote_xml(self.Name).encode(ExternalEncoding), input_name='Name'), namespace_, eol_))
+        if self.Method is not None:
+            showIndent(outfile, level, pretty_print)
+            outfile.write('<%sMethod>%s</%sMethod>%s' % (namespace_, self.gds_format_string(quote_xml(self.Method).encode(ExternalEncoding), input_name='Method'), namespace_, eol_))
+        if self.InitialValue is not None:
+            showIndent(outfile, level, pretty_print)
+            outfile.write('<%sInitialValue>%s</%sInitialValue>%s' % (namespace_, self.gds_format_string(quote_xml(self.InitialValue).encode(ExternalEncoding), input_name='InitialValue'), namespace_, eol_))
+    def exportLiteral(self, outfile, level, name_='XmlHttpParameter'):
+        level += 1
+        already_processed = set()
+        self.exportLiteralAttributes(outfile, level, already_processed, name_)
+        if self.hasContent_():
+            self.exportLiteralChildren(outfile, level, name_)
+    def exportLiteralAttributes(self, outfile, level, already_processed, name_):
+        pass
+    def exportLiteralChildren(self, outfile, level, name_):
+        if self.Name is not None:
+            showIndent(outfile, level)
+            outfile.write('Name=%s,\n' % quote_python(self.Name).encode(ExternalEncoding))
+        if self.Method is not None:
+            showIndent(outfile, level)
+            outfile.write('Method=%s,\n' % quote_python(self.Method).encode(ExternalEncoding))
+        if self.InitialValue is not None:
+            showIndent(outfile, level)
+            outfile.write('InitialValue=%s,\n' % quote_python(self.InitialValue).encode(ExternalEncoding))
+    def build(self, node):
+        already_processed = set()
+        self.buildAttributes(node, node.attrib, already_processed)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self.buildChildren(child, node, nodeName_)
+    def buildAttributes(self, node, attrs, already_processed):
+        pass
+    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
+        if nodeName_ == 'Name':
+            Name_ = child_.text
+            Name_ = self.gds_validate_string(Name_, node, 'Name')
+            self.Name = Name_
+        elif nodeName_ == 'Method':
+            Method_ = child_.text
+            Method_ = self.gds_validate_string(Method_, node, 'Method')
+            self.Method = Method_
+            self.validate_XmlHttpMethod(self.Method)    # validate type XmlHttpMethod
+        elif nodeName_ == 'InitialValue':
+            InitialValue_ = child_.text
+            InitialValue_ = self.gds_validate_string(InitialValue_, node, 'InitialValue')
+            self.InitialValue = InitialValue_
+# end class XmlHttpParameter
+
+
+class XmlNotifications(GeneratedsSuper):
+    subclass = None
+    superclass = None
+    def __init__(self, Email=None):
+        self.Email = Email
+    def factory(*args_, **kwargs_):
+        if XmlNotifications.subclass:
+            return XmlNotifications.subclass(*args_, **kwargs_)
+        else:
+            return XmlNotifications(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_Email(self): return self.Email
+    def set_Email(self, Email): self.Email = Email
+    def hasContent_(self):
+        if (
+            self.Email is not None
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespace_='', name_='XmlNotifications', namespacedef_='', pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self.exportAttributes(outfile, level, already_processed, namespace_, name_='XmlNotifications')
+        if self.hasContent_():
+            outfile.write('>%s' % (eol_, ))
+            self.exportChildren(outfile, level + 1, namespace_, name_, pretty_print=pretty_print)
+            showIndent(outfile, level, pretty_print)
+            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def exportAttributes(self, outfile, level, already_processed, namespace_='', name_='XmlNotifications'):
+        pass
+    def exportChildren(self, outfile, level, namespace_='', name_='XmlNotifications', fromsubclass_=False, pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.Email is not None:
+            self.Email.export(outfile, level, namespace_, name_='Email', pretty_print=pretty_print)
+    def exportLiteral(self, outfile, level, name_='XmlNotifications'):
+        level += 1
+        already_processed = set()
+        self.exportLiteralAttributes(outfile, level, already_processed, name_)
+        if self.hasContent_():
+            self.exportLiteralChildren(outfile, level, name_)
+    def exportLiteralAttributes(self, outfile, level, already_processed, name_):
+        pass
+    def exportLiteralChildren(self, outfile, level, name_):
+        if self.Email is not None:
+            showIndent(outfile, level)
+            outfile.write('Email=model_.XmlEmail(\n')
+            self.Email.exportLiteral(outfile, level, name_='Email')
+            showIndent(outfile, level)
+            outfile.write('),\n')
+    def build(self, node):
+        already_processed = set()
+        self.buildAttributes(node, node.attrib, already_processed)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self.buildChildren(child, node, nodeName_)
+    def buildAttributes(self, node, attrs, already_processed):
+        pass
+    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
+        if nodeName_ == 'Email':
+            obj_ = XmlEmail.factory()
+            obj_.build(child_)
+            self.Email = obj_
+# end class XmlNotifications
+
+
+class XmlEmail(GeneratedsSuper):
+    subclass = None
+    superclass = None
+    def __init__(self, ContentType=None, From=None, Subject=None, Body=None):
+        self.ContentType = ContentType
+        self.From = From
+        self.Subject = Subject
+        self.Body = Body
+    def factory(*args_, **kwargs_):
+        if XmlEmail.subclass:
+            return XmlEmail.subclass(*args_, **kwargs_)
+        else:
+            return XmlEmail(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_ContentType(self): return self.ContentType
+    def set_ContentType(self, ContentType): self.ContentType = ContentType
+    def get_From(self): return self.From
+    def set_From(self, From): self.From = From
+    def get_Subject(self): return self.Subject
+    def set_Subject(self, Subject): self.Subject = Subject
+    def get_Body(self): return self.Body
+    def set_Body(self, Body): self.Body = Body
+    def validate_XmlMIMEContentType(self, value):
+        # Validate type XmlMIMEContentType, a restriction on xs:string.
+        pass
+    def hasContent_(self):
+        if (
+            self.ContentType is not None or
+            self.From is not None or
+            self.Subject is not None or
+            self.Body is not None
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespace_='', name_='XmlEmail', namespacedef_='', pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self.exportAttributes(outfile, level, already_processed, namespace_, name_='XmlEmail')
+        if self.hasContent_():
+            outfile.write('>%s' % (eol_, ))
+            self.exportChildren(outfile, level + 1, namespace_, name_, pretty_print=pretty_print)
+            showIndent(outfile, level, pretty_print)
+            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def exportAttributes(self, outfile, level, already_processed, namespace_='', name_='XmlEmail'):
+        pass
+    def exportChildren(self, outfile, level, namespace_='', name_='XmlEmail', fromsubclass_=False, pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.ContentType is not None:
+            showIndent(outfile, level, pretty_print)
+            outfile.write('<%sContentType>%s</%sContentType>%s' % (namespace_, self.gds_format_string(quote_xml(self.ContentType).encode(ExternalEncoding), input_name='ContentType'), namespace_, eol_))
+        if self.From is not None:
+            showIndent(outfile, level, pretty_print)
+            outfile.write('<%sFrom>%s</%sFrom>%s' % (namespace_, self.gds_format_string(quote_xml(self.From).encode(ExternalEncoding), input_name='From'), namespace_, eol_))
+        if self.Subject is not None:
+            showIndent(outfile, level, pretty_print)
+            outfile.write('<%sSubject>%s</%sSubject>%s' % (namespace_, self.gds_format_string(quote_xml(self.Subject).encode(ExternalEncoding), input_name='Subject'), namespace_, eol_))
+        if self.Body is not None:
+            self.Body.export(outfile, level, namespace_, name_='Body', pretty_print=pretty_print)
+    def exportLiteral(self, outfile, level, name_='XmlEmail'):
+        level += 1
+        already_processed = set()
+        self.exportLiteralAttributes(outfile, level, already_processed, name_)
+        if self.hasContent_():
+            self.exportLiteralChildren(outfile, level, name_)
+    def exportLiteralAttributes(self, outfile, level, already_processed, name_):
+        pass
+    def exportLiteralChildren(self, outfile, level, name_):
+        if self.ContentType is not None:
+            showIndent(outfile, level)
+            outfile.write('ContentType=%s,\n' % quote_python(self.ContentType).encode(ExternalEncoding))
+        if self.From is not None:
+            showIndent(outfile, level)
+            outfile.write('From=%s,\n' % quote_python(self.From).encode(ExternalEncoding))
+        if self.Subject is not None:
+            showIndent(outfile, level)
+            outfile.write('Subject=%s,\n' % quote_python(self.Subject).encode(ExternalEncoding))
+        if self.Body is not None:
+            showIndent(outfile, level)
+            outfile.write('Body=model_.BodyType(\n')
+            self.Body.exportLiteral(outfile, level, name_='Body')
+            showIndent(outfile, level)
+            outfile.write('),\n')
+    def build(self, node):
+        already_processed = set()
+        self.buildAttributes(node, node.attrib, already_processed)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self.buildChildren(child, node, nodeName_)
+    def buildAttributes(self, node, attrs, already_processed):
+        pass
+    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
+        if nodeName_ == 'ContentType':
+            ContentType_ = child_.text
+            ContentType_ = self.gds_validate_string(ContentType_, node, 'ContentType')
+            self.ContentType = ContentType_
+            self.validate_XmlMIMEContentType(self.ContentType)    # validate type XmlMIMEContentType
+        elif nodeName_ == 'From':
+            From_ = child_.text
+            From_ = self.gds_validate_string(From_, node, 'From')
+            self.From = From_
+        elif nodeName_ == 'Subject':
+            Subject_ = child_.text
+            Subject_ = self.gds_validate_string(Subject_, node, 'Subject')
+            self.Subject = Subject_
+        elif nodeName_ == 'Body':
+            obj_ = BodyType.factory()
+            obj_.build(child_)
+            self.Body = obj_
+# end class XmlEmail
+
+
+class BodyType(GeneratedsSuper):
+    subclass = None
+    superclass = None
+    def __init__(self, anytypeobjs_=None, valueOf_=None, mixedclass_=None, content_=None):
+        if anytypeobjs_ is None:
+            self.anytypeobjs_ = []
+        else:
+            self.anytypeobjs_ = anytypeobjs_
+        self.valueOf_ = valueOf_
+        if mixedclass_ is None:
+            self.mixedclass_ = MixedContainer
+        else:
+            self.mixedclass_ = mixedclass_
+        if content_ is None:
+            self.content_ = []
+        else:
+            self.content_ = content_
+        self.valueOf_ = valueOf_
+    def factory(*args_, **kwargs_):
+        if BodyType.subclass:
+            return BodyType.subclass(*args_, **kwargs_)
+        else:
+            return BodyType(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_anytypeobjs_(self): return self.anytypeobjs_
+    def set_anytypeobjs_(self, anytypeobjs_): self.anytypeobjs_ = anytypeobjs_
+    def add_anytypeobjs_(self, value): self.anytypeobjs_.append(value)
+    def insert_anytypeobjs_(self, index, value): self._anytypeobjs_[index] = value
+    def get_valueOf_(self): return self.valueOf_
+    def set_valueOf_(self, valueOf_): self.valueOf_ = valueOf_
+    def hasContent_(self):
+        if (
+            self.anytypeobjs_ or
+            self.valueOf_
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespace_='', name_='BodyType', namespacedef_='', pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self.exportAttributes(outfile, level, already_processed, namespace_, name_='BodyType')
+        if self.hasContent_():
+            outfile.write('>%s' % (eol_, ))
+            self.exportChildren(outfile, level + 1, namespace_, name_, pretty_print=pretty_print)
+            showIndent(outfile, level, pretty_print)
+            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def exportAttributes(self, outfile, level, already_processed, namespace_='', name_='BodyType'):
+        pass
+    def exportChildren(self, outfile, level, namespace_='', name_='BodyType', fromsubclass_=False, pretty_print=True):
+        if not fromsubclass_:
+            for item_ in self.content_:
+                item_.export(outfile, level, item_.name, namespace_, pretty_print=pretty_print)
+    def exportLiteral(self, outfile, level, name_='BodyType'):
+        level += 1
+        already_processed = set()
+        self.exportLiteralAttributes(outfile, level, already_processed, name_)
+        if self.hasContent_():
+            self.exportLiteralChildren(outfile, level, name_)
+        showIndent(outfile, level)
+        outfile.write('valueOf_ = """%s""",\n' % (self.valueOf_,))
+    def exportLiteralAttributes(self, outfile, level, already_processed, name_):
+        pass
+    def exportLiteralChildren(self, outfile, level, name_):
+        showIndent(outfile, level)
+        outfile.write('content_ = [\n')
+        for item_ in self.content_:
+            item_.exportLiteral(outfile, level, name_)
+        showIndent(outfile, level)
+        outfile.write('],\n')
+        pass
+    def build(self, node):
+        already_processed = set()
+        self.buildAttributes(node, node.attrib, already_processed)
+        self.valueOf_ = get_all_text_(node)
+        if node.text is not None:
+            obj_ = self.mixedclass_(MixedContainer.CategoryText,
+                MixedContainer.TypeNone, '', node.text)
+            self.content_.append(obj_)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self.buildChildren(child, node, nodeName_)
+    def buildAttributes(self, node, attrs, already_processed):
+        pass
+    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
+        if nodeName_ == '':
+            obj_ = __ANY__.factory()
+            obj_.build(child_)
+            obj_ = self.mixedclass_(MixedContainer.CategoryComplex,
+                MixedContainer.TypeNone, '', obj_)
+            self.content_.append(obj_)
+            if hasattr(self, 'add_'):
+              self.add_(obj_.value)
+            elif hasattr(self, 'set_'):
+              self.set_(obj_.value)
+        if not fromsubclass_ and child_.tail is not None:
+            obj_ = self.mixedclass_(MixedContainer.CategoryText,
+                MixedContainer.TypeNone, '', child_.tail)
+            self.content_.append(obj_)
+# end class BodyType
+
+
+GDSClassesMapping = {
+    'Website': XmlWebsite,
+    'KeyTag': XmlKeyTag,
+    'AdTag': XmlAdTag,
+    'HtmlFormat': XmlHtmlFormat,
+    'FormatRegex': XmlFormatRegex,
+    'Notifications': XmlNotifications,
+    'TimeTag': XmlTimeTag,
+    'Body': BodyType,
+    'AdDefinition': XmlAdDefinition,
+    'Email': XmlEmail,
+    'PagingParameter': XmlHttpParameter,
+}
+
+
+USAGE_TEXT = """
+Usage: python <Parser>.py [ -s ] <in_xml_file>
+"""
+
+
+def usage():
+    print(USAGE_TEXT)
+    sys.exit(1)
+
+
+def get_root_tag(node):
+    tag = Tag_pattern_.match(node.tag).groups()[-1]
+    rootClass = GDSClassesMapping.get(tag)
+    if rootClass is None:
+        rootClass = globals().get(tag)
+    return tag, rootClass
+
+
+def parse(inFileName, silence=False):
+    doc = parsexml_(inFileName)
+    rootNode = doc.getroot()
+    rootTag, rootClass = get_root_tag(rootNode)
+    if rootClass is None:
+        rootTag = 'Profile'
+        rootClass = Profile
+    rootObj = rootClass.factory()
+    rootObj.build(rootNode)
+    # Enable Python to collect the space used by the DOM.
+    doc = None
+    if not silence:
+        sys.stdout.write('<?xml version="1.0" ?>\n')
+        rootObj.export(
+            sys.stdout, 0, name_=rootTag,
+            namespacedef_='',
+            pretty_print=True)
+    return rootObj
+
+
+def parseEtree(inFileName, silence=False):
+    doc = parsexml_(inFileName)
+    rootNode = doc.getroot()
+    rootTag, rootClass = get_root_tag(rootNode)
+    if rootClass is None:
+        rootTag = 'Profile'
+        rootClass = Profile
+    rootObj = rootClass.factory()
+    rootObj.build(rootNode)
+    # Enable Python to collect the space used by the DOM.
+    doc = None
+    mapping = {}
+    rootElement = rootObj.to_etree(None, name_=rootTag, mapping_=mapping)
+    reverse_mapping = rootObj.gds_reverse_node_mapping(mapping)
+    if not silence:
+        content = etree_.tostring(
+            rootElement, pretty_print=True,
+            xml_declaration=True, encoding="utf-8")
+        sys.stdout.write(content)
+        sys.stdout.write('\n')
+    return rootObj, rootElement, mapping, reverse_mapping
+
+
+def parseString(inString, silence=False):
+    from io import StringIO
+    doc = parsexml_(StringIO(inString))
+    rootNode = doc.getroot()
+    roots = get_root_tag(rootNode)
+    rootClass = roots[1]
+    if rootClass is None:
+        rootClass = Profile
+    rootObj = rootClass.factory()
+    rootObj.build(rootNode)
+    # Enable Python to collect the space used by the DOM.
+    doc = None
+    if not silence:
+        sys.stdout.write('<?xml version="1.0" ?>\n')
+        rootObj.export(
+            sys.stdout, 0, name_="Profile",
+            namespacedef_='')
+    return rootObj
+
+
+def parseLiteral(inFileName, silence=False):
+    doc = parsexml_(inFileName)
+    rootNode = doc.getroot()
+    rootTag, rootClass = get_root_tag(rootNode)
+    if rootClass is None:
+        rootTag = 'Profile'
+        rootClass = Profile
+    rootObj = rootClass.factory()
+    rootObj.build(rootNode)
+    # Enable Python to collect the space used by the DOM.
+    doc = None
+    if not silence:
+        sys.stdout.write('#from ProfileGen import *\n\n')
+        sys.stdout.write('import ProfileGen as model_\n\n')
+        sys.stdout.write('rootObj = model_.rootTag(\n')
+        rootObj.exportLiteral(sys.stdout, 0, name_=rootTag)
+        sys.stdout.write(')\n')
+    return rootObj
+
+
+def main():
+    args = sys.argv[1:]
+    if len(args) == 1:
+        parse(args[0])
+    else:
+        usage()
+
 
 if __name__ == '__main__':
-    profile = get_profile("Willhaben")
-    print("Profile Name:", profile.name)
-    print("baseUrl", profile.base_url)
-    print("adRegex", profile.ad_regex)
-    print("tags", profile.ad_tags)
-    print("timeTag", profile.time_tag)
-    print("keyTag", profile.key_tag)
-    print("format", profile.format_regexes)
-    print("pageParam", profile.page_param)
-    print("Email notification", profile.notification_email)
-    print("Desktop notification", profile.notification_desktop)
-    
-    
+    #import pdb; pdb.set_trace()
+    main()
+
+
+__all__ = [
+    "BodyType",
+    "Profile",
+    "XmlAdDefinition",
+    "XmlAdTag",
+    "XmlEmail",
+    "XmlFormatRegex",
+    "XmlHtmlFormat",
+    "XmlHttpParameter",
+    "XmlKeyTag",
+    "XmlNotifications",
+    "XmlTimeTag",
+    "XmlWebsite"
+]

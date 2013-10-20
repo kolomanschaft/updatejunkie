@@ -6,20 +6,22 @@ main.py
 Created by Martin Hammerschmied on 2012-09-09.
 Copyright (c) 2012. All rights reserved.
 """
-from AdStore import *
+from AdStore import AdStore
 from AdAssessor import *
-from Observer import *
-from Logger import *
-from Config import *
-from NotificationServer import *
-from Profile import *
-from threading import Thread, Lock
+from Observer import Observer
+from Logger import Logger
+from Config import Config
+from NotificationServer import NotificationServer
+from Profile import get_profile
+from threading import Lock
+
 import sys
 import os
 import time
 import datetime
 
-def pseudo_gui():
+def server_loop():
+    # this is where we should listen on a socket for new configurations
     while True:
         time.sleep(1)
 
@@ -54,6 +56,7 @@ if __name__ == "__main__":
     for observer_name in config.list_observers():
         logger.append("Setting up observer " + observer_name)
         observer_config = config.observer_config(observer_name)
+        #profile = get_profile(observer_config.profile)
         profile = get_profile(observer_config.profile)
         # Ads that have already been processed are registered in this file
         if observer_config.ads_store:
@@ -81,16 +84,16 @@ if __name__ == "__main__":
         notificationServer = NotificationServer()
         if observer_config.email_active:
             from platform_dependant.Notification import EmailNotification
-            formatting = profile.notification_email
+            formatting = profile.Notifications.Email
             emailNotify = EmailNotification(config.smtp_host,
                                             config.smtp_port,
                                             config.smtp_user,
                                             config.smtp_password,
-                                            formatting["from"],
+                                            formatting.From,
                                             observer_config.email_to,
-                                            formatting["type"],
-                                            formatting["subject"],
-                                            formatting["body"])
+                                            formatting.ContentType,
+                                            formatting.Subject,
+                                            formatting.Body.valueOf_)
             notificationServer.addNotification(emailNotify)
 
         observer = Observer(url = observer_config.url,
@@ -105,4 +108,4 @@ if __name__ == "__main__":
     
     # all done! let's start spinning the wheel
     for observer in observers: observer.start()
-    pseudo_gui()
+    server_loop()

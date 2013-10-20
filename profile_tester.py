@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-profile_tester.py
+profile_tester.py takes 2 arguments, a profile name and a URL to test the 
+profile against. This script is useful for debugging new profiles.
 
 Created by Martin Hammerschmied on 2012-11-12.
 Copyright (c) 2012. All rights reserved.

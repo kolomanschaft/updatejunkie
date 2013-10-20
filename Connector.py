@@ -14,6 +14,7 @@ from Profile import *
 import datetime
 import html.parser as htmlparser
 from threading import Lock
+from Profile import get_profile
 
 class ConnectionError(Exception): pass
 
@@ -21,7 +22,7 @@ class Connector():
     
     @property
     def profile_name(self):
-        return self._profile.name
+        return self._profile.Name
     
     def __init__(self, url, profile):
         m = re.match(r"(http://)?([a-zA-Z0-9-.]+)?([a-zA-Z0-9-._/?=&%]*)", url)
@@ -36,10 +37,10 @@ class Connector():
     def __get_page__(self, page):
         data = None
         if page is not None:
-            page_param = self._profile.page_param
-            new_encoded = urlencode({page_param["name"]: page})
-            if page_param["method"] == "GET":
-                page_match = re.search("{}=[0-9]+".format(page_param["name"]), self._url)
+            page_param = self._profile.Website.PagingParameter
+            new_encoded = urlencode({page_param.Name: page})
+            if page_param.Method == "GET":
+                page_match = re.search("{}=[0-9]+".format(page_param.Name), self._url)
                 if page_match:
                     self._url = self._url.replace(page_match.group(), new_encoded)
                 elif self._url.find("?") >= 0:
@@ -56,9 +57,9 @@ class Connector():
         
         html = str(f.read(), "ISO-8859-1")
         f.close()
-        for regex in self._profile.format_regexes:
-            if regex["type"] == "filter":
-                html = re.sub(regex["regex"], "", html)
+        for regex in self._profile.Website.HtmlFormat.FormatRegex:
+            if regex.type_ == "filter":
+                html = re.sub(regex.valueOf_, "", html)
             else:
                 raise ConnectionError("Format type {} is not implemented!".format(regex["type"]))
         return html
@@ -79,38 +80,38 @@ class Connector():
                 return float("nan")
         def url_tag(value):
             if value[0] == "/":
-                return self._profile.base_url + value[1:]
+                return self._profile.Website.BaseUrl + value[1:]
             else:
                 return value
 
-        ad_tuples = re.findall(self._profile.ad_regex, html)
-        tags = self._profile.ad_tags
+        ad_tuples = re.findall(self._profile.Website.AdDefinition.Regex, html)
+        tags = self._profile.Website.AdDefinition.AdTag
         
         ads = []
         for ad_tuple in ad_tuples:
             ad = Ad()
             for combined in zip(tags, ad_tuple):
-                if combined[0]["type"] == "text":
-                    ad[combined[0]["name"]] = text_tag(combined[1])
-                elif combined[0]["type"] == "integer":
-                    ad[combined[0]["name"]] = integer_tag(combined[1])
-                elif combined[0]["type"] == "float":
-                    ad[combined[0]["name"]] = float_tag(combined[1])
-                elif combined[0]["type"] == "url":
-                    ad[combined[0]["name"]] = url_tag(combined[1])
-            ad.keytag = self._profile.key_tag
-            timetag_info = self._profile.time_tag
-            ad.timetag = datetime.datetime.strptime(ad[timetag_info["name"]], timetag_info["format"])
+                if combined[0].type_ == "text":
+                    ad[combined[0].valueOf_] = text_tag(combined[1])
+                elif combined[0].type_ == "integer":
+                    ad[combined[0].valueOf_] = integer_tag(combined[1])
+                elif combined[0].type_ == "float":
+                    ad[combined[0].valueOf_] = float_tag(combined[1])
+                elif combined[0].type_ == "url":
+                    ad[combined[0].valueOf_] = url_tag(combined[1])
+            ad.keytag = self._profile.Website.AdDefinition.KeyTag.TagName
+            timetag_info = self._profile.Website.AdDefinition.TimeTag
+            ad.timetag = datetime.datetime.strptime(ad[timetag_info.TagName], timetag_info.DateTimeFormat)
             ad["listingUrl"] = self._url
             ads.append(ad)
         return ads
             
     
     def frontpage_ads(self):
-        if not self._profile.page_param:
+        if not self._profile.Website.PagingParameter:
             html = self.__get_page__(None)
         else:
-            html = self.__get_page__(self._profile.page_param["init"])
+            html = self.__get_page__(self._profile.Website.PagingParameter.InitialValue)
         return self.__get_adlist_from_html__(html)
     
     def ads_all(self, pagestart = None, maxpages = 100):
@@ -124,10 +125,10 @@ class Connector():
         return self.ads_after(timelimit, maxpages)
     
     def ads_after(self, timelimit, maxpages = 100):
-        if not self._profile.page_param:
+        if not self._profile.Website.PagingParameter:
             ads = self.frontpage_ads()
             return [ad for ad in ads if ad.timetag > timelimit]
-        pagestart = self._profile.page_param["init"]
+        pagestart = int(self._profile.Website.PagingParameter.InitialValue)
         if not isinstance(timelimit, datetime.datetime):
             raise ConnectionError("timelimit needs to be a datetime instance")
         ads = []
