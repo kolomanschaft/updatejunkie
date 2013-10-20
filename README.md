@@ -9,8 +9,7 @@ At the moment the only available notification type is email. But it should be ve
 
 ## Dependencies
 
-* Python (>=2.6)
-* Python-beautifulsoup4
+* Python (>=3.0)
 
 ## Setup
 
