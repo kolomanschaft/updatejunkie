@@ -7,6 +7,15 @@ Willhaben is a platform independent web crawler for article-based websites. It s
 
 At the moment the only available notification type is email. But it should be very easy to extend Willhaben with other notification types.
 
+## Features
+
+* Observe article-based websites and send email notifications
+* Specify arbitrary tags in articles (e.g. price, description, post-time, etc.)
+* Specify notification trigger-criteria based on tags (e.g. description contains X, price lower than Y, etc.)
+* Handle paging in websites
+* Presistent index of already processed articles
+* Easily extendable for new websites through XML-based profiles
+ 
 ## Dependencies
 
 * Python (>=3.0)
