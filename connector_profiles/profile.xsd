@@ -1,0 +1,128 @@
+<?xml version="1.0"?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+targetNamespace="http://marvelous.at/2013/WillhabenProfile"
+xmlns="http://marvelous.at/2013/WillhabenProfile"
+elementFormDefault="qualified">
+
+	<xs:element name="Profile">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Name" type="xs:string" minOccurs="1" maxOccurs="1" />
+				<xs:element name="Website" type="XmlWebsite" minOccurs="1" maxOccurs="1" />
+				<xs:element name="Notifications" type="XmlNotifications" minOccurs="1" maxOccurs="1" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	
+	<xs:complexType name="XmlWebsite">
+		<xs:sequence>
+			<xs:element name="BaseUrl" type="xs:string" minOccurs="1" maxOccurs="1" />
+			<xs:element name="AdDefinition" type="XmlAdDefinition" minOccurs="1" maxOccurs="1" />
+			<xs:element name="HtmlFormat" type="XmlHtmlFormat" minOccurs="1" maxOccurs="1" />
+			<xs:element name="PagingParameter" type="XmlHttpParameter" minOccurs="0" maxOccurs="1" />
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="XmlAdDefinition">
+		<xs:sequence>
+			<xs:element name="Regex" type="xs:string" minOccurs="1" maxOccurs="1" />
+			<xs:element name="AdTag" type="XmlAdTag" minOccurs="1" maxOccurs="unbounded" />
+			<xs:element name="KeyTag" type="XmlKeyTag" minOccurs="1" maxOccurs="1" />
+			<xs:element name="TimeTag" type="XmlTimeTag" minOccurs="1" maxOccurs="1" />
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="XmlAdTag">
+		<xs:simpleContent>
+			<xs:extension base="xs:string">
+				<xs:attribute name="type" type="XmlAdTagType" />
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+
+	<xs:simpleType name="XmlAdTagType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="text" />
+			<xs:enumeration value="url" />
+			<xs:enumeration value="integer" />
+			<xs:enumeration value="float" />
+		</xs:restriction>
+	</xs:simpleType>
+	
+	<xs:complexType name="XmlKeyTag">
+		<xs:sequence>
+			<xs:element name="TagName" type="xs:string" minOccurs="1" maxOccurs="1" />
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="XmlTimeTag">
+		<xs:sequence>
+			<xs:element name="TagName" type="xs:string" minOccurs="1" maxOccurs="1" />
+			<xs:element name="DateTimeFormat" type="xs:string" minOccurs="1" maxOccurs="1" />
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="XmlHtmlFormat">
+		<xs:sequence>
+			<xs:element name="FormatRegex" type="XmlFormatRegex" minOccurs="1" maxOccurs="unbounded" />
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="XmlFormatRegex">
+		<xs:simpleContent>
+			<xs:extension base="xs:string">
+				<xs:attribute name="type" type="XmlFormatRegexType" />
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+	
+	<xs:simpleType name="XmlFormatRegexType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="filter" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:complexType name="XmlHttpParameter">
+		<xs:sequence>
+			<xs:element name="Name" type="xs:string" />
+			<xs:element name="Method" type="XmlHttpMethod" />
+			<xs:element name="InitialValue" type="xs:string" />
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:simpleType name="XmlHttpMethod">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="GET" />
+		</xs:restriction>
+	</xs:simpleType>
+	
+	<xs:complexType name="XmlNotifications">
+		<xs:sequence>
+			<xs:element name="Email" type="XmlEmail" minOccurs="0" maxOccurs="1" />
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="XmlEmail">
+		<xs:sequence>
+			<xs:element name="ContentType" type="XmlMIMEContentType" />
+			<xs:element name="From" type="xs:string" />
+			<xs:element name="Subject" type="xs:string" />
+			<xs:element name="Body">
+				<xs:complexType mixed="true">
+					<xs:sequence>
+						<xs:any minOccurs="0" maxOccurs="unbounded" processContents="skip" />
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:simpleType name="XmlMIMEContentType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="text/plain" />
+			<xs:enumeration value="text/html" />
+		</xs:restriction>
+	</xs:simpleType>
+	
+</xs:schema>

@@ -1,47 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<profile>
-	<name>Willhaben</name>
-	<website>
-		<baseUrl>http://www.willhaben.at/</baseUrl>
-		<adDefinition>
-			<regex>(even|odd) clearfix.*?id=\&quot;([0-9]+).*?&lt;a href=\&quot;([^\&quot;]+).*?&gt;([^&lt;]+).*?class=\&quot;price.*?([0-9]+,[0-9]{2}|verkauft).*?class=\&quot;description.*?&gt;(.+?)&lt;a.*?class=\&quot;date-time.*?&gt;([^&lt;]+)</regex>
-			<tag type="text">dummy</tag>
-			<tag type="integer">id</tag>
-			<tag type="url">url</tag>
-			<tag type="text">title</tag>
-			<tag type="float">price</tag>
-			<tag type="text">description</tag>
-			<tag type="text">datetime</tag>
-			<keyTag>
-				<tagName>id</tagName>
-			</keyTag>
-			<timeTag>
-				<tagName>datetime</tagName>
-				<format>%d.%m.%Y %H:%M</format>
-			</timeTag>
-		</adDefinition>
-		<format>
-			<regex type="filter">(\r|\t|\n| {2,})</regex>
-		</format>
-		<pageParam method="GET" init="1">page</pageParam>
-	</website>
-	<notification>
-		<email type="html">
-			<from>Willhaben &lt;contact@willhaben.com&gt;</from>
-			<subject>{title} for {price}</subject>
-			<body>
+<Profile xmlns="http://marvelous.at/2013/WillhabenProfile"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://marvelous.at/2013/WillhabenProfile profile.xsd">
+
+	<Name>Willhaben</Name>
+	<Website>
+		<BaseUrl>http://www.willhaben.at/</BaseUrl>
+		<AdDefinition>
+			<Regex>(even|odd) clearfix.*?id=\&quot;([0-9]+).*?&lt;a href=\&quot;([^\&quot;]+).*?&gt;([^&lt;]+).*?class=\&quot;price.*?([0-9]+,[0-9]{2}|verkauft).*?class=\&quot;description.*?&gt;(.+?)&lt;a.*?class=\&quot;date-time.*?&gt;([^&lt;]+)</Regex>
+			<AdTag type="text">dummy</AdTag>
+			<AdTag type="integer">id</AdTag>
+			<AdTag type="url">url</AdTag>
+			<AdTag type="text">title</AdTag>
+			<AdTag type="float">price</AdTag>
+			<AdTag type="text">description</AdTag>
+			<AdTag type="text">datetime</AdTag>
+			<KeyTag>
+				<TagName>id</TagName>
+			</KeyTag>
+			<TimeTag>
+				<TagName>datetime</TagName>
+				<DateTimeFormat>%d.%m.%Y %H:%M</DateTimeFormat>
+			</TimeTag>
+		</AdDefinition>
+		<HtmlFormat>
+			<FormatRegex type="filter">(\r|\t|\n| {2,})</FormatRegex>
+		</HtmlFormat>
+		<PagingParameter>
+			<Name>page</Name>
+			<Method>GET</Method>
+			<InitialValue>1</InitialValue>
+		</PagingParameter>
+	</Website>
+	<Notifications>
+		<Email>
+			<ContentType>text/html</ContentType>
+			<From>Willhaben &lt;contact@willhaben.com&gt;</From>
+			<Subject>{title} for {price}</Subject>
+			<Body>
 				I found a new ad ({datetime}):<br/><br/>
 				<b>{title}</b><br/>
 				for € <b>{price}</b><br/><br/>
 				<a href="{url}">{url}</a><br/><br/>
 				bye!
-			</body>
-		</email>
-		<desktop>
-			<title>Found an Ad!</title>
-			<body>{title} for € {price}</body>
-			<url>{url}</url>
-		</desktop>
-	</notification>
-</profile>
+			</Body>
+		</Email>
+	</Notifications>
+</Profile>
