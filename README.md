@@ -1,6 +1,6 @@
 # Willhaben
 
-Willhaben is a platform independent web crawler for article-based websites. It started out as an observer for the advertising-platform [willhaben.at]. But by adding *profiles* one can observe all kinds of article-based websites. The following list shows an overview of the profiles that are currently supported:
+Willhaben is a simple, platform independent crawler for article-based websites. It started out as an observer for the advertising-platform [willhaben.at]. But by adding *profiles* one can observe all kinds of article-based websites. The following list shows an overview of the profiles that are currently supported:
 
 * Willhaben: willhaben.at is an advertising service in Austria
 * DoodleComments: Observes the comments section of Doodle schedule pages
