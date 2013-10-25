@@ -1,0 +1,36 @@
+[
+	{
+		"command": "settings",
+		"smtp":
+		{
+			"host": "bsmtp.telekom.at",
+			"port": 25,
+			"user": "martin@hammerschmied.at",
+			"pass": "l/1py78f"
+		}
+	},
+
+	{
+		"command": "observer",
+		"name": "Bugaboo",
+		"profile": "Willhaben",
+		"url": "http://www.willhaben.at/iad/kaufen-und-verkaufen/baby-kind/transport/",
+		"store": true,
+		"interval": 120,
+		"trigger":
+		[
+			{
+				"tag": "title",
+				"type": "any",
+				"keywords": [ "bugaboo" ]
+			}
+		],
+		"notification":
+		[
+			{
+				"type": "email",
+				"to": [ "Martin Hammerschmied <gestatten@gmail.com>" ]
+			}
+		]
+	}
+]
