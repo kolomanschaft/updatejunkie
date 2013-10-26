@@ -8,6 +8,7 @@ Copyright (c) 2012. All rights reserved.
 """
 import pickle
 import datetime
+from threading import RLock
 
 class AdKeyError(Exception):pass
 
@@ -50,6 +51,7 @@ class AdStore(object):
         self.path = path
         self.autosave = autosave
         self.autosort = autosort
+        self._lock = RLock()
         self.load()
     
     def _sort_by_date(self):
@@ -62,17 +64,21 @@ class AdStore(object):
         return len(self.ads)
     
     def save(self):
+        self._lock.acquire()
         if not self.path: return
         try:
             with open(self.path, "wb") as f:
                 pickler = pickle.Pickler(f)
                 pickler.dump(self.ads)
         except: raise
+        self._lock.release()
         return True
     
     def load(self):
+        self._lock.acquire()
         if not self.path:
             self.ads = []
+            self._lock.release()
             return
         try:
             with open(self.path, "rb") as f:
@@ -82,11 +88,14 @@ class AdStore(object):
         except IOError: pass
         finally:
             if not hasattr(self, "ads"): self.ads = []
+            self._lock.release()
+
     
     def add_ads(self, ads):
         """
         'ads' is a list of new ads
         """
+        self._lock.acquire()
         added_ads = []
         cur_keys = [ad.key for ad in self.ads]
         new_keys = [ad.key for ad in ads]
@@ -96,9 +105,11 @@ class AdStore(object):
                 added_ads.append(ads[i])
         if self.autosort: self._sort_by_date()
         if self.autosave: self.save()
+        self._lock.release()
         return added_ads
     
     def remove_ads(self, ads):
+        self._lock.acquire()
         removed_ads = []
         cur_keys = [ad.key for ad in self.ads]
         new_keys = [ad.key for ad in ads]
@@ -110,6 +121,7 @@ class AdStore(object):
                 removed_ads.append(ads[i])
         if self.autosort: self._sort_by_date()
         if self.autosave: self.save()
+        self._lock.release()
         return removed_ads
     
     def __getitem__(self, key):

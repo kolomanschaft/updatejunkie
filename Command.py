@@ -13,17 +13,7 @@ from AdAssessor import *
 from NotificationServer import NotificationServer
 from Observer import Observer
 
-def command_from_json(server, data):
-    if ("command" not in data):
-        raise CommandException("The given data is not a valid command.")
-    
-    if (data["command"] == "settings"):
-        return SettingsCommand(server, data)
-    elif (data["command"] == "observer"):
-        return ObserverCommand(server, data)
-
-
-class CommandException(Exception):pass
+class CommandError(Exception):pass
 
 
 class Command(object):
@@ -33,7 +23,17 @@ class Command(object):
         self._data = data
     
     def execute(self):
-        raise CommandException("Execute must be implemented in a subclass.")
+        raise CommandError("Execute must be implemented in a subclass.")
+    
+    @classmethod
+    def from_json(cls, server, data):
+        if ("command" not in data):
+            raise CommandError("The given data is not a valid command.")
+        
+        if (data["command"] == "settings"):
+            return SettingsCommand(server, data)
+        elif (data["command"] == "observer"):
+            return ObserverCommand(server, data)
 
 
 class SettingsCommand(Command):
@@ -45,9 +45,9 @@ class SettingsCommand(Command):
     
     def validate_smtp(self, config):
         if ("host" not in config):
-            raise CommandException("'host' is missing in the smtp configuration.")
+            raise CommandError("'host' is missing in the smtp configuration.")
         if ("port" not in config):
-            raise CommandException("'port' is missing in the smtp configuration.")
+            raise CommandError("'port' is missing in the smtp configuration.")
 
 
 class ObserverCommand(Command):
@@ -55,16 +55,34 @@ class ObserverCommand(Command):
     def execute(self):
         self._server._logger.append("Setting up observer " + self._data["name"])
         profile = get_profile(self._data["profile"])
+        store = self._setup_store()
+        assessor = self._setup_assessor()
+     
+        # Notification server setup
+        notificationServer = NotificationServer()
+        for json in self._data["notification"]:
+            notification = self._setup_notification(json, profile)
+            notificationServer.addNotification(notification)
+
+        # Setup the actual observer
+        observer = Observer(url = self._data["url"], profile = profile,
+                            store = store, assessor = assessor,
+                            notification = notificationServer,
+                            logger = self._server.logger,
+                            update_interval = self._data["interval"],
+                            name = self._data["name"])
         
-        # Ads that have already been processed are registered in this file
-        save_file = None
+        self._server.add_observer(observer)
+
+    def _setup_store(self):
+        save_file = None    # Ads that have already been processed are registered in this file
         if self._data["store"] == True:
             save_file = "files/adstore.{}.db".format(self._data["name"])
         else: 
             save_file = None    
-        store = AdStore(path = save_file)
-     
-        # Search criteria setup
+        return AdStore(path = save_file)
+    
+    def _setup_assessor(self):
         assessor = AdAssessor()
         for trigger in self._data["trigger"]:
             if (trigger["type"] == "all"):
@@ -76,41 +94,23 @@ class ObserverCommand(Command):
             if (trigger["type"] == "limit"):
                 criterion = AdCriterionLimit(trigger["tag"], trigger["value"])
             assessor.add_criterion(criterion)
-     
-        # Notification server setup
-        notificationServer = NotificationServer()
-        for notification in self._data["notification"]:
-            if (notification["type"] == "email"):
-                if not self._server.config["smtp"]:
-                    raise CommandException("Cannot setup email notifications without smtp settings.")
+        return assessor
+            
+    def _setup_notification(self, json, profile):
+        if (json["type"] == "email"):
+            if not self._server.config["smtp"]:
+                raise CommandError("Cannot setup email notifications without smtp settings.")
 
-                from platform_dependant.Notification import EmailNotification
-                formatting = profile.Notifications.Email
-
-                smtp = self._server.config["smtp"]
-                to = notification["to"]
-                if (type(to) == str):
-                    to = [to]   # make it a list
-                
-                emailNotify = EmailNotification(smtp["host"],
-                                                smtp["port"],
-                                                smtp["user"],
-                                                smtp["pass"],
-                                                formatting.From,
-                                                notification["to"],
-                                                formatting.ContentType,
-                                                formatting.Subject,
-                                                formatting.Body.valueOf_)
-                notificationServer.addNotification(emailNotify)
- 
-        observer = Observer(url = self._data["url"],
-                            profile = profile,
-                            store = store,
-                            assessor = assessor,
-                            notification = notificationServer,
-                            logger = self._server.logger,
-                            update_interval = self._data["interval"],
-                            name = self._data["name"])
-        
-        self._server.observers.append(observer)
-        observer.start()
+            from platform_dependant.Notification import EmailNotification
+            formatting = profile.Notifications.Email
+            smtp = self._server.config["smtp"]
+            to = json["to"]
+            if (type(to) == str):
+                to = [to]   # make it a list
+            email_notification = EmailNotification(smtp["host"], smtp["port"],
+                                                   smtp["user"], smtp["pass"],
+                                                   formatting.From, json["to"],
+                                                   formatting.ContentType,
+                                                   formatting.Subject,
+                                                   formatting.Body.valueOf_)
+            return email_notification

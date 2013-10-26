@@ -10,22 +10,17 @@ Copyright (c) 2012. All rights reserved.
 
 
 from Logger import Logger
-from Config import Config
-
-
-from threading import Lock
 from Server import ServerApp
 
 import sys
 import os
-import time
 import datetime
 
 if __name__ == "__main__":
  
     dtime = "01.05.2013 23:27"
-    format = "%d.%m.%Y %H:%M"
-    datetime.datetime.strptime(dtime, format)
+    dtime_format = "%d.%m.%Y %H:%M"
+    datetime.datetime.strptime(dtime, dtime_format)
     
     # Create the 'files/' directory if it doesn't exist yet
     if not os.path.exists("./files/"): os.mkdir("files")

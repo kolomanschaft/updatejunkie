@@ -16,7 +16,7 @@
 		"profile": "Willhaben",
 		"url": "http://www.willhaben.at/iad/kaufen-und-verkaufen/baby-kind/transport/",
 		"store": true,
-		"interval": 120,
+		"interval": 30,
 		"trigger":
 		[
 			{

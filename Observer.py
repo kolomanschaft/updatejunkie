@@ -22,8 +22,15 @@ class Observer(threading.Thread):
         self.assessor = assessor
         self.notification = notification
         self.logger = logger
-        self.daemon = True
         self.name = name
+        self._quit = False
+        
+    def quit(self):
+        """
+        Make the Thread quit on the next round.
+        """
+        self._quit = True
+        self.logger.append("Observer {} quits on the next round".format(self.name))
 
     def process_ads(self, ads):
         if len(ads) == 0: return
@@ -43,13 +50,16 @@ class Observer(threading.Thread):
         self.time_mark = datetime.datetime.now() - datetime.timedelta(days = 1)
         self.logger.append("Observer {} polling ads back to {}".format(self.name, self.time_mark))
         ads = self.connector.ads_after(self.time_mark)
+        if self._quit: return   # Quit now if quit() was called while fetching ads
         self.process_ads(ads)
         self.logger.append("Observer {} initial poll done".format(self.name))
         while True:
             time.sleep(self.interval)
+            if self._quit: return   # Quit now if quit() was called while sleeping
             self.logger.append("Observer {} polling for new ads".format(self.name))
             try:
                 ads = self.connector.ads_after(self.time_mark)
+                if self._quit: return   # Quit now if quit() was called while fetching ads
                 self.process_ads(ads)
             except ConnectionError as ex:
                 self.logger.append("Observer {} connection failed with message: {}".format(self.name, ex.message))
