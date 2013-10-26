@@ -3,10 +3,10 @@
 		"command": "settings",
 		"smtp":
 		{
-			"host": "bsmtp.telekom.at",
+			"host": "mail.example.com",
 			"port": 25,
-			"user": "martin@hammerschmied.at",
-			"pass": "l/1py78f"
+			"user": "myuser123",
+			"pass": "secret"
 		}
 	},
 
@@ -16,7 +16,7 @@
 		"profile": "Willhaben",
 		"url": "http://www.willhaben.at/iad/kaufen-und-verkaufen/baby-kind/transport/",
 		"store": true,
-		"interval": 30,
+		"interval": 120,
 		"trigger":
 		[
 			{
@@ -24,12 +24,17 @@
 				"type": "any",
 				"keywords": [ "bugaboo" ]
 			}
+			{
+				"tag": "title",
+				"type": "not",
+				"keywords": [ "teutonia" ]
+			}
 		],
 		"notification":
 		[
 			{
 				"type": "email",
-				"to": [ "Martin Hammerschmied <gestatten@gmail.com>" ]
+				"to": [ "John Doe <john.doe@example.com>" ]
 			}
 		]
 	}
