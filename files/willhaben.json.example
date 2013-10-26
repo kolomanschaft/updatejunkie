@@ -1,13 +1,10 @@
 [
 	{
-		"command": "settings",
-		"smtp":
-		{
-			"host": "mail.example.com",
-			"port": 25,
-			"user": "myuser123",
-			"pass": "secret"
-		}
+		"command": "smtp_config",
+		"host": "mail.example.com",
+		"port": 25,
+		"user": "myuser123",
+		"pass": "secret"
 	},
 
 	{

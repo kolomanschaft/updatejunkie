@@ -30,20 +30,26 @@ class Command(object):
         if ("command" not in data):
             raise CommandError("The given data is not a valid command.")
         
-        if (data["command"] == "settings"):
-            return SettingsCommand(server, data)
-        elif (data["command"] == "observer"):
+        # Dispatch the command
+        if (data["command"] == "observer"):
             return ObserverCommand(server, data)
+        elif (data["command"] == "smtp_config"):
+            return SmtpSettingsCommand(server, data)
+        
+        raise CommandError("Unknown command: {}".format(data["command"]))
 
 
-class SettingsCommand(Command):
+class SmtpSettingsCommand(Command):
     
     def execute(self):
-        if ("smtp" in self._data):
-            self.validate_smtp(self._data["smtp"])
-            self._server.config["smtp"] = self._data["smtp"]
+        self.validate_smtp_config(self._data)
+        if "user" not in self._data:
+            self._data["user"] = None
+        if "pass" not in self._data:
+            self._data["pass"] = None
+        self._server.config["smtp"] = self._data
     
-    def validate_smtp(self, config):
+    def validate_smtp_config(self, config):
         if ("host" not in config):
             raise CommandError("'host' is missing in the smtp configuration.")
         if ("port" not in config):

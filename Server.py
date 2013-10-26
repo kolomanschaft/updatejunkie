@@ -8,10 +8,11 @@ Copyright (c) 2013. All rights reserved.
 """
 
 from Command import Command
+from bottle import route, request
+from bottle import run as bottlerun
 import json
-import time
 
-class ServerException(Exception):pass
+class ServerError(Exception):pass
 
 class ServerApp():
     
@@ -47,20 +48,26 @@ class ServerApp():
     def logger(self, aLogger):
         self._logger = aLogger
     
-    def process_json(self, json_string):
+    def process_command_script(self, path):
+        with open(path, "r") as f:
+            json_data = json.loads(f.read())
+            self.process_json(json_data)
+        
+    def process_json(self, json_data):
         def executeCommand(cmd):
-            if ("command" in cmd):
-                command = Command.from_json(self, cmd)
-                command.execute()
-                
-        data = json.loads(json_string)
-        if (type(data) is dict):
-            executeCommand(data)
-        elif (type(data) is list):
-            for cmd in data: executeCommand(cmd)
+            command = Command.from_json(self, cmd)
+            command.execute()
+        if (type(json_data) is dict):
+            executeCommand(json_data)
+        elif (type(json_data) is list):
+            for cmd in json_data: executeCommand(cmd)
         else:
-            raise ServerException("Unknown json structure.")
-
+            raise ServerError("Unknown JSON structure.")
+    
     def run(self):
-        while True:
-            time.sleep(1)
+        route("/api/command")(self._command)
+        bottlerun(host="localhost", port="8118", debug=True)
+        
+    def _command(self):
+        if request.json:
+            self.process_json(request.json)

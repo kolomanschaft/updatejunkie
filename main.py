@@ -25,7 +25,7 @@ if __name__ == "__main__":
     # Create the 'files/' directory if it doesn't exist yet
     if not os.path.exists("./files/"): os.mkdir("files")
     
-    # Load configuration
+    # Configuration script path
     if len(sys.argv) > 1:
         config_path = sys.argv[1]
     else:
@@ -34,10 +34,12 @@ if __name__ == "__main__":
     # Initialize logging
     logger = Logger(path = "files/observer.log")
 
-    app = ServerApp(logger)
+    server = ServerApp(logger)
     
-    with open(config_path, "r") as f:
-        app.process_json(f.read())
+    # If we have a configuration script, process it
+    if (os.path.exists(config_path)):
+        server.process_command_script(config_path)
 
-    app.run()
+    # Run, run, run!
+    server.run()
     
