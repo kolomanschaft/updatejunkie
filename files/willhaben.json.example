@@ -8,7 +8,7 @@
 	},
 
 	{
-		"command": "observer",
+		"command": "new_observer",
 		"name": "Bugaboo",
 		"profile": "Willhaben",
 		"url": "http://www.willhaben.at/iad/kaufen-und-verkaufen/baby-kind/transport/",

@@ -22,17 +22,24 @@ At the moment the only available notification type is email. But it should be ve
 
 ## Setup
 
-The setup process is straight forward. Copy the config file `files/willhaben.cfg.sample` to `files/willhaben.cfg` and edit it. The sample configuration is well commented and should be easy to grasp. That's it!
-
 To launch Willhaben simply run `main.py`:
 
-    python main.py
+    python3 main.py
 
-Willhaben will automatically look for the configuration file `files/willhaben.cfg`. However, you can create arbitrary configuration files and pass them as an argument:
+Willhaben will automatically look for the command script `files/willhaben.json`. However, you can create arbitrary command script and pass them as an argument:
 
-    python main.py path/to/configfile.cfg
+    python3 main.py path/to/commandscript.json
 
-This way you can create various config files, one for each kind of ads you want to observe.
+This way you can create various command scripts and run multiple instances simultaneously, if desired. Use `files/willhaben.json.example` as a template.
+
+## Commands
+
+The whole configuration of Willhaben is based on commands (the only exceptions are profiles which are discussed in the next chapter). Commands are encoded in JSON and can be send to Willhaben in two ways:
+
+* Via a HTTP API
+* Via a configuration script
+
+You could launch Willhaben without a command script to bootstrap it. After launch Willhaben can be configured using the web-based JSON API. If nothing else was configured (using a command script), Willhaben listens on localhost:8118. However, it is recommended to use a command script to do some basic configuration.
 
 ## Profiles
 

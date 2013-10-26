@@ -13,6 +13,7 @@ from AdAssessor import *
 from NotificationServer import NotificationServer
 from Observer import Observer
 
+
 class CommandError(Exception):pass
 
 
@@ -31,8 +32,10 @@ class Command(object):
             raise CommandError("The given data is not a valid command.")
         
         # Dispatch the command
-        if (data["command"] == "observer"):
-            return ObserverCommand(server, data)
+        if (data["command"] == "new_observer"):
+            return NewObserverCommand(server, data)
+        elif (data["command"] == "remove_observer"):
+            return RemoveObserverCommand(server, data)
         elif (data["command"] == "smtp_config"):
             return SmtpSettingsCommand(server, data)
         
@@ -56,7 +59,7 @@ class SmtpSettingsCommand(Command):
             raise CommandError("'port' is missing in the smtp configuration.")
 
 
-class ObserverCommand(Command):
+class NewObserverCommand(Command):
     
     def execute(self):
         self._server._logger.append("Setting up observer " + self._data["name"])
@@ -120,3 +123,17 @@ class ObserverCommand(Command):
                                                    formatting.Subject,
                                                    formatting.Body.valueOf_)
             return email_notification
+        
+        
+class RemoveObserverCommand(Command):
+    
+    def execute(self):
+        if "name" not in self._data:
+            raise CommandError("The remove_observer command must specify a name.")
+        
+        try:
+            self._server.remove_observer(self._data["name"])
+            return {"status": "OK"}
+        except Exception as ex:
+            return {"status": "ERROR", "description": "write something"}
+        

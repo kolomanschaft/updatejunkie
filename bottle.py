@@ -1573,7 +1573,7 @@ class JSONPlugin(object):
         if not dumps: return callback
         def wrapper(*a, **ka):
             rv = callback(*a, **ka)
-            if isinstance(rv, dict):
+            if isinstance(rv, dict) or isinstance(rv, list):
                 #Attempt to serialize, raises exception on failure
                 json_response = dumps(rv)
                 #Set content type only if serialization succesful

@@ -8,7 +8,7 @@ Copyright (c) 2013. All rights reserved.
 """
 
 from Command import Command
-from bottle import route, request
+from bottle import route, request, response
 from bottle import run as bottlerun
 import json
 
@@ -34,7 +34,8 @@ class ServerApp():
             observer = next(observer for observer in self._observers if observer.name == name)
             observer.quit()
             self._observers.remove(observer)
-        except StopIteration:pass
+        except StopIteration:
+            raise ServerError("No observer with the name of '{}'".format(name))
         
     @property
     def config(self):
@@ -56,11 +57,11 @@ class ServerApp():
     def process_json(self, json_data):
         def executeCommand(cmd):
             command = Command.from_json(self, cmd)
-            command.execute()
+            return command.execute()
         if (type(json_data) is dict):
-            executeCommand(json_data)
+            return executeCommand(json_data)
         elif (type(json_data) is list):
-            for cmd in json_data: executeCommand(cmd)
+            return [executeCommand(cmd) for cmd in json_data]
         else:
             raise ServerError("Unknown JSON structure.")
     
@@ -70,4 +71,5 @@ class ServerApp():
         
     def _command(self):
         if request.json:
-            self.process_json(request.json)
+            return self.process_json(request.json)
+            
