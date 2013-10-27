@@ -35,7 +35,7 @@ This way you can create various command scripts and run multiple instances simul
 
 You can also start Willhaben without a command script and configure it using only the JSON API.
 
-## The Command Structure
+## The Command API
 
 The whole configuration of Willhaben is based on commands (the only exceptions are profiles which are discussed in the next chapter). Commands are encoded in JSON and can be send to Willhaben in two ways:
 
