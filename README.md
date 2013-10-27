@@ -53,10 +53,12 @@ Example for a successful command response:
 ```
 
 Example for a failed command response:
-    {
-        'state': 'ERROR',
-        'message': 'Payload is not valid JSON: Expecting , delimiter: line 3 column 2 (char 33)'
-    }
+```
+{
+	"state": "ERROR",
+	"message": "Payload is not valid JSON: Expecting , delimiter: line 3 column 2 (char 33)"
+}
+```
 
 Upcoming is a list of commands that the API currently supports.
 
@@ -67,12 +69,16 @@ Upcoming is a list of commands that the API currently supports.
 Returns a list of all available commands.
 
 Example:
-    {
-        "command": "list_commands"
-    }
+```
+{
+	"command": "list_commands"
+}
+```
 
 Response:
-    ["<command1>", "<command2>", ...]
+```
+["<command1>", "<command2>", ...]
+```
 
 ## Profiles
 
