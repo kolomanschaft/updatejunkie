@@ -213,9 +213,9 @@ Response:
 			"type": "keywords_not"
 		},
 		{
-			"limit": 50
+			"limit": 50,
 			"tag": "price",
-			"type": "limit",
+			"type": "limit"
         	}
 	],
 	"store": true
