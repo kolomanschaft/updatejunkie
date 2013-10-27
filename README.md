@@ -45,10 +45,12 @@ You can launch Willhaben without a command script. After launch Willhaben can be
 Use the JSON API by sending commands to `http://host:port/api/command`. Each API call is terminated by a response which is also JSON. The response states whether the command was successful or not and contains a response data structure if necessary. In case the command failed, the response contains an error message.
 
 Example for a successful command response:
-    {
-        "state": "OK",
-        "response": ["mydata", 25, False]
-    }
+```
+{
+	"state": "OK",
+	"response": ["mydata", 25, False]
+}
+```
 
 Example for a failed command response:
     {
