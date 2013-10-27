@@ -211,7 +211,12 @@ Response:
 			"keywords": ["teutonia"],
 			"tag": "title",
 			"type": "keywords_not"
-		}
+		},
+		{
+			"limit": 50
+			"tag": "price",
+			"type": "limit",
+        	}
 	],
 	"store": true
 }
