@@ -45,7 +45,7 @@ You can launch Willhaben without a command script. After launch Willhaben can be
 Use the JSON API by sending commands to `http://host:port/api/command`. Each API call is terminated by a response which is also JSON. The response states whether the command was successful or not and contains a response data structure if necessary. In case the command failed, the response contains an error message.
 
 Example for a successful command response:
-```
+```JSON
 {
 	"state": "OK",
 	"response": ["mydata", 25, False]
@@ -53,7 +53,7 @@ Example for a successful command response:
 ```
 
 Example for a failed command response:
-```
+```JSON
 {
 	"state": "ERROR",
 	"message": "Payload is not valid JSON: Expecting , delimiter: line 3 column 2 (char 33)"
@@ -69,16 +69,92 @@ Upcoming is a list of commands that the API currently supports.
 Returns a list of all available commands.
 
 Example:
-```
+```JSON
 {
 	"command": "list_commands"
 }
 ```
 
 Response:
-```
+```JSON
 ["<command1>", "<command2>", ...]
 ```
+
+#### list_observers
+
+Returns a list of all observers which are currently active.
+
+Example:
+```JSON
+{
+	"command": "list_observers"
+}
+```
+
+Response:
+```JSON
+["MyObserver", "AnotherObserver", ...]
+```
+
+#### remove_observer
+
+Removes an active observer.
+
+Example:
+```JSON
+{
+	"command": "remove_observer",
+	"name": "<observer_name>"
+}
+```
+
+#### new_observer
+
+Adds a new observer and activates it. This is the most complex command as it contains the whole configuration for an observer.
+
+
+
+Example:
+```JSON
+{
+	"command": "new_observer",
+	"name": "Bugaboo",
+	"profile": "Willhaben",
+	"url": "http://www.willhaben.at/iad/kaufen-und-verkaufen/baby-kind/transport/",
+	"store": true,
+	"interval": 30,
+	"criteria":
+	[
+		{
+			"tag": "title",
+			"type": "keywords_any",
+			"keywords": [ "bugaboo" ]
+		},
+		{
+			"tag": "title",
+			"type": "keywords_not",
+			"keywords": [ "teutonia" ]
+		}
+		{
+			"tag": "price",
+			"type": "limit",
+			"limit": 50
+		}
+	],
+	"notifications":
+	[
+		{
+			"type": "email",
+			"to": [ "Martin Hammerschmied <gestatten@gmail.com>" ]
+		}
+	]
+}
+```
+
+#### get_observer
+#### smtp_config
+
+Response: None
 
 ## Profiles
 
