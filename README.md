@@ -14,8 +14,8 @@ At the moment the only available notification type is email. But it should be ve
 * Specify notification trigger-criteria based on tags (e.g. description contains X, price lower than Y, etc.)
 * Handle paging in websites
 * Presistent index of already processed articles
-* Configurable entirely through a RESTful JSON API and/or a startup script
-* Easily extendable for new websites through XML-based profiles
+* Configurable entirely through a RESTful JSON API and/or a JSON startup script
+* Easily extendable for new websites by using XML-based profiles
  
 ## Dependencies
 
@@ -27,11 +27,13 @@ To launch Willhaben simply run `main.py`:
 
     python3 main.py
 
-Willhaben will look for a command script at `files/willhaben.json`. However, you can create arbitrary command script and pass them as an argument:
+Willhaben will look for a command script at `files/willhaben.json`. However, you can create arbitrary command scripts and pass them as an argument:
 
     python3 main.py path/to/commandscript.json
 
 This way you can create various command scripts and run multiple instances simultaneously, if desired. Use `files/willhaben.json.example` as a template.
+
+You can also start Willhaben without a command script and configure it using only the JSON API.
 
 ## The Command Structure
 
@@ -40,23 +42,23 @@ The whole configuration of Willhaben is based on commands (the only exceptions a
 * Via a HTTP API
 * Via a command script
 
-You can launch Willhaben without a command script. After launch Willhaben can be configured using the web-based JSON API. If nothing else was configured (using a command script), Willhaben listens on `localhost` and port `8118`. However, it is recommended to use a command script to properly bootstrap Willhaben.
+You can launch Willhaben without a command script. After launch Willhaben can be configured using the web-based JSON API. If nothing else was configured (by a command script), Willhaben's web server listens on `localhost` and port `8118`. However, it is recommended to use a command script to properly bootstrap Willhaben. The root element in command scripts can either be a dictionary containing a single command, or a list of commands (see `files/willhaben.json.example`).
 
 Use the JSON API by sending commands to `http://host:port/api/command`. Each API call is terminated by a response which is also JSON. The response states whether the command was successful or not and contains a response data structure if necessary. In case the command failed, the response contains an error message.
 
 Example for a successful command response:
 ```JSON
 {
-	"state": "OK",
-	"response": ["mydata", 25, False]
+	"status": "OK",
+	"response": ["mydata", 25, false]
 }
 ```
 
 Example for a failed command response:
 ```JSON
 {
-	"state": "ERROR",
-	"message": "Payload is not valid JSON: Expecting , delimiter: line 3 column 2 (char 33)"
+	"status": "ERROR",
+	"message": "JSON syntax: Expecting , delimiter: line 3 column 2 (char 33)"
 }
 ```
 
@@ -108,11 +110,30 @@ Example:
 }
 ```
 
+Response: *None*
+
 #### new_observer
 
-Adds a new observer and activates it. This is the most complex command as it contains the whole configuration for an observer.
+Adds a new observer and activates it. This is the most complex command as it contains the whole configuration for an observer. Therefore here is a brief explanation about what each element does. It might be worth mentioning that none of the elements in the first level is optional.
 
+__name__: The observer's name<br />
+__profile__: The website's profile. More about profiles in the next section<br />
+__url__: The URL of the page where the articles are located<br />
+__store__: If `true`, Willhaben remembers already processed ads upon restarts<br />
+__interval__: Time between two polls<br />
+__criteria__: A list of trigger criteria
 
+You can specify a set of criteria which have to be satisfied in order to trigger a notification. If at least one criterion doesn't match, no notification will be triggered.
+
+__tag__: The name of the tag as defined in the website profile<br />
+__type__: One out of `keywords_any`, `keywords_all`, `keywords_not`, `limit`<br />
+__keywords__: A list of keywords (only available for types `keywords_*`)<br />
+__limit__: A number value that is the upper bound of an integer or float type tag (only available for criterion type `limit`)
+
+You can specify notifications for that observer. At the moment the only available notification type is `email` but there might be more in the future.
+
+__type__: One out of `email`, ... well thats it<br />
+__to__: A list of email recipients
 
 Example:
 ```JSON
@@ -151,10 +172,67 @@ Example:
 }
 ```
 
+Response: *None*
+
 #### get_observer
+
+Returns a data structure that contains the same elements as the `new_observer` command except for the `command` specifier itself. You could take the response directly to add another observer.
+
+Example:
+```JSON
+{
+	"command": "get_observer",
+	"name": "Bugaboo"
+}
+```
+
+Response:
+```JSON
+{
+	"profile": "Willhaben",
+	"name": "Bugaboo",
+	"url": "http://www.willhaben.at/iad/kaufen-und-verkaufen/baby-kind/transport/",
+	"interval": 30,
+	"notifications":
+	[
+		{
+			"to": ["Martin Hammerschmied <gestatten@gmail.com>"],
+			"type": "email"
+		}
+	],
+	"criteria":
+	[
+		{
+			"keywords": ["bugaboo"],
+			"tag": "title",
+			"type": "keywords_any"
+		},
+		{
+			"keywords": ["teutonia"],
+			"tag": "title",
+			"type": "keywords_not"
+		}
+	],
+	"store": true
+}
+```
+
 #### smtp_config
 
-Response: None
+Set the SMTP configuration used to send emails.
+
+Example:
+```JSON
+{
+	"command": "smtp_config",
+	"host": "smtp.example.com",
+	"port": 25,
+	"user": "felix_the_cat",
+	"pass": "fuckingpassword"
+}
+```
+
+Response: *None*
 
 ## Profiles
 
@@ -168,10 +246,6 @@ The original Willhaben profile (`connector_profiles/willhaben.xml`) is very well
 
 ## Known issues
 
-* If an ad article is free or the article is already sold the price is not recognized correctly and causes the observer to ignore a set price limit.
-
-## Outlook
-
-I'm planning to make Willhaben a server/client application with the present application being the server. Therefore the configurtaion will no longer be fetched from a cfg-file. Instead Willhaben will be accessable over a simple JSON API.
+* Profile `Willhaben`: If an ad article is free or the article is already sold the price is not recognized correctly and causes the observer to ignore a set price limit.
 
 [willhaben.at]: http://www.willhaben.at/
