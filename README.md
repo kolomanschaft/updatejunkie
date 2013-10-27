@@ -14,6 +14,7 @@ At the moment the only available notification type is email. But it should be ve
 * Specify notification trigger-criteria based on tags (e.g. description contains X, price lower than Y, etc.)
 * Handle paging in websites
 * Presistent index of already processed articles
+* Configurable entirely through a RESTful JSON API and/or a startup script
 * Easily extendable for new websites through XML-based profiles
  
 ## Dependencies
@@ -26,20 +27,50 @@ To launch Willhaben simply run `main.py`:
 
     python3 main.py
 
-Willhaben will automatically look for the command script `files/willhaben.json`. However, you can create arbitrary command script and pass them as an argument:
+Willhaben will look for a command script at `files/willhaben.json`. However, you can create arbitrary command script and pass them as an argument:
 
     python3 main.py path/to/commandscript.json
 
 This way you can create various command scripts and run multiple instances simultaneously, if desired. Use `files/willhaben.json.example` as a template.
 
-## Commands
+## The Command Structure
 
 The whole configuration of Willhaben is based on commands (the only exceptions are profiles which are discussed in the next chapter). Commands are encoded in JSON and can be send to Willhaben in two ways:
 
 * Via a HTTP API
-* Via a configuration script
+* Via a command script
 
-You could launch Willhaben without a command script to bootstrap it. After launch Willhaben can be configured using the web-based JSON API. If nothing else was configured (using a command script), Willhaben listens on localhost:8118. However, it is recommended to use a command script to do some basic configuration.
+You can launch Willhaben without a command script. After launch Willhaben can be configured using the web-based JSON API. If nothing else was configured (using a command script), Willhaben listens on `localhost` and port `8118`. However, it is recommended to use a command script to properly bootstrap Willhaben.
+
+Use the JSON API by sending commands to `http://host:port/api/command`. Each API call is terminated by a response which is also JSON. The response states whether the command was successful or not and contains a response data structure if necessary. In case the command failed, the response contains an error message.
+
+Example for a successful command response:
+    {
+        "state": "OK",
+        "response": ["mydata", 25, False]
+    }
+
+Example for a failed command response:
+    {
+        'state': 'ERROR',
+        'message': 'Payload is not valid JSON: Expecting , delimiter: line 3 column 2 (char 33)'
+    }
+
+Upcoming is a list of commands that the API currently supports.
+
+### Available Commands
+
+#### list_commands
+
+Returns a list of all available commands.
+
+Example:
+    {
+        "command": "list_commands"
+    }
+
+Response:
+    ["<command1>", "<command2>", ...]
 
 ## Profiles
 

@@ -8,22 +8,36 @@ Copyright (c) 2012. All rights reserved.
 """
 import time, datetime
 from itertools import compress
-from Connector import *
-from Logger import *
+from Connector import Connector, ConnectionError
+from Logger import Logger
 import threading
 
 class Observer(threading.Thread):
     
-    def __init__(self, url, profile, store, assessor, notification, logger = Logger(), update_interval = 180, name = "Unnamed Observer"):
+    def __init__(self, url, profile, store, assessor, notifications, logger = Logger(), update_interval = 180, name = "Unnamed Observer"):
         super(Observer, self).__init__()
         self.interval = update_interval
         self.connector = Connector(url, profile)
         self.store = store
         self.assessor = assessor
-        self.notification = notification
+        self.notifications = notifications
         self.logger = logger
         self.name = name
         self._quit = False
+    
+    def serialize(self):
+        d = dict()
+        d["name"] = self.name
+        d["url"] = self.connector.url
+        d["interval"] = self.interval
+        d["profile"] = self.connector.profile_name
+        if self.store is not None:
+            d["store"] = True
+        if self.assessor is not None:
+            d["criteria"] = [criterion.serialize() for criterion in self.assessor.criteria]
+        if self.notifications is not None:
+            d["notifications"] = [notification.serialize() for notification in self.notifications]
+        return d
         
     def quit(self):
         """
@@ -42,8 +56,8 @@ class Observer(threading.Thread):
                 self.logger.append("Observer {} Found Ad: {}".format(self.name, ad["title"]))
             except KeyError:
                 self.logger.append("Observer {} Found Ad: {}".format(self.name, ad.key))
-            if self.notification:
-                self.notification.notifyAll(ad)
+            if self.notifications:
+                self.notifications.notify_all(ad)
         self.time_mark = sorted(ads, key = lambda ad: ad.timetag)[-1].timetag
 
     def run(self):

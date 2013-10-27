@@ -7,10 +7,11 @@ Created by Martin Hammerschmied on 2013-10-25.
 Copyright (c) 2013. All rights reserved.
 """
 
-from Command import Command
+from Command import Command, CommandError
 from bottle import route, request, response
 from bottle import run as bottlerun
 import json
+import sys
 
 class ServerError(Exception):pass
 
@@ -35,8 +36,19 @@ class ServerApp():
             observer.quit()
             self._observers.remove(observer)
         except StopIteration:
-            raise ServerError("No observer with the name of '{}'".format(name))
-        
+            raise ServerError("No observer with the name of {}".format(name))
+    
+    def __getitem__(self, key):
+        if type(key) is not str:
+            raise TypeError("The key must be a string containing the observer name.")
+        try:
+            return next(observer for observer in self._observers if observer.name == key)
+        except StopIteration:
+            raise KeyError("Observer {} not found".format(key))
+    
+    def __iter__(self):
+        return self._observers.__iter__()
+    
     @property
     def config(self):
         return self._config
@@ -56,8 +68,17 @@ class ServerApp():
         
     def process_json(self, json_data):
         def executeCommand(cmd):
-            command = Command.from_json(self, cmd)
-            return command.execute()
+            try:
+                command = Command.from_json(self, cmd)
+                response = command.execute()
+                response_message = {"state": "OK"}
+                if response is not None:
+                    response_message["response"] = response
+                return response_message
+            except (ServerError, CommandError) as ex:
+                args_text = "; ".join(["{}".format(arg) for arg in ex.args])
+                return {"state": "ERROR", "message": args_text}
+        
         if (type(json_data) is dict):
             return executeCommand(json_data)
         elif (type(json_data) is list):
@@ -70,6 +91,10 @@ class ServerApp():
         bottlerun(host="localhost", port="8118", debug=True)
         
     def _command(self):
-        if request.json:
-            return self.process_json(request.json)
-            
+        try:
+            json_data = request.json
+            return self.process_json(json_data)
+        except ValueError as error:
+            return {"state": "ERROR", 
+                    "message": "Payload is not valid JSON: {}".format(error.args[0])
+                   }

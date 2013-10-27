@@ -9,7 +9,7 @@ Copyright (c) 2013. All rights reserved.
 
 from Profile import get_profile
 from AdStore import AdStore
-from AdAssessor import *
+from AdAssessor import AdAssessor, AdCriterion
 from NotificationServer import NotificationServer
 from Observer import Observer
 
@@ -18,6 +18,9 @@ class CommandError(Exception):pass
 
 
 class Command(object):
+    """
+    Base class for all commands.
+    """
 
     def __init__(self, server, data):
         self._server = server
@@ -30,19 +33,27 @@ class Command(object):
     def from_json(cls, server, data):
         if ("command" not in data):
             raise CommandError("The given data is not a valid command.")
-        
-        # Dispatch the command
-        if (data["command"] == "new_observer"):
-            return NewObserverCommand(server, data)
-        elif (data["command"] == "remove_observer"):
-            return RemoveObserverCommand(server, data)
-        elif (data["command"] == "smtp_config"):
-            return SmtpSettingsCommand(server, data)
+
+        for subclass in Command.__subclasses__():
+            if subclass.command == data["command"]:
+                return subclass(server, data)
+                
+#         # Dispatch the command
+#         if (data["command"] == "new_observer"):
+#             return NewObserverCommand(server, data)
+#         elif (data["command"] == "remove_observer"):
+#             return RemoveObserverCommand(server, data)
+#         elif (data["command"] == "smtp_config"):
+#             return SmtpSettingsCommand(server, data)
         
         raise CommandError("Unknown command: {}".format(data["command"]))
 
 
 class SmtpSettingsCommand(Command):
+    """
+    Command to change the SMTP settings for sending email notifications.
+    """
+    command = "smtp_config"
     
     def execute(self):
         self.validate_smtp_config(self._data)
@@ -60,23 +71,32 @@ class SmtpSettingsCommand(Command):
 
 
 class NewObserverCommand(Command):
-    
+    """
+    Setup a new observer. If an older observer is running with the same name, 
+    it will be replaced by the new observer.
+    """
+    command = "new_observer"
+
     def execute(self):
         self._server._logger.append("Setting up observer " + self._data["name"])
         profile = get_profile(self._data["profile"])
         store = self._setup_store()
-        assessor = self._setup_assessor()
+        
+        
+        assessor = AdAssessor()
+        for json in self._data["criteria"]:
+            assessor.add_criterion(AdCriterion.from_json(json))
      
         # Notification server setup
         notificationServer = NotificationServer()
-        for json in self._data["notification"]:
+        for json in self._data["notifications"]:
             notification = self._setup_notification(json, profile)
-            notificationServer.addNotification(notification)
+            notificationServer.add_notification(notification)
 
         # Setup the actual observer
         observer = Observer(url = self._data["url"], profile = profile,
                             store = store, assessor = assessor,
-                            notification = notificationServer,
+                            notifications = notificationServer,
                             logger = self._server.logger,
                             update_interval = self._data["interval"],
                             name = self._data["name"])
@@ -91,20 +111,6 @@ class NewObserverCommand(Command):
             save_file = None    
         return AdStore(path = save_file)
     
-    def _setup_assessor(self):
-        assessor = AdAssessor()
-        for trigger in self._data["trigger"]:
-            if (trigger["type"] == "all"):
-                criterion = AdCriterionKeywordsAll(trigger["tag"], trigger["keywords"])
-            if (trigger["type"] == "any"):
-                criterion = AdCriterionKeywordsAny(trigger["tag"], trigger["keywords"])
-            if (trigger["type"] == "not"):
-                criterion = AdCriterionKeywordsNot(trigger["tag"], trigger["keywords"])
-            if (trigger["type"] == "limit"):
-                criterion = AdCriterionLimit(trigger["tag"], trigger["value"])
-            assessor.add_criterion(criterion)
-        return assessor
-            
     def _setup_notification(self, json, profile):
         if (json["type"] == "email"):
             if not self._server.config["smtp"]:
@@ -126,14 +132,48 @@ class NewObserverCommand(Command):
         
         
 class RemoveObserverCommand(Command):
+    """
+    Command to remove an observer by its name.
+    """
+    command = "remove_observer"
     
     def execute(self):
         if "name" not in self._data:
             raise CommandError("The remove_observer command must specify a name.")
-        
-        try:
-            self._server.remove_observer(self._data["name"])
-            return {"status": "OK"}
-        except Exception as ex:
-            return {"status": "ERROR", "description": "write something"}
-        
+        self._server.remove_observer(self._data["name"])
+
+
+class ListObserversCommand(Command):
+    """
+    Returns a list of all observers that are currently running.
+    """
+    command = "list_observers"
+    
+    def execute(self):
+        return [observer.name for observer in self._server]
+
+
+class GetObserverCommand(Command):
+    """
+    Returns a list of all observers that are currently running.
+    """
+    command = "get_observer"
+    
+    def execute(self):
+        if "name" not in self._data:
+            raise CommandError("The get_observer command must specify a name.")
+        observer = self._server[self._data["name"]]
+        if observer is None:
+            raise CommandError("Observer {} not found.".format(self._data["name"]))
+        return observer.serialize()
+
+
+class ListCommandsCommand(Command):
+    """
+    Returns a list of all available commands.
+    """
+    command = "list_commands"
+    
+    def execute(self):
+        return [cmd_class.command for cmd_class in Command.__subclasses__()]
+

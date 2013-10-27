@@ -24,6 +24,10 @@ class Connector():
     def profile_name(self):
         return self._profile.Name
     
+    @property
+    def url(self):
+        return self._url
+    
     def __init__(self, url, profile):
         m = re.match(r"(http://)?([a-zA-Z0-9-.]+)?([a-zA-Z0-9-._/?=&%]*)", url)
         if m is None:
@@ -36,24 +40,25 @@ class Connector():
 
     def __get_page__(self, page):
         data = None
+        url = self._url
         if page is not None:
             page_param = self._profile.Website.PagingParameter
             new_encoded = urlencode({page_param.Name: page})
             if page_param.Method == "GET":
                 page_match = re.search("{}=[0-9]+".format(page_param.Name), self._url)
                 if page_match:
-                    self._url = self._url.replace(page_match.group(), new_encoded)
+                    url = self._url.replace(page_match.group(), new_encoded)
                 elif self._url.find("?") >= 0:
-                    self._url = self._url + "&" + new_encoded
+                    url = self._url + "&" + new_encoded
                 else:
-                    self._url = self._url + "?" + new_encoded
+                    url = self._url + "?" + new_encoded
             else:
                 data = new_encoded
         
         try:
-            f = urllib.request.urlopen(self._url, data)
+            f = urllib.request.urlopen(url, data)
         except urllib.error.URLError:
-            raise ConnectionError("Could not connect to {}".format(self._url))
+            raise ConnectionError("Could not connect to {}".format(url))
         
         html = str(f.read(), "ISO-8859-1")
         f.close()

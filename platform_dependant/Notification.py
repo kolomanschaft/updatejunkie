@@ -7,6 +7,7 @@ Created by Martin Hammerschmied on 2012-09-09.
 Copyright (c) 2012. All rights reserved.
 """
 import smtplib
+import re
 from email.mime.text import MIMEText
 from email.header import Header
 
@@ -14,6 +15,9 @@ class NotificationError(Exception):pass
 
 class Notification:
 	def notify(self, ad):pass
+	
+	def serialize(self):
+		raise NotImplementedError("Notification must be subclassed.")
 	
 class EmailNotification(Notification):
 	"""Sends email notification using python's smtplib module"""
@@ -29,7 +33,11 @@ class EmailNotification(Notification):
 		self.mimetype = mimetype
 	
 	def _get_mime_string(self, to, subject, body):
-		mimetext = MIMEText(body, self.mimetype, _charset = "utf-8")
+		match = re.match("text/(.+)", self.mimetype)
+		if not match:
+			raise RuntimeError("MIME type not supported: {}".format(self.mimetype))
+		subtype = match.groups()[0]
+		mimetext = MIMEText(body, subtype, _charset = "utf-8")
 		mimetext["From"] = self.sender
 		mimetext["Subject"] = Header(subject, "utf-8")
 		mimetext["To"] = Header(to, "utf-8")
@@ -52,3 +60,5 @@ class EmailNotification(Notification):
 			msg = self._get_mail(ad, to)
 			server.sendmail(self.sender, to, msg)
 
+	def serialize(self):
+		return {"type": "email", "to": self.to}

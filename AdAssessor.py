@@ -8,18 +8,31 @@ Copyright (c) 2012. All rights reserved.
 """
 
 class AdCriterion(object):
-    def __init__(self, tagname): 
-        self._tagname = tagname
+    def __init__(self, data):
+        self._tagname = ""
 
-    def check(self, ad): return True
+    @property
+    def tagname(self):
+        return self._tagname
+
+    def serialize(self):
+        return {"tag": self._tagname}
+
+    def check(self, ad):
+        raise NotImplementedError("AdCriterion has to be subclassed.")
+    
+    @classmethod
+    def from_json(cls, data):
+        for subclass in AdCriterion.__subclasses__():
+            if subclass.criterion_type == data["type"]:
+                return subclass(data)
 
 class AdCriterionLimit(AdCriterion):
-    
-    def __init__(self, tagname, limit):
-        super(AdCriterionLimit, self).__init__(tagname)
-        if not isinstance(limit, int):
-            raise TypeError("Limit must be an integer!")
-        self._limit = limit
+    criterion_type = "limit"
+
+    def __init__(self, data):
+        self._tagname = data["tag"]
+        self._limit = data["limit"]
     
     def check(self, ad):
         if self._limit >= ad[self._tagname]:
@@ -27,13 +40,18 @@ class AdCriterionLimit(AdCriterion):
         else:
             return False
 
-class AdCriterionKeywordsAll(AdCriterion):
+    def serialize(self):
+        d = super(AdCriterionLimit, self).serialize()
+        d["type"] = self.criterion_type
+        d["limit"] = self._limit
+        return d
 
-    def __init__(self, tagname, keywords):
-        super(AdCriterionKeywordsAll, self).__init__(tagname)
-        if not isinstance(keywords, list):
-            raise TypeError("Keywords must be a list!")
-        self._keywords = [str(keyword) for keyword in keywords]
+class AdCriterionKeywordsAll(AdCriterion):
+    criterion_type = "keywords_all"
+
+    def __init__(self, data):
+        self._tagname = data["tag"]
+        self._keywords = data["keywords"]
     
     def check(self, ad):
         for kwd in self._keywords:
@@ -41,13 +59,18 @@ class AdCriterionKeywordsAll(AdCriterion):
                 return False
         return True
 
-class AdCriterionKeywordsAny(AdCriterion):
+    def serialize(self):
+        d = super(AdCriterionKeywordsAll, self).serialize()
+        d["type"] = self.criterion_type
+        d["keywords"] = self._keywords
+        return d
 
-    def __init__(self, tagname, keywords):
-        super(AdCriterionKeywordsAny, self).__init__(tagname)
-        if not isinstance(keywords, list):
-            raise TypeError("Keywords must be a list!")
-        self._keywords = [str(keyword) for keyword in keywords]
+class AdCriterionKeywordsAny(AdCriterion):
+    criterion_type = "keywords_any"
+
+    def __init__(self, data):
+        self._tagname = data["tag"]
+        self._keywords = data["keywords"]
 
     def check(self, ad):
         for kwd in self._keywords:
@@ -55,13 +78,18 @@ class AdCriterionKeywordsAny(AdCriterion):
                 return True
         return False
 
-class AdCriterionKeywordsNot(AdCriterion):
+    def serialize(self):
+        d = super(AdCriterionKeywordsAny, self).serialize()
+        d["type"] = self.criterion_type
+        d["keywords"] = self._keywords
+        return d
 
-    def __init__(self, tagname, keywords):
-        super(AdCriterionKeywordsNot, self).__init__(tagname)
-        if not isinstance(keywords, list):
-            TypeError("Keywords must be a list!")
-        self._keywords = [str(keyword) for keyword in keywords]
+class AdCriterionKeywordsNot(AdCriterion):
+    criterion_type = "keywords_not"
+
+    def __init__(self, data):
+        self._tagname = data["tag"]
+        self._keywords = data["keywords"]
 
     def check(self, ad):
         for kwd in self._keywords:
@@ -69,20 +97,30 @@ class AdCriterionKeywordsNot(AdCriterion):
                 return False
         return True
 
+    def serialize(self):
+        d = super(AdCriterionKeywordsNot, self).serialize()
+        d["type"] = self.criterion_type
+        d["keywords"] = self._keywords
+        return d
+
 class AdAssessor:
     
     def __init__(self):
-        self.criteria = []
+        self._criteria = []
     
     def add_criterion(self, criterion):
         if not isinstance(criterion, AdCriterion):
             raise TypeError("Expected type AdCriterion. Got {}".format(type(criterion)))
-        self.criteria.append(criterion)
+        self._criteria.append(criterion)
     
     def add_criteria(self, *args):
         for arg in args:
             self.add_criterion(arg)
+            
+    @property
+    def criteria(self):
+        return self._criteria
     
     def check(self, ad):
-        return all([criterion.check(ad) for criterion in self.criteria])
+        return all([criterion.check(ad) for criterion in self._criteria])
 
