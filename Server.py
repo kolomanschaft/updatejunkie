@@ -71,13 +71,13 @@ class ServerApp():
             try:
                 command = Command.from_json(self, cmd)
                 response = command.execute()
-                response_message = {"state": "OK"}
+                response_message = {"status": "OK"}
                 if response is not None:
                     response_message["response"] = response
                 return response_message
             except (ServerError, CommandError) as ex:
                 args_text = "; ".join(["{}".format(arg) for arg in ex.args])
-                return {"state": "ERROR", "message": args_text}
+                return {"status": "ERROR", "message": args_text}
         
         if (type(json_data) is dict):
             return executeCommand(json_data)
@@ -95,6 +95,6 @@ class ServerApp():
             json_data = request.json
             return self.process_json(json_data)
         except ValueError as error:
-            return {"state": "ERROR", 
-                    "message": "Payload is not valid JSON: {}".format(error.args[0])
+            return {"status": "ERROR", 
+                    "message": "JSON syntax: {}".format(error.args[0])
                    }

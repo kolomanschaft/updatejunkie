@@ -13,7 +13,6 @@ import random
 from AdStore import *
 from AdAssessor import *
 from Logger import *
-from Config import *
 from NotificationServer import *
 from platform_dependant.Notification import *
 from Connector import *
@@ -65,7 +64,8 @@ class TestAdAssessor(unittest.TestCase):
     def tearDown(self):pass
     
     def testAdCriterionPriceLimit(self):
-        priceCriterion = AdCriterionLimit("price", 50)
+        data = {"tag": "price", "limit": 50}
+        priceCriterion = AdCriterionLimit(data)
         self.assessor.add_criterion(priceCriterion)
         ad = Ad({"price": 30})
         self.assertTrue(self.assessor.check(ad))
@@ -73,7 +73,8 @@ class TestAdAssessor(unittest.TestCase):
         self.assertFalse(self.assessor.check(ad))
 
     def testAdCriterionTitleKeywordsAll(self):
-        kwdCriterion = AdCriterionKeywordsAll("title", ["schöner", "tag"])
+        data = {"tag": "title", "keywords": ["schöner", "tag"]}
+        kwdCriterion = AdCriterionKeywordsAll(data)
         self.assessor.add_criterion(kwdCriterion)
         ad = Ad({"title": "Das ist ein schöner Tag"})
         self.assertTrue(self.assessor.check(ad))
@@ -81,7 +82,8 @@ class TestAdAssessor(unittest.TestCase):
         self.assertFalse(self.assessor.check(ad))
 
     def testAdCriterionTitleKeywordsAny(self):
-        kwdCriterion = AdCriterionKeywordsAny("title", ["schöner", "tag"])
+        data = {"tag": "title", "keywords": ["schöner", "tag"]}
+        kwdCriterion = AdCriterionKeywordsAny(data)
         self.assessor.add_criterion(kwdCriterion)
         ad = Ad({"title": "Das ist ein schöner tag"})
         self.assertTrue(self.assessor.check(ad))
@@ -91,7 +93,8 @@ class TestAdAssessor(unittest.TestCase):
         self.assertFalse(self.assessor.check(ad))
         
     def testAdCriterionTitleKeywordsNot(self):
-        kwdCriterion = AdCriterionKeywordsNot("title", ["schöner", "tag"])
+        data = {"tag": "title", "keywords": ["schöner", "tag"]}
+        kwdCriterion = AdCriterionKeywordsNot(data)
         self.assessor.add_criterion(kwdCriterion)
         ad = Ad({"title": "Das ist ein schöner tag"})
         self.assertFalse(self.assessor.check(ad))
@@ -129,32 +132,6 @@ class TestLogger(unittest.TestCase):
             self.assertNotRegex(l, s1)
             self.assertRegex(l, s2)
 
-class TestConfig(unittest.TestCase):
-    
-    path = "./test.cfg"
-    
-    def setUp(self):
-        self.config = Config(self.path)
-    
-    def tearDown(self):
-        if os.path.exists(self.path):
-            os.remove(self.path)
-    
-    def testSafeLoadOptions(self):
-        testsmtp = "smtp.example.com"
-        self.config.smtp_host = testsmtp
-        self.config.save()
-        c = Config(self.path)
-        self.assertTrue(testsmtp == c.smtp_host)
-    
-    def testSaveLoadCriteria(self):
-        kwds = ["word-1", "word-2", "word-3"]
-        self.config.add_observer("theObserver")
-        self.config.theObserver.keywords_all = [{"wildcard": "title", "value":kwds}]
-        self.config.save()
-        c = Config(self.path)
-        self.assertListEqual(kwds, c.theObserver.keywords_all[0]["value"])
-
 class TestNotificationServer(unittest.TestCase):
     
     def setUp(self):
@@ -165,12 +142,12 @@ class TestNotificationServer(unittest.TestCase):
     
     def testNotificationTypeError(self):
         x = 123
-        self.assertRaises(TypeError, self.notificationServer.addNotification, x)
+        self.assertRaises(TypeError, self.notificationServer.add_notification, x)
     
     def testAddDeleteNotificaions(self):
         a = Notification()
         b = Notification()
-        self.notificationServer.addNotifications(a,b)
+        self.notificationServer.add_notifications(a,b)
         self.assertIs(self.notificationServer[0], a)
         self.assertIs(self.notificationServer[1], b)
         self.assertRaises(IndexError, self.notificationServer.__getitem__, 2)
@@ -210,7 +187,7 @@ class TestEmailNotification(unittest.TestCase):
     def testMIMEStringGeneration(self):
         sender = "Gustl Hemmer <gustl@example.com>"
         to = "Moatl Hemmer <moatl@example.com>"
-        mimetype = "plain"
+        mimetype = "text/plain"
         subject = "$Rückenschmerzen sind öfters schlächt$"
         body = "{datetime}{title}€{price}{url}"
         notification = EmailNotification(host = None, port = 25, user = None, 
