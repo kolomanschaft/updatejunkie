@@ -1,11 +1,11 @@
-# Willhaben
+# UpdateJunkie
 
-Willhaben is a simple, platform independent crawler for article-based websites. It started out as an observer for the advertising-platform [willhaben.at]. But by adding *profiles* one can observe all kinds of article-based websites. The following list shows an overview of the profiles that are currently supported:
+UpdateJunkie is a simple, platform independent crawler for article-based websites. It started out as an observer for the advertising-platform [willhaben.at]. But by adding *profiles* one can observe all kinds of article-based websites. The following list shows an overview of the profiles that are currently supported:
 
 * Willhaben: willhaben.at is an advertising service in Austria
 * DoodleComments: Observes the comments section of Doodle schedule pages
 
-At the moment the only available notification type is email. But it should be very easy to extend Willhaben with other notification types.
+At the moment the only available notification type is email. But it should be very easy to extend UpdateJunkie with other notification types.
 
 ## Features
 
@@ -13,7 +13,7 @@ At the moment the only available notification type is email. But it should be ve
 * Specify arbitrary tags in articles (e.g. price, description, post-time, etc.)
 * Specify notification trigger-criteria based on tags (e.g. description contains X, price lower than Y, etc.)
 * Handle paging in websites
-* Presistent index of already processed articles
+* Persistent store of already processed articles
 * Configurable entirely through a RESTful JSON API and/or a JSON startup script
 * Easily extendable for new websites by using XML-based profiles
  
@@ -23,26 +23,26 @@ At the moment the only available notification type is email. But it should be ve
 
 ## Setup
 
-To launch Willhaben simply run `main.py`:
+To launch UpdateJunkie simply run `main.py`:
 
     python3 main.py
 
-Willhaben will look for a command script at `files/willhaben.json`. However, you can create arbitrary command scripts and pass them as an argument:
+UpdateJunkie will look for a command script at `files/willhaben.json`. However, you can create arbitrary command scripts and pass them as an argument:
 
     python3 main.py path/to/commandscript.json
 
 This way you can create various command scripts and run multiple instances simultaneously, if desired. Use `files/willhaben.json.example` as a template.
 
-You can also start Willhaben without a command script and configure it using only the JSON API.
+You can also start UpdateJunkie without a command script and configure it using only the JSON API.
 
 ## The Command API
 
-The whole configuration of Willhaben is based on commands (the only exceptions are profiles which are discussed in the next chapter). Commands are encoded in JSON and can be send to Willhaben in two ways:
+The whole configuration of UpdateJunkie is based on commands (the only exceptions are profiles which are discussed in the next chapter). Commands are encoded in JSON and can be send to UpdateJunkie in two ways:
 
 * Via a HTTP API
 * Via a command script
 
-You can launch Willhaben without a command script. After launch Willhaben can be configured using the web-based JSON API. If nothing else was configured (by a command script), Willhaben's web server listens on `localhost` and port `8118`. However, it is recommended to use a command script to properly bootstrap Willhaben. The root element in command scripts can either be a dictionary containing a single command, or a list of commands (see `files/willhaben.json.example`).
+You can launch UpdateJunkie without a command script. After launch UpdateJunkie can be configured using the web-based JSON API. If nothing else was configured (by a command script), UpdateJunkie's web server listens on `localhost` and port `8118`. However, it is recommended to use a command script to properly bootstrap UpdateJunkie. The root element in command scripts can either be a dictionary containing a single command, or a list of commands (see `files/willhaben.json.example`).
 
 Use the JSON API by sending commands to `http://host:port/api/command`. Each API call is terminated by a response which is also JSON. The response states whether the command was successful or not and contains a response data structure if necessary. In case the command failed, the response contains an error message.
 
@@ -119,7 +119,7 @@ Adds a new observer and activates it. This is the most complex command as it con
 __name__: The observer's name<br />
 __profile__: The website's profile. More about profiles in the next section<br />
 __url__: The URL of the page where the articles are located<br />
-__store__: If `true`, Willhaben remembers already processed ads upon restarts<br />
+__store__: If `true`, UpdateJunkie remembers already processed ads upon restarts<br />
 __interval__: Time between two polls<br />
 __criteria__: A list of trigger criteria
 
@@ -241,11 +241,11 @@ Response: *None*
 
 ## Profiles
 
-Profiles are stored in the `connector_profiles` folder. Each XML file in this folder represents a particular website (or a certain part of it) and contains information about how to access the website and how to find articles on its pages. If you want to adapt Willhaben for a new website, all you should have to do is create a new profile.
+Profiles are stored in the `connector_profiles` folder. Each XML file in this folder represents a particular website (or a certain part of it) and contains information about how to access the website and how to find articles on its pages. If you want to adapt UpdateJunkie for a new website, all you should have to do is create a new profile.
 
 ### Profile Creation
 
-To make the process of creating a new profile as easy as possible, Willhaben comes with a XML Schema file located at `connector_profiles/profile.xsd`. If you are using an advanced XML editor (like the one in the Eclipse Web Tools Platform) you can validate your profile while you write it.
+To make the process of creating a new profile as easy as possible, UpdateJunkie comes with a XML Schema file located at `connector_profiles/profile.xsd`. If you are using an advanced XML editor (like the one in the Eclipse Web Tools Platform) you can validate your profile while you write it.
 
 The original Willhaben profile (`connector_profiles/willhaben.xml`) is very well documented. This should be enough to get you started with new profiles. You can use the script `profile_tester.py` to help you during the profile creation. It takes a profilename and a URL as arguments and tests the profile against the given URL.
 
