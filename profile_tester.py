@@ -8,9 +8,9 @@ Created by Martin Hammerschmied on 2012-11-12.
 Copyright (c) 2012. All rights reserved.
 """
 import sys
-from Profile import *
-from Connector import *
-from AdStore import *
+from profile import *
+from connector import *
+from adstore import *
 import pprint
 
 if __name__ == "__main__":

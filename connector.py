@@ -9,12 +9,12 @@ Copyright (c) 2012. All rights reserved.
 import urllib.request, urllib.error, urllib.parse
 from urllib.parse import urlencode
 import re
-from AdStore import Ad
-from Profile import *
+from adstore import Ad
+from profile import *
 import datetime
 import html.parser as htmlparser
 from threading import Lock
-from Profile import get_profile
+from profile import get_profile
 
 class ConnectionError(Exception): pass
 

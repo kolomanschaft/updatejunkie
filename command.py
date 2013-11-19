@@ -7,11 +7,11 @@ Created by Martin Hammerschmied on 2013-10-25.
 Copyright (c) 2013. All rights reserved.
 """
 
-from Profile import get_profile
-from AdStore import AdStore
-from AdAssessor import AdAssessor, AdCriterion
-from NotificationServer import NotificationServer
-from Observer import Observer
+from profile import get_profile
+from adstore import AdStore
+from adassessor import AdAssessor, AdCriterion
+from notificationserver import NotificationServer
+from observer import Observer
 
 
 class CommandError(Exception):pass

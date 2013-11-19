@@ -8,8 +8,8 @@ Copyright (c) 2012. All rights reserved.
 """
 import time, datetime
 from itertools import compress
-from Connector import Connector, ConnectionError
-from Logger import Logger
+from connector import Connector, ConnectionError
+from logger import Logger
 import threading
 
 class Observer(threading.Thread):

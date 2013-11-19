@@ -10,12 +10,12 @@ import unittest
 import os
 import datetime
 import random
-from AdStore import *
-from AdAssessor import *
-from Logger import *
-from NotificationServer import *
+from adstore import *
+from adassessor import *
+from logger import *
+from notificationserver import *
 from platform_dependant.Notification import *
-from Connector import *
+from connector import *
 
 class TestAdStore(unittest.TestCase):
     

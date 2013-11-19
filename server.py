@@ -7,7 +7,7 @@ Created by Martin Hammerschmied on 2013-10-25.
 Copyright (c) 2013. All rights reserved.
 """
 
-from Command import Command, CommandError
+from command import Command, CommandError
 from bottle import route, request, response
 from bottle import run as bottlerun
 import json
@@ -18,7 +18,7 @@ class ServerError(Exception):pass
 class ServerApp():
     
     def __init__(self, logger):
-        self._config = dict()
+        #self._config = dict()
         self._logger = logger
         self._observers = list()
 
@@ -49,9 +49,9 @@ class ServerApp():
     def __iter__(self):
         return self._observers.__iter__()
     
-    @property
-    def config(self):
-        return self._config
+#     @property
+#     def config(self):
+#         return self._config
 
     @property
     def logger(self):

@@ -9,8 +9,8 @@ Copyright (c) 2012. All rights reserved.
 
 
 
-from Logger import Logger
-from Server import ServerApp
+from logger import Logger
+from server import ServerApp
 
 import sys
 import os
