@@ -62,29 +62,39 @@ class ServerApp():
         self._logger = aLogger
     
     def process_command_script(self, path):
+        """
+        Takes a path to a command script and processes it. A command script can
+        contain a single command dictionary or an array of commands.
+        """
+        self._logger.append("Processing command script at {}".format(path))
         with open(path, "r") as f:
-            json_data = json.loads(f.read())
-            self.process_json(json_data)
+            json_decoded = json.loads(f.read())
+            if type(json_decoded) is list:
+                for cmd in json_decoded: self.process_json_command(cmd)
+            else:
+                self.process_json_command(json_decoded)
         
-    def process_json(self, json_data):
-        def executeCommand(cmd):
-            try:
-                command = Command.from_json(self, cmd)
-                response = command.execute()
-                response_message = {"status": "OK"}
-                if response is not None:
-                    response_message["response"] = response
-                return response_message
-            except (ServerError, CommandError) as ex:
-                args_text = "; ".join(["{}".format(arg) for arg in ex.args])
-                return {"status": "ERROR", "message": args_text}
+    def process_json_command(self, json_decoded):
+        """
+        Takes a command dictionary 'json_data' and executes the contained 
+        command. Returns a response dictionary containing a status and the 
+        response of the executed command.
+        """
+        if type(json_decoded) is list:
+            raise ServerError("The format of a JSON command is supposed to be a dictionary.")
         
-        if (type(json_data) is dict):
-            return executeCommand(json_data)
-        elif (type(json_data) is list):
-            return [executeCommand(cmd) for cmd in json_data]
-        else:
-            raise ServerError("Unknown JSON structure.")
+        try:
+            command = Command.from_json(self, json_decoded)
+            self._logger.append("Processing command {}".format(command.name))
+            response = command.execute()
+            response_message = {"status": "OK"}
+            if response is not None:
+                response_message["response"] = response
+            return response_message
+
+        except (ServerError, CommandError) as ex:
+            args_text = "; ".join(["{}".format(arg) for arg in ex.args])
+            return {"status": "ERROR", "message": args_text}
     
     def run(self):
         route("/api/command")(self._command)
@@ -92,8 +102,8 @@ class ServerApp():
         
     def _command(self):
         try:
-            json_data = request.json
-            return self.process_json(json_data)
+            json_decoded = request.json
+            return self.process_json_command(json_decoded)
         except ValueError as error:
             return {"status": "ERROR", 
                     "message": "JSON syntax: {}".format(error.args[0])

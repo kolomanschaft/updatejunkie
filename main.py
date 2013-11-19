@@ -29,14 +29,14 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         config_path = sys.argv[1]
     else:
-        config_path = "./files/willhaben.json"
+        config_path = "./files/updatejunkie.json"
     
     # Initialize logging
-    logger = Logger(path = "files/observer.log")
+    logger = Logger(path = "files/updatejunkie.log")
 
     server = ServerApp(logger)
     
-    # If we have a configuration script, process it
+    # If we have a command script, process it
     if (os.path.exists(config_path)):
         server.process_command_script(config_path)
 
