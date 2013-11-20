@@ -24,9 +24,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import imp
+bottle = imp.load_source('bottle', 'api/bottle/bottle.py')
+
 from api.commandapi import CommandApi
-from bottle import route, request, response
-from bottle import run as bottlerun
 
 class WebApi(CommandApi):
     """
@@ -35,7 +36,7 @@ class WebApi(CommandApi):
         
     def _command(self):
         try:
-            json_decoded = request.json
+            json_decoded = bottle.request.json
             return self.process_command(json_decoded)
         except ValueError as error:
             return {"status": "ERROR", 
@@ -43,5 +44,5 @@ class WebApi(CommandApi):
                    }
             
     def run(self):
-        route("/api/command")(self._command)
-        bottlerun(host="localhost", port="8118", debug=True)
+        bottle.route("/api/command")(self._command)
+        bottle.run(host="localhost", port="8118", debug=True)

@@ -58,8 +58,7 @@ if __name__ == "__main__":
     # If we have a command script, process it
     if (os.path.exists(config_path)):
         config = JsonScript(server, config_path)
-        config.start()
-        config.join()
+        config.run()
     
     # Start the web API
     web = WebApi(server)

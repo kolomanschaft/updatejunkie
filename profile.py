@@ -3,6 +3,7 @@
 
 #
 # Generated Sun Oct 20 15:28:11 2013 by generateDS.py version 2.11a.
+# Processed by 2to3 in order to reach Python3 compatibility
 #
 
 import sys

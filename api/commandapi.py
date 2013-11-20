@@ -32,7 +32,10 @@ import logging
 
 class CommandApi(Thread):
     """
-    The base for all APIs that process commands.
+    The base for all APIs that process commands. Each API runs in a separate 
+    thread. In general APIs translate data they receive on their front-ends 
+    into command objects and pass them on to the server. The result is then 
+    taken back from the server to the API front-end.
     """
 
     def __init__(self, server):
