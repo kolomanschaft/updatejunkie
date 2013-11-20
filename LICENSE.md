@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# encoding: utf-8
-"""
 The MIT License (MIT)
 
 Copyright (c) 2012 Martin Hammerschmied
@@ -22,22 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-"""
-
-import time
-import codecs
-
-class Logger:
-	
-	def __init__(self, path = None, silent = False):
-		self.path = path
-		self.silent = silent
-	
-	def append(self, msg):
-		s = time.strftime("[%Y-%m-%d %H:%M:%S] ") + msg
-		if self.path:
-			with codecs.open(self.path, mode = "a", encoding = "utf-8") as f:
-				f.write(s + "\n")
-
-		if not self.silent:
-			print(s)
