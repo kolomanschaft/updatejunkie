@@ -24,24 +24,25 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from command import Command, CommandError
-from bottle import route, request, response
-from bottle import run as bottlerun
-import json
-import sys
+from queue import Queue
+from command import CommandError
+from threading import Thread
+
+import logging
 
 class ServerError(Exception):pass
 
-class ServerApp():
+class Server(Thread):
     
-    def __init__(self, logger):
+    def __init__(self):
+        super(Server, self).__init__()
         self._config = dict()
-        self._logger = logger
         self._observers = list()
+        self._command_queue = Queue()
 
     def add_observer(self, observer):
         if (observer.name in [other.name for other in self._observers]):
-            self._logger.append("Replacing observer {}".format(observer.name))
+            logging.info("Replacing observer {}".format(observer.name))
             self.remove_observer(observer.name)
             
         self._observers.append(observer)
@@ -66,62 +67,38 @@ class ServerApp():
     def __iter__(self):
         return self._observers.__iter__()
     
+    def run(self):
+        """
+        run() is called after everything is set up. It just waits for commands 
+        to come in and executes them. Usually commands are put into the queue 
+        by CommandApis like the WebApi or a JsonScript.
+        """
+        def process_command(command):
+            try:
+                logging.info("Processing command {}".format(command.name))
+                response = command.execute()
+                response_message = {"status": "OK"}
+                response_message["response"] = response
+                return response_message
+            except (ServerError, CommandError) as ex:
+                args_text = "; ".join(["{}".format(arg) for arg in ex.args])
+                return {"status": "ERROR", "message": args_text}
+
+        while True:
+            command = self._command_queue.get()
+            command.server = self
+            command.condition.acquire()
+            try:
+                command.response = process_command(command)
+                command.condition.notify_all()
+            finally:
+                command.condition.release()
+
     @property
     def config(self):
         return self._config
-
+    
     @property
-    def logger(self):
-        return self._logger
-    
-    @logger.setter
-    def logger(self, aLogger):
-        self._logger = aLogger
-    
-    def process_command_script(self, path):
-        """
-        Takes a path to a command script and processes it. A command script can
-        contain a single command dictionary or an array of commands.
-        """
-        self._logger.append("Processing command script at {}".format(path))
-        with open(path, "r") as f:
-            json_decoded = json.loads(f.read())
-            if type(json_decoded) is list:
-                for cmd_info in json_decoded: self.process_command(cmd_info)
-            else:
-                self.process_command(json_decoded)
+    def command_queue(self):
+        return self._command_queue
         
-    def process_command(self, cmd_info):
-        """
-        Takes a command dictionary 'cmd_info' and executes the contained 
-        command. Returns a response dictionary containing a status and the 
-        response of the executed command.
-        """
-        if type(cmd_info) is not dict:
-            raise ServerError("The command info is supposed to be a dictionary.")
-        
-        try:
-            command = Command.from_command_info(self, cmd_info)
-            self._logger.append("Processing command {}".format(command.name))
-            response = command.execute()
-            response_message = {"status": "OK"}
-            if response is not None:
-                response_message["response"] = response
-            return response_message
-
-        except (ServerError, CommandError) as ex:
-            args_text = "; ".join(["{}".format(arg) for arg in ex.args])
-            return {"status": "ERROR", "message": args_text}
-    
-    def run(self):
-        route("/api/command")(self._command)
-        bottlerun(host="localhost", port="8118", debug=True)
-        
-    def _command(self):
-        try:
-            json_decoded = request.json
-            return self.process_command(json_decoded)
-        except ValueError as error:
-            return {"status": "ERROR", 
-                    "message": "JSON syntax: {}".format(error.args[0])
-                   }

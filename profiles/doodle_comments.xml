@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <!-- 
 """
 The MIT License (MIT)
@@ -23,9 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
  -->
-
-<?xml version="1.0" encoding="utf-8"?>
-
+ 
 <Profile xmlns="http://marvelous.at/2013/WillhabenProfile"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://marvelous.at/2013/WillhabenProfile profile.xsd">

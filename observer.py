@@ -24,22 +24,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import time, datetime
+import time
+import datetime
+import threading
+import logging
+
 from itertools import compress
 from connector import Connector, ConnectionError
-from logger import Logger
-import threading
 
 class Observer(threading.Thread):
     
-    def __init__(self, url, profile, store, assessor, notifications, logger = Logger(), update_interval = 180, name = "Unnamed Observer"):
+    def __init__(self, url, profile, store, assessor, notifications, update_interval = 180, name = "Unnamed Observer"):
         super(Observer, self).__init__()
         self.interval = update_interval
         self.connector = Connector(url, profile)
         self.store = store
         self.assessor = assessor
         self.notifications = notifications
-        self.logger = logger
         self.name = name
         self._quit = False
     
@@ -62,7 +63,7 @@ class Observer(threading.Thread):
         Make the Thread quit on the next round.
         """
         self._quit = True
-        self.logger.append("Observer {} quits on the next round".format(self.name))
+        logging.info("Observer {} quits on the next round".format(self.name))
 
     def process_ads(self, ads):
         if len(ads) == 0: return
@@ -71,27 +72,27 @@ class Observer(threading.Thread):
         new_ads = self.store.add_ads(hit_ads)
         for ad in new_ads:
             try:
-                self.logger.append("Observer {} Found Ad: {}".format(self.name, ad["title"]))
+                logging.info("Observer {} Found Ad: {}".format(self.name, ad["title"]))
             except KeyError:
-                self.logger.append("Observer {} Found Ad: {}".format(self.name, ad.key))
+                logging.info("Observer {} Found Ad: {}".format(self.name, ad.key))
             if self.notifications:
                 self.notifications.notify_all(ad)
         self.time_mark = sorted(ads, key = lambda ad: ad.timetag)[-1].timetag
 
     def run(self):
         self.time_mark = datetime.datetime.now() - datetime.timedelta(days = 1)
-        self.logger.append("Observer {} polling ads back to {}".format(self.name, self.time_mark))
+        logging.info("Observer {} polling ads back to {}".format(self.name, self.time_mark))
         ads = self.connector.ads_after(self.time_mark)
         if self._quit: return   # Quit now if quit() was called while fetching ads
         self.process_ads(ads)
-        self.logger.append("Observer {} initial poll done".format(self.name))
+        logging.info("Observer {} initial poll done".format(self.name))
         while True:
             time.sleep(self.interval)
             if self._quit: return   # Quit now if quit() was called while sleeping
-            self.logger.append("Observer {} polling for new ads".format(self.name))
+            logging.info("Observer {} polling for new ads".format(self.name))
             try:
                 ads = self.connector.ads_after(self.time_mark)
                 if self._quit: return   # Quit now if quit() was called while fetching ads
                 self.process_ads(ads)
             except ConnectionError as ex:
-                self.logger.append("Observer {} connection failed with message: {}".format(self.name, ex.message))
+                logging.info("Observer {} connection failed with message: {}".format(self.name, ex.message))

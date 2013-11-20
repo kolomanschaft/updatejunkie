@@ -30,7 +30,6 @@ import datetime
 import random
 from adstore import *
 from adassessor import *
-from logger import *
 from notificationserver import *
 from platform_dependant.Notification import *
 from connector import *
@@ -124,31 +123,6 @@ class TestAdAssessor(unittest.TestCase):
     def testAdAssessorReturnsTrueWhenEmpty(self):
         ad = Ad(title = "Expensive Blablabla", price = 1e8)
         self.assertTrue (self.assessor.check(ad))
-
-class TestLogger(unittest.TestCase):
-    
-    path = "./test.log"
-    
-    def setUp(self):
-        self.logger = Logger(path = self.path, silent = True)
-    
-    def tearDown(self):
-        os.remove(self.path)
-    
-    def testAppendLogEntry(self):
-        s1 = "This is a test entry"
-        s2 = "Another one!"
-        self.logger.append(s1)
-        with open(self.path, "r") as f:
-            l = f.readline()
-            self.assertRegex(l, s1)
-        self.logger.append(s2)
-        with open(self.path, "r") as f:
-            l = f.readline()
-            self.assertRegex(l, s1)
-            l = f.readline()
-            self.assertNotRegex(l, s1)
-            self.assertRegex(l, s2)
 
 class TestNotificationServer(unittest.TestCase):
     

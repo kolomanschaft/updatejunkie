@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 The MIT License (MIT)
 
-Copyright (c) 2012 Martin Hammerschmied
+Copyright (c) 2013 Martin Hammerschmied
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,20 +24,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import time
-import codecs
+from command import Command, CommandError
+from server import ServerError
+from threading import Thread
 
-class Logger:
-	
-	def __init__(self, path = None, silent = False):
-		self.path = path
-		self.silent = silent
-	
-	def append(self, msg):
-		s = time.strftime("[%Y-%m-%d %H:%M:%S] ") + msg
-		if self.path:
-			with codecs.open(self.path, mode = "a", encoding = "utf-8") as f:
-				f.write(s + "\n")
+import logging
 
-		if not self.silent:
-			print(s)
+class CommandApi(Thread):
+    """
+    The base for all APIs that process commands.
+    """
+
+    def __init__(self, server):
+        super(CommandApi, self).__init__()
+        self._server = server
+        
+    def _process_command_info(self, cmd_info):
+        command = Command.from_command_info(cmd_info)
+        self._server.command_queue.put_nowait(command)

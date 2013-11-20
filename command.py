@@ -29,7 +29,10 @@ from adstore import AdStore
 from adassessor import AdAssessor, AdCriterion
 from notificationserver import NotificationServer
 from observer import Observer
+from threading import Condition
+
 import os
+import logging
 
 class CommandError(Exception):pass
 
@@ -39,23 +42,57 @@ class Command(object):
     Base class for all commands.
     """
 
-    def __init__(self, server, json_decoded):
+    def __init__(self, cmd_info, server = None):
+        self._cmd_info = cmd_info
         self._server = server
-        self._json_decoded = json_decoded
+        self._cv = Condition()
+        self._result = None
     
     def execute(self):
         raise CommandError("Execute must be implemented in a subclass.")
     
     @classmethod
-    def from_command_info(cls, server, cmd_info):
+    def from_command_info(cls, cmd_info):
         if ("command" not in cmd_info):
             raise CommandError("The given data is not a valid command.")
 
         for cmd in Command.__subclasses__():
             if cmd.name == cmd_info["command"]:
-                return cmd(server, cmd_info)
+                return cmd(cmd_info)
         
         raise CommandError("Unknown command: {}".format(cmd_info["command"]))
+    
+    @property
+    def server(self):
+        """
+        The server to execute the command on.
+        """
+        return self._server
+    
+    @server.setter
+    def server(self, server):
+        self._server = server
+        
+    @property
+    def condition(self):
+        """
+        A condition variable which will be notified after the command was 
+        executed by the server. The result will also be available at the 
+        time of notification.
+        """
+        return self._cv
+    
+    @property
+    def result(self):
+        """
+        After the command was executed the server stores the result in 
+        this property.
+        """
+        return self._result
+    
+    @result.setter
+    def result(self, result):
+        self._result = result
 
 
 class SmtpSettingsCommand(Command):
@@ -65,12 +102,12 @@ class SmtpSettingsCommand(Command):
     name = "smtp_config"
     
     def execute(self):
-        self.validate_smtp_config(self._json_decoded)
-        if "user" not in self._json_decoded:
-            self._json_decoded["user"] = None
-        if "pass" not in self._json_decoded:
-            self._json_decoded["pass"] = None
-        self._server.config["smtp"] = self._json_decoded
+        self.validate_smtp_config(self._cmd_info)
+        if "user" not in self._cmd_info:
+            self._cmd_info["user"] = None
+        if "pass" not in self._cmd_info:
+            self._cmd_info["pass"] = None
+        self._server.config["smtp"] = self._cmd_info
     
     def validate_smtp_config(self, config):
         if ("host" not in config):
@@ -87,35 +124,34 @@ class NewObserverCommand(Command):
     name = "new_observer"
 
     def execute(self):
-        self._server._logger.append("Setting up observer " + self._json_decoded["name"])
-        profile = get_profile(self._json_decoded["profile"])
+        logging.info("Setting up observer " + self._cmd_info["name"])
+        profile = get_profile(self._cmd_info["profile"])
         store = self._setup_store()
         
         assessor = AdAssessor()
-        for json in self._json_decoded["criteria"]:
+        for json in self._cmd_info["criteria"]:
             assessor.add_criterion(AdCriterion.from_json(json))
      
         # Notification server setup
         notificationServer = NotificationServer()
-        for json in self._json_decoded["notifications"]:
+        for json in self._cmd_info["notifications"]:
             notification = self._setup_notification(json, profile)
             notificationServer.add_notification(notification)
 
         # Setup the actual observer
-        observer = Observer(url = self._json_decoded["url"], profile = profile,
+        observer = Observer(url = self._cmd_info["url"], profile = profile,
                             store = store, assessor = assessor,
                             notifications = notificationServer,
-                            logger = self._server.logger,
-                            update_interval = self._json_decoded["interval"],
-                            name = self._json_decoded["name"])
+                            update_interval = self._cmd_info["interval"],
+                            name = self._cmd_info["name"])
         
         self._server.add_observer(observer)
 
     def _setup_store(self):
         save_file = None    # Ads that have already been processed are registered in this file
-        if self._json_decoded["store"] == True:
+        if self._cmd_info["store"] == True:
             if not os.path.exists("./store/"): os.mkdir("store")
-            save_file = "store/adstore.{}.db".format(self._json_decoded["name"])
+            save_file = "store/adstore.{}.db".format(self._cmd_info["name"])
         return AdStore(path = save_file)
     
     def _setup_notification(self, json, profile):
@@ -145,9 +181,9 @@ class RemoveObserverCommand(Command):
     name = "remove_observer"
     
     def execute(self):
-        if "name" not in self._json_decoded:
+        if "name" not in self._cmd_info:
             raise CommandError("The remove_observer command must specify a name.")
-        self._server.remove_observer(self._json_decoded["name"])
+        self._server.remove_observer(self._cmd_info["name"])
 
 
 class ListObserversCommand(Command):
@@ -167,11 +203,11 @@ class GetObserverCommand(Command):
     name = "get_observer"
     
     def execute(self):
-        if "name" not in self._json_decoded:
+        if "name" not in self._cmd_info:
             raise CommandError("The get_observer command must specify a name.")
-        observer = self._server[self._json_decoded["name"]]
+        observer = self._server[self._cmd_info["name"]]
         if observer is None:
-            raise CommandError("Observer {} not found.".format(self._json_decoded["name"]))
+            raise CommandError("Observer {} not found.".format(self._cmd_info["name"]))
         return observer.serialize()
 
 
