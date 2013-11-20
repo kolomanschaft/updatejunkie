@@ -23,16 +23,16 @@ if __name__ == "__main__":
     datetime.datetime.strptime(dtime, dtime_format)
     
     # Create the 'files/' directory if it doesn't exist yet
-    if not os.path.exists("./files/"): os.mkdir("files")
+    if not os.path.exists("./config/"): os.mkdir("config")
     
     # Configuration script path
     if len(sys.argv) > 1:
         config_path = sys.argv[1]
     else:
-        config_path = "./files/updatejunkie.json"
+        config_path = "./config/updatejunkie.json"
     
     # Initialize logging
-    logger = Logger(path = "files/updatejunkie.log")
+    logger = Logger(path = "updatejunkie.log")
 
     server = ServerApp(logger)
     

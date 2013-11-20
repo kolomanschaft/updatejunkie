@@ -12,7 +12,7 @@ from adstore import AdStore
 from adassessor import AdAssessor, AdCriterion
 from notificationserver import NotificationServer
 from observer import Observer
-
+import os
 
 class CommandError(Exception):pass
 
@@ -30,15 +30,15 @@ class Command(object):
         raise CommandError("Execute must be implemented in a subclass.")
     
     @classmethod
-    def from_json(cls, server, json_decoded):
-        if ("command" not in json_decoded):
+    def from_command_info(cls, server, cmd_info):
+        if ("command" not in cmd_info):
             raise CommandError("The given data is not a valid command.")
 
         for cmd in Command.__subclasses__():
-            if cmd.name == json_decoded["command"]:
-                return cmd(server, json_decoded)
+            if cmd.name == cmd_info["command"]:
+                return cmd(server, cmd_info)
         
-        raise CommandError("Unknown command: {}".format(json_decoded["command"]))
+        raise CommandError("Unknown command: {}".format(cmd_info["command"]))
 
 
 class SmtpSettingsCommand(Command):
@@ -74,7 +74,6 @@ class NewObserverCommand(Command):
         profile = get_profile(self._json_decoded["profile"])
         store = self._setup_store()
         
-        
         assessor = AdAssessor()
         for json in self._json_decoded["criteria"]:
             assessor.add_criterion(AdCriterion.from_json(json))
@@ -98,9 +97,8 @@ class NewObserverCommand(Command):
     def _setup_store(self):
         save_file = None    # Ads that have already been processed are registered in this file
         if self._json_decoded["store"] == True:
-            save_file = "files/adstore.{}.db".format(self._json_decoded["name"])
-        else: 
-            save_file = None    
+            if not os.path.exists("./store/"): os.mkdir("store")
+            save_file = "store/adstore.{}.db".format(self._json_decoded["name"])
         return AdStore(path = save_file)
     
     def _setup_notification(self, json, profile):
@@ -108,7 +106,7 @@ class NewObserverCommand(Command):
             if not self._server.config["smtp"]:
                 raise CommandError("Cannot setup email notifications without smtp settings.")
 
-            from platform_dependant.Notification import EmailNotification
+            from notifications import EmailNotification
             formatting = profile.Notifications.Email
             smtp = self._server.config["smtp"]
             to = json["to"]

@@ -13,7 +13,7 @@ import datetime as datetime_
 import os
 
 def get_profile(name):
-    folder = "connector_profiles/"
+    folder = "profiles/"
     filenames = os.listdir(folder)
     for filename in filenames:
         if filename[-3:] == "xml":

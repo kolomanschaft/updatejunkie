@@ -14,10 +14,11 @@ from email.header import Header
 class NotificationError(Exception):pass
 
 class Notification:
-	def notify(self, ad):pass
+	def notify(self, ad):
+		raise NotImplementedError("notify() must be implemented in subclass.")
 	
 	def serialize(self):
-		raise NotImplementedError("Notification must be subclassed.")
+		raise NotImplementedError("serialize() must be implemented in subclass.")
 	
 class EmailNotification(Notification):
 	"""Sends email notification using python's smtplib module"""

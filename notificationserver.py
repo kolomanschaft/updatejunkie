@@ -6,7 +6,7 @@ NotificationServer.py
 Created by Martin Hammerschmied on 2012-10-28.
 Copyright (c) 2012. All rights reserved.
 """
-from platform_dependant.Notification import *
+from notifications import Notification
 
 class NotificationServer:
     

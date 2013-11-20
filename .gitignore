@@ -1,14 +1,14 @@
 # My stuff
 
 *~
+*.log
 .DS_Store
-files/*.save
-files/*.db
-files/*.store
-files/*.log
-files/*.cfg
-files/*.json
-connector_profiles/*.html
+store/*.save
+store/*.db
+store/*.store
+config/*.cfg
+config/*.json
+client/*
 
 # Eclipse / PyDev
 

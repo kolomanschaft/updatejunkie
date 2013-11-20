@@ -18,7 +18,7 @@ class ServerError(Exception):pass
 class ServerApp():
     
     def __init__(self, logger):
-        #self._config = dict()
+        self._config = dict()
         self._logger = logger
         self._observers = list()
 
@@ -49,9 +49,9 @@ class ServerApp():
     def __iter__(self):
         return self._observers.__iter__()
     
-#     @property
-#     def config(self):
-#         return self._config
+    @property
+    def config(self):
+        return self._config
 
     @property
     def logger(self):
@@ -70,21 +70,21 @@ class ServerApp():
         with open(path, "r") as f:
             json_decoded = json.loads(f.read())
             if type(json_decoded) is list:
-                for cmd in json_decoded: self.process_json_command(cmd)
+                for cmd_info in json_decoded: self.process_command(cmd_info)
             else:
-                self.process_json_command(json_decoded)
+                self.process_command(json_decoded)
         
-    def process_json_command(self, json_decoded):
+    def process_command(self, cmd_info):
         """
-        Takes a command dictionary 'json_data' and executes the contained 
+        Takes a command dictionary 'cmd_info' and executes the contained 
         command. Returns a response dictionary containing a status and the 
         response of the executed command.
         """
-        if type(json_decoded) is list:
-            raise ServerError("The format of a JSON command is supposed to be a dictionary.")
+        if type(cmd_info) is not dict:
+            raise ServerError("The command info is supposed to be a dictionary.")
         
         try:
-            command = Command.from_json(self, json_decoded)
+            command = Command.from_command_info(self, cmd_info)
             self._logger.append("Processing command {}".format(command.name))
             response = command.execute()
             response_message = {"status": "OK"}
@@ -103,7 +103,7 @@ class ServerApp():
     def _command(self):
         try:
             json_decoded = request.json
-            return self.process_json_command(json_decoded)
+            return self.process_command(json_decoded)
         except ValueError as error:
             return {"status": "ERROR", 
                     "message": "JSON syntax: {}".format(error.args[0])
