@@ -68,7 +68,7 @@ class EmailNotification(Notification):
 			subject = self.subject.format(**ad)
 			msg = self._get_mime_string(to, subject, body)
 		except KeyError as expn:
-			raise NotificationError("Profile doesn't support tagname '{}'".format(expn.message))
+			raise NotificationError("Profile doesn't support tagname '{}'".format(expn.args[0]))
 		return msg
 
 

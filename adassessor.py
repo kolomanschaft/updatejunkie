@@ -44,8 +44,8 @@ class AdCriterion(object):
             if subclass.criterion_type == data["type"]:
                 return subclass(data)
 
-class AdCriterionLimit(AdCriterion):
-    criterion_type = "limit"
+class AdCriterionLessThan(AdCriterion):
+    criterion_type = "less_than"
 
     def __init__(self, data):
         self._tagname = data["tag"]
@@ -58,7 +58,26 @@ class AdCriterionLimit(AdCriterion):
             return False
 
     def serialize(self):
-        d = super(AdCriterionLimit, self).serialize()
+        d = super(AdCriterionLessThan, self).serialize()
+        d["type"] = self.criterion_type
+        d["limit"] = self._limit
+        return d
+    
+class AdCriterionGreaterThan(AdCriterion):
+    criterion_type = "greater_than"
+
+    def __init__(self, data):
+        self._tagname = data["tag"]
+        self._limit = data["limit"]
+    
+    def check(self, ad):
+        if self._limit <= ad[self._tagname]:
+            return True
+        else:
+            return False
+
+    def serialize(self):
+        d = super(AdCriterionGreaterThan, self).serialize()
         d["type"] = self.criterion_type
         d["limit"] = self._limit
         return d

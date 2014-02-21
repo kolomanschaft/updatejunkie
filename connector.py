@@ -124,7 +124,10 @@ class Connector():
                     ad[combined[0].valueOf_] = url_tag(combined[1])
             ad.keytag = self._profile.Website.AdDefinition.KeyTag.TagName
             timetag_info = self._profile.Website.AdDefinition.TimeTag
-            ad.timetag = datetime.datetime.strptime(ad[timetag_info.TagName], timetag_info.DateTimeFormat)
+            if timetag_info is not None:
+                ad.timetag = datetime.datetime.strptime(ad[timetag_info.TagName], timetag_info.DateTimeFormat)
+            else:
+                ad.timetag = datetime.datetime.now()
             ad["listingUrl"] = self._url
             ads.append(ad)
         return ads
@@ -137,17 +140,17 @@ class Connector():
             html = self.__get_page__(self._profile.Website.PagingParameter.InitialValue)
         return self.__get_adlist_from_html__(html)
     
-    def ads_all(self, pagestart = None, maxpages = 100):
+    def ads_all(self, pagestart = None, maxpages = 10):
         timelimit = datetime.datetime(1970,1,1)
         return self.ads_after(timelimit, maxpages)
     
-    def ads_in(self, dtime, maxpages = 100):
+    def ads_in(self, dtime, maxpages = 10):
         if not isinstance(dtime, datetime.timedelta):
             raise ConnectionError("timelimit needs to be a timedelta instance")
         timelimit = datetime.datetime.now() - dtime
         return self.ads_after(timelimit, maxpages)
     
-    def ads_after(self, timelimit, maxpages = 100):
+    def ads_after(self, timelimit, maxpages = 10):
         if not self._profile.Website.PagingParameter:
             ads = self.frontpage_ads()
             return [ad for ad in ads if ad.timetag > timelimit]
