@@ -126,9 +126,9 @@ __criteria__: A list of trigger criteria
 You can specify a set of criteria which have to be satisfied in order to trigger a notification. If at least one criterion doesn't match, no notification will be triggered.
 
 __tag__: The name of the tag as defined in the website profile<br />
-__type__: One out of `keywords_any`, `keywords_all`, `keywords_not`, `limit`<br />
+__type__: One out of `keywords_any`, `keywords_all`, `keywords_not`, `less_than`, `greater_than`<br />
 __keywords__: A list of keywords (only available for types `keywords_*`)<br />
-__limit__: A number value that is the upper bound of an integer or float type tag (only available for criterion type `limit`)
+__limit__: A number value that is the upper or lower bound of an integer or float type tag (only available for criterion types `less_than` and `greater_than`)
 
 You can specify notifications for that observer. At the moment the only available notification type is `email` but there might be more in the future.
 
