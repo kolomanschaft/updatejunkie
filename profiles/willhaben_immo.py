@@ -31,32 +31,35 @@ import re
 class WillhabenProfile(Profile):
     
     name = "Willhaben"
+    base_url = "http://www.willhaben.at"
     
     def __init__(self):
-        self._tags = {"id":0, "url":"", "title":"", "size":0, "price":0.0, "description":"", "location":"", "zipcode":0}
+        self._tags = {"id":0, "url":"", "title":"", "size":0, "price":0.0, "description":"", "location":"", "zip":0}
         
     @property
     def tags(self):
         return self._tags.keys()
-    
+
     def parse(self, html):
         soup = BeautifulSoup(html)
         allads = soup.find(name="ul", attrs={"id":"resultlist"})
         ads = allads.findAll("li", attrs={"class":"even clearfix"})
         ads.extend(allads.findAll("li", attrs={"class":"odd clearfix"}))
-        return list(map(self.parse_ad, ads))
+        return list(map(self._ad_soup_to_dict, ads))
 
-    def parse_ad(self, soup):
+    def _ad_soup_to_dict(self, soup):
         tags = self._tags.copy()
         tags["id"] = int(soup.h2.attrs['id'])
-        tags["url"] = soup.h2.a.attrs['href']        
+        tags["url"] = self.base_url + soup.h2.a.attrs['href']        
         tags["title"] = soup.h2.a.text
         
         size_text = soup.find('p', attrs={'class':'size'}).text
         tags["size"] = int(re.findall("[0-9]+", size_text)[0])
         
         price_text = soup.find('p', attrs={'class':'price'}).text
-        tags["price"] = int("".join(re.findall("[0-9]+", price_text)))
+        price_text = "".join(re.findall("[0-9]+", price_text))
+        if len(price_text) > 0:
+            tags["price"] = int(price_text)
         
         description_text = soup.find('p', attrs={'class':'description'}).text
         lines = re.findall("^[\r\n\s]*([^\r^\n]+)[\r\n\s]*", description_text)
@@ -68,18 +71,23 @@ class WillhabenProfile(Profile):
         if len(lines) > 0:
             tags["location"] = lines[0]
             
-        tags["zipcode"] = int(re.findall("[0-9]+", location_text)[0])
+        zip_text = re.findall("[0-9]+", location_text)[0]
+        tags["zipcode"] = int(zip_text)
         
         return tags
     
 
 if __name__ == "__main__":
+
     from urllib import request
-    f = request.urlopen("http://www.willhaben.at/iad/immobilien/eigentumswohnung/wien/wien-1150-rudolfsheim-fuenfhaus/")
-    html = f.read()
-    f.close()
+    from pprint import PrettyPrinter
+
+    with request.urlopen("http://www.willhaben.at/iad/immobilien/eigentumswohnung/wien/wien-1150-rudolfsheim-fuenfhaus/") as f:
+        html = f.read()
     
     p = WillhabenProfile()
     ads = p.parse(html)
-    print(ads)
+    
+    pp = PrettyPrinter()
+    pp.pprint(ads)
     
