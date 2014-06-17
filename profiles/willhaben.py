@@ -28,13 +28,13 @@ from bs4 import BeautifulSoup
 from profile import Profile
 import re
 
-class WillhabenImmoProfile(Profile):
+class WillhabenProfile(Profile):
     
-    name = "WillhabenImmo"
+    name = "Willhaben"
     base_url = "http://www.willhaben.at"
     
     def __init__(self):
-        self._tags = {"id":0, "url":"", "title":"", "size":0, "price":0.0, "description":"", "location":"", "zip":0}
+        self._tags = {"id":0, "url":"", "title":"", "price":0.0, "description":""}
         
     @property
     def tags(self):
@@ -51,29 +51,19 @@ class WillhabenImmoProfile(Profile):
         tags = self._tags.copy()
         tags["id"] = int(soup.h2.attrs['id'])
         tags["url"] = self.base_url + soup.h2.a.attrs['href']        
-        tags["title"] = soup.h2.a.text
-        
-        size_text = soup.find('p', attrs={'class':'size'}).text
-        tags["size"] = int(re.findall("[0-9]+", size_text)[0])
+
+        tags["title"] = soup.h2.a.text.strip()
         
         price_text = soup.find('p', attrs={'class':'price'}).text
-        price_text = "".join(re.findall("[0-9]+", price_text))
-        if len(price_text) > 0:
-            tags["price"] = int(price_text)
+        price_match = re.search("^.*?([0-9]+),([0-9]{2})", price_text, re.M)
+        if price_match:
+            tags["price"] = float(price_match.groups()[0]) + float(price_match.groups()[1])/100
         
         description_text = soup.find('p', attrs={'class':'description'}).text
         lines = re.findall("^[\r\n\s]*([^\r^\n]+)[\r\n\s]*", description_text)
         if len(lines) > 0:
             tags["description"] = lines[0]
-            
-        location_text = soup.find('p', attrs={'class':'location'}).text
-        lines = re.findall("^[\r\n\s]*[0-9]+[\r\n\s]*([^\r^\n]+)[\r\n\s]*", location_text)
-        if len(lines) > 0:
-            tags["location"] = lines[0]
-            
-        zip_text = re.findall("[0-9]+", location_text)[0]
-        tags["zipcode"] = int(zip_text)
-        
+
         return tags
     
 
@@ -82,10 +72,10 @@ if __name__ == "__main__":
     from urllib import request
     from pprint import PrettyPrinter
 
-    with request.urlopen("http://www.willhaben.at/iad/immobilien/eigentumswohnung/wien/wien-1150-rudolfsheim-fuenfhaus/") as f:
+    with request.urlopen("http://www.willhaben.at/iad/kaufen-und-verkaufen/marktplatz?KITCHENAPPLIANCES_DETAIL=4&CATEGORY/SUBCATEGORY=8599&CATEGORY/MAINCATEGORY=8214") as f:
         html = f.read()
     
-    p = WillhabenImmoProfile()
+    p = WillhabenProfile()
     ads = p.parse(html)
     
     pp = PrettyPrinter()

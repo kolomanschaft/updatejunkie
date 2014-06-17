@@ -53,10 +53,10 @@ class Connector():
         self._url = url
         if isinstance(profile, Profile):
             self._profile = profile
-        elif isinstance(profile, str) or isinstance(profile, str):
+        elif isinstance(profile, str):
             self._profile = get_profile(profile)
 
-    def __get_page__(self, page):
+    def _get_page(self, page):
         data = None
         url = self._url
         if page is not None:
@@ -88,7 +88,7 @@ class Connector():
         return html
 
 
-    def __get_adlist_from_html__(self, html):
+    def _get_adlist_from_html(self, html):
         def text_tag(value):
             return htmlparser.HTMLParser().unescape(value)
         def integer_tag(value):
@@ -135,10 +135,10 @@ class Connector():
     
     def frontpage_ads(self):
         if not self._profile.Website.PagingParameter:
-            html = self.__get_page__(None)
+            html = self._get_page(None)
         else:
-            html = self.__get_page__(self._profile.Website.PagingParameter.InitialValue)
-        return self.__get_adlist_from_html__(html)
+            html = self._get_page(self._profile.Website.PagingParameter.InitialValue)
+        return self._get_adlist_from_html(html)
     
     def ads_all(self, pagestart = None, maxpages = 10):
         timelimit = datetime.datetime(1970,1,1)
@@ -159,8 +159,8 @@ class Connector():
             raise ConnectionError("timelimit needs to be a datetime instance")
         ads = []
         for page in range(pagestart,pagestart+maxpages):
-            html = self.__get_page__(page)
-            new_ads = [ad for ad in self.__get_adlist_from_html__(html) if ad.timetag > timelimit]
+            html = self._get_page(page)
+            new_ads = [ad for ad in self._get_adlist_from_html(html) if ad.timetag > timelimit]
             if len(new_ads) == 0:
                 break
             ads.extend(new_ads)
@@ -169,8 +169,8 @@ class Connector():
 if __name__ == "__main__":
     url = "http://www.willhaben.at/iad/kaufen-und-verkaufen/moebel-wohnen-buero/regale-schraenke-vitrinen-kommoden/"
     c = Connector(url, "Willhaben")
-    #html = c.__get_page__(1)
-    #print c.__get_adlist_from_html__(html)
-    #print [ad.key for ad in c.__get_adlist_from_html__(html)]
+    #html = c._get_page(1)
+    #print c._get_adlist_from_html(html)
+    #print [ad.key for ad in c._get_adlist_from_html(html)]
     print([ad.timetag for ad in c.ads_in(datetime.timedelta(hours = 2))])
     

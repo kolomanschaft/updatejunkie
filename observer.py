@@ -65,7 +65,7 @@ class Observer(threading.Thread):
         self._quit = True
         logging.info("Observer {} quits on the next round".format(self.name))
 
-    def process_ads(self, ads):
+    def _process_ads(self, ads):
         if len(ads) == 0: return
         hits = map(self.assessor.check, ads)
         hit_ads = [ad for ad in compress(ads, hits)]
@@ -84,7 +84,7 @@ class Observer(threading.Thread):
         logging.info("Observer {} polling ads back to {}".format(self.name, self.time_mark))
         ads = self.connector.ads_after(self.time_mark)
         if self._quit: return   # Quit now if quit() was called while fetching ads
-        self.process_ads(ads)
+        self._process_ads(ads)
         logging.info("Observer {} initial poll done".format(self.name))
         while True:
             time.sleep(self.interval)
@@ -93,6 +93,6 @@ class Observer(threading.Thread):
             try:
                 ads = self.connector.ads_after(self.time_mark)
                 if self._quit: return   # Quit now if quit() was called while fetching ads
-                self.process_ads(ads)
+                self._process_ads(ads)
             except ConnectionError as ex:
                 logging.info("Observer {} connection failed with message: {}".format(self.name, ex.message))
