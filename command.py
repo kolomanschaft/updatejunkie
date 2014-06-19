@@ -24,7 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from profile import get_profile
+import profiles
 from adstore import AdStore
 from adassessor import AdAssessor, AdCriterion
 from notificationserver import NotificationServer
@@ -125,7 +125,7 @@ class NewObserverCommand(Command):
 
     def execute(self):
         logging.info("Setting up observer " + self._cmd_info["name"])
-        profile = get_profile(self._cmd_info["profile"])
+        profile = profiles.get_profile_by_name(self._cmd_info["profile"])
         store = self._setup_store()
         
         assessor = AdAssessor()

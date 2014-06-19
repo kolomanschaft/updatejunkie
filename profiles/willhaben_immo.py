@@ -25,10 +25,10 @@ SOFTWARE.
 """
 
 from bs4 import BeautifulSoup
-from profile import Profile
+from . import base
 import re
 
-class WillhabenImmoProfile(Profile):
+class WillhabenImmoProfile(base.ProfileBase):
     
     name = "WillhabenImmo"
     base_url = "http://www.willhaben.at"

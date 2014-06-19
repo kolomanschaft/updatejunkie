@@ -24,18 +24,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-class Profile(object):
-    '''
+class ProfileBase(object):
+    """
     Base class for profiles. Subclass this.
-    '''
+    """
     
     name = "Unnamed"
     
-    @classmethod
-    def get_profile(name):
-    	pass
-
-
     @property
     def tags(self):
         raise NotImplementedError()

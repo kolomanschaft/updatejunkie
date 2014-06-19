@@ -32,7 +32,7 @@ from profile import *
 import datetime
 import html.parser as htmlparser
 from threading import Lock
-from profile import get_profile
+import profiles
 
 class ConnectionError(Exception): pass
 
@@ -54,7 +54,7 @@ class Connector():
         if isinstance(profile, Profile):
             self._profile = profile
         elif isinstance(profile, str):
-            self._profile = get_profile(profile)
+            self._profile = profiles.get_profile_by_name(profile)
 
     def _get_page(self, page):
         data = None
