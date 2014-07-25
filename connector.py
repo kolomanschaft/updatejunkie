@@ -102,16 +102,23 @@ class Connector():
         if not self._profile.paging_param:
             ads = self.frontpage_ads()
             return [ad for ad in ads if ad.timetag > timelimit]
+
         pagestart = int(self._profile.paging_param_init)
+
         if not isinstance(timelimit, datetime.datetime):
             raise ConnectionError("timelimit needs to be a datetime instance")
+
         ads = []
         for page in range(pagestart,pagestart+maxpages):
             html = self._get_page(page)
-            new_ads = [ad for ad in self._profile.parse(html) if ad.timetag > timelimit]
+            new_ads = [Ad(tags, self._profile.key_tag, self._profile.datetime_tag)
+                       for tags in self._profile.parse(html)
+                       if tags[self._profile.datetime_tag] > timelimit]
+
             if len(new_ads) == 0:
                 break
             ads.extend(new_ads)
+
         return ads
 
 if __name__ == "__main__":

@@ -28,6 +28,7 @@ from bs4 import BeautifulSoup
 from . import base
 #import base
 import re
+from datetime import datetime
 
 class WillhabenProfile(base.ProfileBase):
     
@@ -35,7 +36,7 @@ class WillhabenProfile(base.ProfileBase):
     base_url = "http://www.willhaben.at"
     
     def __init__(self):
-        self._tags = {"id":0, "url":"", "title":"", "price":0.0, "description":"", "datetime":""}
+        self._tags = {"id":0, "url":"", "title":"", "price":0.0, "description":"", "datetime":None}
         
     @property
     def tags(self):
@@ -48,10 +49,6 @@ class WillhabenProfile(base.ProfileBase):
     @property
     def datetime_tag(self):
         return "datetime"
-
-    @property
-    def datetime_tag_format(self):
-        return "%d.%m.%Y %H:%M"
 
     @property
     def paging_param(self):
@@ -74,15 +71,17 @@ class WillhabenProfile(base.ProfileBase):
         allads = soup.find(name="ul", attrs={"id":"resultlist"})
         ads = allads.findAll("li", attrs={"class":"even clearfix"})
         ads.extend(allads.findAll("li", attrs={"class":"odd clearfix"}))
-        return map(self._ad_soup_to_dict, ads)
+        return map(self._soup_to_tags, ads)
 
-    def _ad_soup_to_dict(self, soup):
+    def _soup_to_tags(self, soup):
         tags = self._tags.copy()
         tags["id"] = int(soup.h2.attrs['id'])
         tags["url"] = self.base_url + soup.h2.a.attrs['href']
-        tags["datetime"] = next(soup.find('p', attrs={'class', 'date-time'}).children)
         tags["title"] = soup.h2.a.text.strip()
-        
+
+        datetime_text = next(soup.find('p', attrs={'class', 'date-time'}).children)
+        tags["datetime"] = datetime.strptime(datetime_text, "%d.%m.%Y %H:%M")
+
         price_text = soup.find('p', attrs={'class':'price'}).text
         price_match = re.search("^.*?([0-9]+),([0-9]{2})", price_text, re.M)
         if price_match:

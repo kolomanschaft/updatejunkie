@@ -28,37 +28,39 @@ import pickle
 import datetime
 from threading import RLock
 
+
 class AdKeyError(Exception):pass
+
 
 class Ad(dict):
 
+    def __init__(self, tags, key_tag, datetime_tag):
+        self.update(tags)
+        self._key_tag = key_tag
+        self._datetime_tag = datetime_tag
+
     @property
-    def keytag(self):
+    def key_tag(self):
         return self._keytag
     
-    @keytag.setter
-    def keytag(self, tagname):
-        if not tagname in self.keys():
-            raise AdKeyError("Tag {0} could not be found. Set the tag {0} before using it as key!".format(tagname))
-        self._keytag = tagname
+    @key_tag.setter
+    def key_tag(self, tag_name):
+        self._key_tag = tag_name
     
     @property
     def key(self):
-        if not hasattr(self, "_keytag"):
-            raise AdKeyError("No keytag defined yet!")
-        return self[self._keytag]
+        return self[self._key_tag]
     
     @property
-    def timetag(self):
-        if not hasattr(self, "_timetag"):
-            raise AdKeyError("No timetag set yet!")
-        return self._timetag
+    def datetime_tag(self):
+        return self._datetime_tag
     
-    @timetag.setter
-    def timetag(self, atime):
-        if not isinstance(atime, datetime.datetime):
-            raise TypeError("The timetag needs to be a valid datetime!")
-        self._timetag = atime
+    @datetime_tag.setter
+    def datetime_tag(self, date_time):
+        if not isinstance(date_time, datetime.datetime):
+            raise TypeError("The datetime tag needs to be a valid datetime!")
+        self._datetime_tag = date_time
+
 
 class AdStore(object):
     
@@ -74,7 +76,7 @@ class AdStore(object):
     
     def _sort_by_date(self):
         try:
-            self.ads = sorted(self.ads, key = lambda ad: ad.timetag)
+            self.ads = sorted(self.ads, key = lambda ad: ad.datetime_tag)
         except AdKeyError:
             pass
     
@@ -108,7 +110,6 @@ class AdStore(object):
             if not hasattr(self, "ads"): self.ads = []
             self._lock.release()
 
-    
     def add_ads(self, ads):
         """
         'ads' is a list of new ads

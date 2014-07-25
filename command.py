@@ -168,7 +168,7 @@ class AddNotificationCommand(Command):
         if (notification_type == "email"):
             notification = self._setup_email_notification()
 
-        self._server[observer_name].notifications.add_notification(notification)
+        self._server[observer_name]._notifications.add_notification(notification)
 
     def _setup_email_notification(self):
         if not self._server.config["smtp"]:

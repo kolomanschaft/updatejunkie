@@ -77,7 +77,7 @@ class Observer(threading.Thread):
                 logging.info("Observer {} Found Ad: {}".format(self._name, ad.key))
             if self._notifications:
                 self._notifications.notify_all(ad)
-        self._time_mark = sorted(ads, key = lambda ad: ad.timetag)[-1].timetag
+        self._time_mark = sorted(ads, key = lambda ad: ad.datetime_tag)[-1].datetime_tag
 
     def run(self):
         self._time_mark = datetime.datetime.now() - datetime.timedelta(days = 1)
