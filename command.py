@@ -116,12 +116,12 @@ class SmtpSettingsCommand(Command):
             raise CommandError("'port' is missing in the smtp configuration.")
 
 
-class NewObserverCommand(Command):
+class CreateObserverCommand(Command):
     """
-    Setup a new observer. If an older observer is running with the same name, 
-    it will be replaced by the new observer.
+    Create and setup a new observer. If an older observer is running with the 
+    same name, it will be replaced by the new observer.
     """
-    name = "new_observer"
+    name = "create_observer"
 
     def execute(self):
         logging.info("Setting up observer " + self._cmd_info["name"])
@@ -131,12 +131,9 @@ class NewObserverCommand(Command):
         assessor = AdAssessor()
         for json in self._cmd_info["criteria"]:
             assessor.add_criterion(AdCriterion.from_json(json))
-     
-        # Notification server setup
+
+        # Add an empty notification server
         notificationServer = NotificationServer()
-        for json in self._cmd_info["notifications"]:
-            notification = self._setup_notification(json, profile)
-            notificationServer.add_notification(notification)
 
         # Setup the actual observer
         observer = Observer(url = self._cmd_info["url"], profile = profile,
@@ -153,26 +150,47 @@ class NewObserverCommand(Command):
             if not os.path.exists("./store/"): os.mkdir("store")
             save_file = "store/adstore.{}.db".format(self._cmd_info["name"])
         return AdStore(path = save_file)
-    
-    def _setup_notification(self, json, profile):
-        if (json["type"] == "email"):
-            if not self._server.config["smtp"]:
-                raise CommandError("Cannot setup email notifications without smtp settings.")
 
-            from notifications import EmailNotification
-            formatting = profile.Notifications.Email
-            smtp = self._server.config["smtp"]
-            to = json["to"]
-            if (type(to) == str):
-                to = [to]   # make it a list
-            email_notification = EmailNotification(smtp["host"], smtp["port"],
-                                                   smtp["user"], smtp["pass"],
-                                                   formatting.From, json["to"],
-                                                   formatting.ContentType,
-                                                   formatting.Subject,
-                                                   formatting.Body.valueOf_)
-            return email_notification
-        
+
+class AddNotificationCommand(Command):
+    """
+    Adds a new notification and associates it with a running observer.
+    """
+    name = "add_notification"
+
+    def execute(self):
+        notification_type = self._cmd_info["type"]
+        observer_name = self._cmd_info["observer"]
+
+        logging.info("Adding {} notification to observer {}".format(notification_type, observer_name))
+        notification = None
+
+        if (notification_type == "email"):
+            notification = self._setup_email_notification()
+
+        self._server[observer_name].notifications.add_notification(notification)
+
+    def _setup_email_notification(self):
+        if not self._server.config["smtp"]:
+            raise CommandError("Cannot setup email notifications without smtp settings.")
+
+        header_from = self._cmd_info["from"]
+        header_to = self._cmd_info["to"]
+        header_mime_type = self._cmd_info["mime_type"]
+        header_subject = self._cmd_info["subject"]
+        body = self._cmd_info["body"]
+        smtp = self._server.config["smtp"]
+        if (type(header_to) == str):
+            header_to = [header_to]   # make it a list
+
+        from notifications import EmailNotification
+        email_notification = EmailNotification(smtp["host"], smtp["port"],
+                                               smtp["user"], smtp["pass"],
+                                               header_from, header_to,
+                                               header_mime_type,
+                                               header_subject, body)
+        return email_notification
+
         
 class RemoveObserverCommand(Command):
     """

@@ -36,26 +36,26 @@ class Observer(threading.Thread):
     
     def __init__(self, url, profile, store, assessor, notifications, update_interval = 180, name = "Unnamed Observer"):
         super(Observer, self).__init__()
-        self.interval = update_interval
-        self.connector = Connector(url, profile)
-        self.store = store
-        self.assessor = assessor
-        self.notifications = notifications
-        self.name = name
+        self._interval = update_interval
+        self._connector = Connector(url, profile)
+        self._store = store
+        self._assessor = assessor
+        self._notifications = notifications
+        self._name = name
         self._quit = False
     
     def serialize(self):
         d = dict()
-        d["name"] = self.name
-        d["url"] = self.connector.url
-        d["interval"] = self.interval
-        d["profile"] = self.connector.profile_name
-        if self.store is not None:
+        d["name"] = self._name
+        d["url"] = self._connector.url
+        d["interval"] = self._interval
+        d["profile"] = self._connector.profile_name
+        if self._store is not None:
             d["store"] = True
-        if self.assessor is not None:
-            d["criteria"] = [criterion.serialize() for criterion in self.assessor.criteria]
-        if self.notifications is not None:
-            d["notifications"] = [notification.serialize() for notification in self.notifications]
+        if self._assessor is not None:
+            d["criteria"] = [criterion.serialize() for criterion in self._assessor.criteria]
+        # if self._notifications is not None:
+        #     d["notifications"] = [notification.serialize() for notification in self._notifications]
         return d
         
     def quit(self):
@@ -63,36 +63,36 @@ class Observer(threading.Thread):
         Make the Thread quit on the next round.
         """
         self._quit = True
-        logging.info("Observer {} quits on the next round".format(self.name))
+        logging.info("Observer {} quits on the next round".format(self._name))
 
     def _process_ads(self, ads):
         if len(ads) == 0: return
-        hits = map(self.assessor.check, ads)
+        hits = map(self._assessor.check, ads)
         hit_ads = [ad for ad in compress(ads, hits)]
-        new_ads = self.store.add_ads(hit_ads)
+        new_ads = self._store.add_ads(hit_ads)
         for ad in new_ads:
             try:
-                logging.info("Observer {} Found Ad: {}".format(self.name, ad["title"]))
+                logging.info("Observer {} Found Ad: {}".format(self._name, ad["title"]))
             except KeyError:
-                logging.info("Observer {} Found Ad: {}".format(self.name, ad.key))
-            if self.notifications:
-                self.notifications.notify_all(ad)
-        self.time_mark = sorted(ads, key = lambda ad: ad.timetag)[-1].timetag
+                logging.info("Observer {} Found Ad: {}".format(self._name, ad.key))
+            if self._notifications:
+                self._notifications.notify_all(ad)
+        self._time_mark = sorted(ads, key = lambda ad: ad.timetag)[-1].timetag
 
     def run(self):
-        self.time_mark = datetime.datetime.now() - datetime.timedelta(days = 1)
-        logging.info("Observer {} polling ads back to {}".format(self.name, self.time_mark))
-        ads = self.connector.ads_after(self.time_mark)
+        self._time_mark = datetime.datetime.now() - datetime.timedelta(days = 1)
+        logging.info("Observer {} polling ads back to {}".format(self._name, self._time_mark))
+        ads = self._connector.ads_after(self._time_mark)
         if self._quit: return   # Quit now if quit() was called while fetching ads
         self._process_ads(ads)
-        logging.info("Observer {} initial poll done".format(self.name))
+        logging.info("Observer {} initial poll done".format(self._name))
         while True:
-            time.sleep(self.interval)
+            time.sleep(self._interval)
             if self._quit: return   # Quit now if quit() was called while sleeping
-            logging.info("Observer {} polling for new ads".format(self.name))
+            logging.info("Observer {} polling for new ads".format(self._name))
             try:
-                ads = self.connector.ads_after(self.time_mark)
+                ads = self._connector.ads_after(self._time_mark)
                 if self._quit: return   # Quit now if quit() was called while fetching ads
                 self._process_ads(ads)
             except ConnectionError as ex:
-                logging.info("Observer {} connection failed with message: {}".format(self.name, ex.message))
+                logging.info("Observer {} connection failed with message: {}".format(self._name, ex.message))

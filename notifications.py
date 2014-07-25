@@ -39,7 +39,10 @@ class Notification:
 		raise NotImplementedError("serialize() must be implemented in subclass.")
 	
 class EmailNotification(Notification):
-	"""Sends email notification using python's smtplib module"""
+	"""
+	Sends email notification using python's smtplib module
+	"""
+
 	def __init__(self, host, port, user, pw, sender, to, mimetype, subject, body):
 		self.host = host
 		self.port = port

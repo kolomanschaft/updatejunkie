@@ -112,7 +112,7 @@ Example:
 
 Response: *None*
 
-#### new_observer
+#### create_observer
 
 Adds a new observer and activates it. This is the most complex command as it contains the whole configuration for an observer. Therefore here is a brief explanation about what each element does. It might be worth mentioning that none of the elements in the first level is optional.
 
@@ -138,7 +138,7 @@ __to__: A list of email recipients
 Example:
 ```JSON
 {
-	"command": "new_observer",
+	"command": "create_observer",
 	"name": "Bugaboo",
 	"profile": "Willhaben",
 	"url": "http://www.willhaben.at/iad/kaufen-und-verkaufen/baby-kind/transport/",
@@ -176,7 +176,7 @@ Response: *None*
 
 #### get_observer
 
-Returns a data structure that contains the same elements as the `new_observer` command except for the `command` specifier itself. You could take the response directly to add another observer.
+Returns a data structure that contains the same elements as the `create_observer` command except for the `command` specifier itself. You could take the response directly to add another observer.
 
 Example:
 ```JSON

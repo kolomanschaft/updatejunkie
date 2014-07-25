@@ -28,7 +28,6 @@ import urllib.request, urllib.error, urllib.parse
 from urllib.parse import urlencode
 import re
 from adstore import Ad
-from profile import *
 import datetime
 import html.parser as htmlparser
 from threading import Lock
@@ -51,7 +50,7 @@ class Connector():
         if m is None:
             raise Exception("Invalid URL: {}".format(url))
         self._url = url
-        if isinstance(profile, Profile):
+        if isinstance(profile, profiles.base.ProfileBase):
             self._profile = profile
         elif isinstance(profile, str):
             self._profile = profiles.get_profile_by_name(profile)
@@ -60,10 +59,10 @@ class Connector():
         data = None
         url = self._url
         if page is not None:
-            page_param = self._profile.Website.PagingParameter
-            new_encoded = urlencode({page_param.Name: page})
-            if page_param.Method == "GET":
-                page_match = re.search("{}=[0-9]+".format(page_param.Name), self._url)
+            page_param = self._profile.paging_param
+            new_encoded = urlencode({page_param: page})
+            if self._profile.paging_method == "GET":
+                page_match = re.search("{}=[0-9]+".format(page_param), self._url)
                 if page_match:
                     url = self._url.replace(page_match.group(), new_encoded)
                 elif self._url.find("?") >= 0:
@@ -151,10 +150,10 @@ class Connector():
         return self.ads_after(timelimit, maxpages)
     
     def ads_after(self, timelimit, maxpages = 10):
-        if not self._profile.Website.PagingParameter:
+        if not self._profile.paging_param:
             ads = self.frontpage_ads()
             return [ad for ad in ads if ad.timetag > timelimit]
-        pagestart = int(self._profile.Website.PagingParameter.InitialValue)
+        pagestart = int(self._profile.paging_param_init)
         if not isinstance(timelimit, datetime.datetime):
             raise ConnectionError("timelimit needs to be a datetime instance")
         ads = []

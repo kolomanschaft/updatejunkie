@@ -6,9 +6,8 @@
 		"user": "myuser123",
 		"pass": "secret"
 	},
-
 	{
-		"command": "new_observer",
+		"command": "create_observer",
 		"name": "Bugaboo",
 		"profile": "Willhaben",
 		"url": "http://www.willhaben.at/iad/kaufen-und-verkaufen/baby-kind/transport/",

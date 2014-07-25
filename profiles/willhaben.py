@@ -26,6 +26,7 @@ SOFTWARE.
 
 from bs4 import BeautifulSoup
 from . import base
+#import base
 import re
 
 class WillhabenProfile(base.ProfileBase):
@@ -34,24 +35,52 @@ class WillhabenProfile(base.ProfileBase):
     base_url = "http://www.willhaben.at"
     
     def __init__(self):
-        self._tags = {"id":0, "url":"", "title":"", "price":0.0, "description":""}
+        self._tags = {"id":0, "url":"", "title":"", "price":0.0, "description":"", "datetime":""}
         
     @property
     def tags(self):
         return self._tags.keys()
+
+    @property
+    def key_tag(self):
+        return "id"
+
+    @property
+    def datetime_tag(self):
+        return "datetime"
+
+    @property
+    def datetime_tag_format(self):
+        return "%d.%m.%Y %H:%M"
+
+    @property
+    def paging_param(self):
+        return "page"
+
+    @property
+    def paging_param_init(self):
+        return 1
+
+    @property
+    def paging_method(self):
+        return "GET"
+
+    @property
+    def encoding(self):
+        return "ISO-8859-1"
 
     def parse(self, html):
         soup = BeautifulSoup(html)
         allads = soup.find(name="ul", attrs={"id":"resultlist"})
         ads = allads.findAll("li", attrs={"class":"even clearfix"})
         ads.extend(allads.findAll("li", attrs={"class":"odd clearfix"}))
-        return list(map(self._ad_soup_to_dict, ads))
+        return map(self._ad_soup_to_dict, ads)
 
     def _ad_soup_to_dict(self, soup):
         tags = self._tags.copy()
         tags["id"] = int(soup.h2.attrs['id'])
-        tags["url"] = self.base_url + soup.h2.a.attrs['href']        
-
+        tags["url"] = self.base_url + soup.h2.a.attrs['href']
+        tags["datetime"] = next(soup.find('p', attrs={'class', 'date-time'}).children)
         tags["title"] = soup.h2.a.text.strip()
         
         price_text = soup.find('p', attrs={'class':'price'}).text
@@ -76,7 +105,7 @@ if __name__ == "__main__":
         html = f.read()
     
     p = WillhabenProfile()
-    ads = p.parse(html)
+    ads = list(p.parse(html))
     
     pp = PrettyPrinter()
     pp.pprint(ads)
