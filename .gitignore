@@ -16,6 +16,10 @@ client/*
 .pydevproject
 .settings
 
+# PyCharm
+
+.idea/
+
 # Added by github.com
 
 *.py[co]
