@@ -29,37 +29,30 @@ import datetime
 from threading import RLock
 
 
-class AdKeyError(Exception):pass
+class AdKeyError(Exception):
+    pass
 
 
 class Ad(dict):
 
     def __init__(self, tags, key_tag, datetime_tag):
         self.update(tags)
+
+        if (key_tag not in tags.keys()):
+            raise AttributeError("Key tag not present.")
+        if (datetime_tag not in tags.keys()):
+            raise AttributeError("Datetime tag not present.")
+
         self._key_tag = key_tag
         self._datetime_tag = datetime_tag
 
-    @property
-    def key_tag(self):
-        return self._keytag
-    
-    @key_tag.setter
-    def key_tag(self, tag_name):
-        self._key_tag = tag_name
-    
     @property
     def key(self):
         return self[self._key_tag]
     
     @property
-    def datetime_tag(self):
-        return self._datetime_tag
-    
-    @datetime_tag.setter
-    def datetime_tag(self, date_time):
-        if not isinstance(date_time, datetime.datetime):
-            raise TypeError("The datetime tag needs to be a valid datetime!")
-        self._datetime_tag = date_time
+    def datetime(self):
+        return self[self._datetime_tag]
 
 
 class AdStore(object):
@@ -76,7 +69,7 @@ class AdStore(object):
     
     def _sort_by_date(self):
         try:
-            self.ads = sorted(self.ads, key = lambda ad: ad.datetime_tag)
+            self.ads = sorted(self.ads, key = lambda ad: ad.datetime)
         except AdKeyError:
             pass
     
