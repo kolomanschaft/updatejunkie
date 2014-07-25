@@ -77,67 +77,16 @@ class Connector():
         except urllib.error.URLError:
             raise ConnectionError("Could not connect to {}".format(url))
         
-        html = str(f.read(), "ISO-8859-1")
+        html = str(f.read(), self._profile.encoding)
         f.close()
-        for regex in self._profile.Website.HtmlFormat.FormatRegex:
-            if regex.type_ == "filter":
-                html = re.sub(regex.valueOf_, "", html)
-            else:
-                raise ConnectionError("Format type {} is not implemented!".format(regex["type"]))
         return html
 
-
-    def _get_adlist_from_html(self, html):
-        def text_tag(value):
-            return htmlparser.HTMLParser().unescape(value)
-        def integer_tag(value):
-            try:
-                return int(value)
-            except ValueError:
-                return float("nan")
-        def float_tag(value):
-            try:
-                return float(value.replace(",", "."))
-            except ValueError:
-                return float("nan")
-        def url_tag(value):
-            if value[0] == "/":
-                return self._profile.Website.BaseUrl + value[1:]
-            else:
-                return value
-
-        ad_tuples = re.findall(self._profile.Website.AdDefinition.Regex, html)
-        tags = self._profile.Website.AdDefinition.AdTag
-        
-        ads = []
-        for ad_tuple in ad_tuples:
-            ad = Ad()
-            for combined in zip(tags, ad_tuple):
-                if combined[0].type_ == "text":
-                    ad[combined[0].valueOf_] = text_tag(combined[1])
-                elif combined[0].type_ == "integer":
-                    ad[combined[0].valueOf_] = integer_tag(combined[1])
-                elif combined[0].type_ == "float":
-                    ad[combined[0].valueOf_] = float_tag(combined[1])
-                elif combined[0].type_ == "url":
-                    ad[combined[0].valueOf_] = url_tag(combined[1])
-            ad.keytag = self._profile.Website.AdDefinition.KeyTag.TagName
-            timetag_info = self._profile.Website.AdDefinition.TimeTag
-            if timetag_info is not None:
-                ad.timetag = datetime.datetime.strptime(ad[timetag_info.TagName], timetag_info.DateTimeFormat)
-            else:
-                ad.timetag = datetime.datetime.now()
-            ad["listingUrl"] = self._url
-            ads.append(ad)
-        return ads
-            
-    
     def frontpage_ads(self):
         if not self._profile.Website.PagingParameter:
             html = self._get_page(None)
         else:
             html = self._get_page(self._profile.Website.PagingParameter.InitialValue)
-        return self._get_adlist_from_html(html)
+        return self._profile.parse(html)
     
     def ads_all(self, pagestart = None, maxpages = 10):
         timelimit = datetime.datetime(1970,1,1)
@@ -159,7 +108,7 @@ class Connector():
         ads = []
         for page in range(pagestart,pagestart+maxpages):
             html = self._get_page(page)
-            new_ads = [ad for ad in self._get_adlist_from_html(html) if ad.timetag > timelimit]
+            new_ads = [ad for ad in self._profile.parse(html) if ad.timetag > timelimit]
             if len(new_ads) == 0:
                 break
             ads.extend(new_ads)
