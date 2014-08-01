@@ -26,16 +26,17 @@ SOFTWARE.
 
 import unittest
 from notifications import *
-from connector import *
+#from connector import *
+from profiles.willhaben import *
 
 
 class TestEmailNotification(unittest.TestCase):
     
     def setUp(self):
-        with open("test.html", "r", encoding="UTF-8") as htmlfile:
+        with open("test/test.html", "r", encoding="UTF-8") as htmlfile:
             html = htmlfile.read()
-        connector = Connector("http://example.com/", "Willhaben")
-        self.ads = connector.__get_adlist_from_html__(html)
+        profile = WillhabenProfile()
+        self.ads = profile.parse(html)
 
     def testMIMEStringGeneration(self):
         sender = "Gustl Hemmer <gustl@example.com>"
@@ -48,6 +49,3 @@ class TestEmailNotification(unittest.TestCase):
                           mimetype = mimetype, subject = subject, body = body)
         for ad in self.ads:
             notification._get_mail(ad, to)
-
-if __name__ == '__main__':
-    unittest.main()
