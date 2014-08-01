@@ -48,3 +48,6 @@ class TestEmailNotification(unittest.TestCase):
                           mimetype = mimetype, subject = subject, body = body)
         for ad in self.ads:
             notification._get_mail(ad, to)
+
+if __name__ == '__main__':
+    unittest.main()
