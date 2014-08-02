@@ -49,10 +49,18 @@ class Ad(dict):
     @property
     def key(self):
         return self[self._key_tag]
+
+    @key.setter
+    def key(self, value):
+        self[self._key_tag] = value
     
     @property
     def datetime(self):
         return self[self._datetime_tag]
+
+    @datetime.setter
+    def datetime(self, value):
+        self[self._datetime_tag] = value
 
 
 class AdStore(object):

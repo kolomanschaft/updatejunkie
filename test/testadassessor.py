@@ -32,50 +32,60 @@ from connector import *
 class TestAdAssessor(unittest.TestCase):
     
     def setUp(self):
-        self.assessor = AdAssessor()
-    
+        self._assessor = AdAssessor()
+        self._base_ad = Ad({"id":1, "dt":"2014-07-07"}, "id", "dt")
+
     def tearDown(self):pass
     
-    def testAdCriterionPriceLimit(self):
+    def test_ad_criterion_less_than(self):
         data = {"tag": "price", "limit": 50}
-        priceCriterion = AdCriterionLimit(data)
-        self.assessor.add_criterion(priceCriterion)
-        ad = Ad({"price": 30})
-        self.assertTrue(self.assessor.check(ad))
-        ad = Ad({"price": 70})
-        self.assertFalse(self.assessor.check(ad))
+        priceCriterion = AdCriterionLessThan(data)
+        self._assessor.add_criterion(priceCriterion)
+        self._base_ad["price"] = 30
+        self.assertTrue(self._assessor.check(self._base_ad))
+        self._base_ad["price"] = 70
+        self.assertFalse(self._assessor.check(self._base_ad))
 
-    def testAdCriterionTitleKeywordsAll(self):
+    def test_ad_criterion_greater_than(self):
+        data = {"tag": "price", "limit": 50}
+        priceCriterion = AdCriterionGreaterThan(data)
+        self._assessor.add_criterion(priceCriterion)
+        self._base_ad["price"] = 30
+        self.assertFalse(self._assessor.check(self._base_ad))
+        self._base_ad["price"] = 70
+        self.assertTrue(self._assessor.check(self._base_ad))
+
+    def test_ad_criterion_title_keywords_all(self):
         data = {"tag": "title", "keywords": ["schöner", "tag"]}
         kwdCriterion = AdCriterionKeywordsAll(data)
-        self.assessor.add_criterion(kwdCriterion)
-        ad = Ad({"title": "Das ist ein schöner Tag"})
-        self.assertTrue(self.assessor.check(ad))
-        ad = Ad({"title": "Das ist ein schöner Wagen"})
-        self.assertFalse(self.assessor.check(ad))
+        self._assessor.add_criterion(kwdCriterion)
+        self._base_ad["title"] = "Das ist ein schöner Tag"
+        self.assertTrue(self._assessor.check(self._base_ad))
+        self._base_ad["title"] = "Das ist ein schöner Wagen"
+        self.assertFalse(self._assessor.check(self._base_ad))
 
-    def testAdCriterionTitleKeywordsAny(self):
+    def test_ad_criterion_title_keywords_any(self):
         data = {"tag": "title", "keywords": ["schöner", "tag"]}
         kwdCriterion = AdCriterionKeywordsAny(data)
-        self.assessor.add_criterion(kwdCriterion)
-        ad = Ad({"title": "Das ist ein schöner tag"})
-        self.assertTrue(self.assessor.check(ad))
-        ad = Ad({"title": "Das ist ein schöner Wagen"})
-        self.assertTrue (self.assessor.check(ad))
-        ad = Ad({"title": "Das ist ein schneller Wagen"})
-        self.assertFalse(self.assessor.check(ad))
+        self._assessor.add_criterion(kwdCriterion)
+        self._base_ad["title"] = "Das ist ein schöner tag"
+        self.assertTrue(self._assessor.check(self._base_ad))
+        self._base_ad["title"] = "Das ist ein schöner Wagen"
+        self.assertTrue (self._assessor.check(self._base_ad))
+        self._base_ad["title"] = "Das ist ein schneller Wagen"
+        self.assertFalse(self._assessor.check(self._base_ad))
         
-    def testAdCriterionTitleKeywordsNot(self):
+    def test_ad_criterion_title_keywords_not(self):
         data = {"tag": "title", "keywords": ["schöner", "tag"]}
         kwdCriterion = AdCriterionKeywordsNot(data)
-        self.assessor.add_criterion(kwdCriterion)
-        ad = Ad({"title": "Das ist ein schöner tag"})
-        self.assertFalse(self.assessor.check(ad))
-        ad = Ad({"title": "Das ist ein schöner Wagen"})
-        self.assertFalse (self.assessor.check(ad))
-        ad = Ad({"title": "Das ist ein schneller Wagen"})
-        self.assertTrue(self.assessor.check(ad))
+        self._assessor.add_criterion(kwdCriterion)
+        self._base_ad["title"] = "Das ist ein schöner tag"
+        self.assertFalse(self._assessor.check(self._base_ad))
+        self._base_ad["title"] = "Das ist ein schöner Wagen"
+        self.assertFalse (self._assessor.check(self._base_ad))
+        self._base_ad["title"] = "Das ist ein schneller Wagen"
+        self.assertTrue(self._assessor.check(self._base_ad))
 
-    def testAdAssessorReturnsTrueWhenEmpty(self):
-        ad = Ad(title = "Expensive Blablabla", price = 1e8)
-        self.assertTrue (self.assessor.check(ad))
+    def test_adassessor_returns_true_if_empty(self):
+        self._base_ad["title"] = "Expensive Blablabla"
+        self.assertTrue (self._assessor.check(self._base_ad))

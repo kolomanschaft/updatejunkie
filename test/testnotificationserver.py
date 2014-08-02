@@ -37,11 +37,11 @@ class TestNotificationServer(unittest.TestCase):
     def tearDown(self):
         del self.notificationServer
     
-    def testNotificationTypeError(self):
+    def test_notification_type_error(self):
         x = 123
         self.assertRaises(TypeError, self.notificationServer.add_notification, x)
     
-    def testAddDeleteNotificaions(self):
+    def test_add_delete_notificaions(self):
         a = Notification()
         b = Notification()
         self.notificationServer.add_notifications(a,b)

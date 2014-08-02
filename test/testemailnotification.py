@@ -38,7 +38,7 @@ class TestEmailNotification(unittest.TestCase):
         profile = WillhabenProfile()
         self.ads = profile.parse(html)
 
-    def testMIMEStringGeneration(self):
+    def test_MIME_string_generation(self):
         sender = "Gustl Hemmer <gustl@example.com>"
         to = "Moatl Hemmer <moatl@example.com>"
         mimetype = "text/plain"

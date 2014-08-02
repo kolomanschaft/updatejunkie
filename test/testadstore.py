@@ -36,14 +36,13 @@ class TestAdStore(unittest.TestCase):
     
     def setUp(self):
         self.store = AdStore(self.path)
-        self.some_ads = [Ad({"id":nr, "title":"Ad number {}".format(nr)}) for nr in range(10)]
-        for ad in self.some_ads:
-            ad.keytag = "id"
-        
+        self.some_ads = [Ad({"id":nr, "dt": nr, "title":"Ad number {}".format(nr)}, "id", "dt")
+                         for nr in range(10)]
+
     def tearDown(self):
         os.remove(self.path)
         
-    def testAddAndRemoveAds(self):
+    def test_add_and_remove_ads(self):
         added_ads = self.store.add_ads(self.some_ads)
         self.assertListEqual(self.some_ads, added_ads)
         ridx = [2,3,5,6,8]
@@ -53,7 +52,7 @@ class TestAdStore(unittest.TestCase):
         ads_not_removed = [ad for ad in self.some_ads if ad.key not in ridx]
         self.assertListEqual(ads_not_removed, self.store[:])
     
-    def testSaveAndLoadAds(self):
+    def test_save_and_load_ads(self):
         self.store.add_ads(self.some_ads)
         self.store.save()
         another_store = AdStore(self.path)
@@ -61,10 +60,10 @@ class TestAdStore(unittest.TestCase):
         second_ids = [ad.key for ad in another_store]
         self.assertListEqual(first_ids, second_ids)
 
-    def testSortByDate(self):
+    def test_sort_by_date(self):
         delta = datetime.timedelta(hours = 2)
         for ad in self.some_ads:
-            ad.timetag = datetime.datetime.now() + random.randint(0,20) * delta
+            ad.datetime = datetime.datetime.now() + random.randint(0,20) * delta
         self.store.add_ads(self.some_ads)
         for i in range(1,self.store.length()):
-            self.assertGreaterEqual(self.store[i].timetag, self.store[i-1].timetag)            
+            self.assertGreaterEqual(self.store[i].datetime, self.store[i-1].datetime)

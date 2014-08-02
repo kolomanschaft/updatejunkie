@@ -37,14 +37,14 @@ class TestConnector(unittest.TestCase):
     def tearDown(self):
         del self.connector
     
-    def testAdsAfter(self):
+    def test_ads_after(self):
         timelimit = datetime.datetime.now() - datetime.timedelta(hours = 1)
         ads = self.connector.ads_after(timelimit)
         for ad in ads:
-            self.assertTrue(ad.timetag > timelimit)
+            self.assertTrue(ad.datetime > timelimit)
     
-    def testAdsIn(self):
+    def test_ads_in(self):
         timedelta = datetime.timedelta(hours = 1)
         ads = self.connector.ads_in(timedelta)
         for ad in ads:
-            self.assertTrue(ad.timetag > datetime.datetime.now()-timedelta)
+            self.assertTrue(ad.datetime > datetime.datetime.now()-timedelta)
