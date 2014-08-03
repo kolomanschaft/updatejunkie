@@ -53,7 +53,7 @@ class Command(object):
     
     @classmethod
     def from_command_info(cls, cmd_info):
-        if ("command" not in cmd_info):
+        if type(cmd_info) != dict or "command" not in cmd_info:
             raise CommandError("The given data is not a valid command.")
 
         for cmd in Command.__subclasses__():
@@ -102,17 +102,17 @@ class SmtpSettingsCommand(Command):
     name = "smtp_config"
     
     def execute(self):
-        self.validate_smtp_config(self._cmd_info)
+        self._validate_smtp_config(self._cmd_info)
         if "user" not in self._cmd_info:
             self._cmd_info["user"] = None
         if "pass" not in self._cmd_info:
             self._cmd_info["pass"] = None
         self._server.config["smtp"] = self._cmd_info
     
-    def validate_smtp_config(self, config):
-        if ("host" not in config):
+    def _validate_smtp_config(self, config):
+        if "host" not in config:
             raise CommandError("'host' is missing in the smtp configuration.")
-        if ("port" not in config):
+        if "port" not in config:
             raise CommandError("'port' is missing in the smtp configuration.")
 
 
@@ -133,23 +133,23 @@ class CreateObserverCommand(Command):
             assessor.add_criterion(AdCriterion.from_json(json))
 
         # Add an empty notification server
-        notificationServer = NotificationServer()
+        notification_server = NotificationServer()
 
         # Setup the actual observer
-        observer = Observer(url = self._cmd_info["url"], profile = profile,
-                            store = store, assessor = assessor,
-                            notifications = notificationServer,
-                            update_interval = self._cmd_info["interval"],
-                            name = self._cmd_info["name"])
+        observer = Observer(url=self._cmd_info["url"], profile=profile,
+                            store=store, assessor=assessor,
+                            notifications=notification_server,
+                            update_interval=self._cmd_info["interval"],
+                            name=self._cmd_info["name"])
         
         self._server.add_observer(observer)
 
     def _setup_store(self):
         save_file = None    # Ads that have already been processed are registered in this file
-        if self._cmd_info["store"] == True:
+        if self._cmd_info["store"]:
             if not os.path.exists("./store/"): os.mkdir("store")
             save_file = "store/adstore.{}.db".format(self._cmd_info["name"])
-        return AdStore(path = save_file)
+        return AdStore(path=save_file)
 
 
 class AddNotificationCommand(Command):
@@ -165,7 +165,7 @@ class AddNotificationCommand(Command):
         logging.info("Adding {} notification to observer '{}'".format(notification_type, observer_name))
         notification = None
 
-        if (notification_type == "email"):
+        if notification_type == "email":
             notification = self._setup_email_notification()
 
         self._server[observer_name]._notifications.add_notification(notification)
@@ -180,7 +180,7 @@ class AddNotificationCommand(Command):
         header_subject = self._cmd_info["subject"]
         body = self._cmd_info["body"]
         smtp = self._server.config["smtp"]
-        if (type(header_to) == str):
+        if type(header_to) == str:
             header_to = [header_to]   # make it a list
 
         from notifications import EmailNotification

@@ -37,10 +37,11 @@ class WebApi(CommandApi):
     def _command(self):
         try:
             json_decoded = bottle.request.json
-            return self.process_command(json_decoded)
-        except ValueError as error:
+            return self._process_command_info(json_decoded)
+        except Exception as error:
+            # Relay the error as JSON response
             return {"status": "ERROR", 
-                    "message": "JSON syntax: {}".format(error.args[0])
+                    "message": "{}".format(error.args[0])
                    }
             
     def run(self):
