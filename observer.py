@@ -43,6 +43,7 @@ class Observer(threading.Thread):
         self._notifications = notifications
         self._name = name
         self._quit = False
+        self._time_mark = datetime.datetime.now() - datetime.timedelta(days = 1)
     
     def serialize(self):
         d = dict()
@@ -80,19 +81,34 @@ class Observer(threading.Thread):
         self._time_mark = sorted(ads, key = lambda ad: ad.datetime)[-1].datetime
 
     def run(self):
-        self._time_mark = datetime.datetime.now() - datetime.timedelta(days = 1)
-        logging.info("Observer {} polling ads back to {}".format(self._name, self._time_mark))
-        ads = self._connector.ads_after(self._time_mark)
-        if self._quit: return   # Quit now if quit() was called while fetching ads
-        self._process_ads(ads)
-        logging.info("Observer {} initial poll done".format(self._name))
+
+        # logging.info("Observer {} polling ads back to {}".format(self._name, self._time_mark))
+        #
+        # # initial poll
+        # try:
+        #     ads = self._connector.ads_after(self._time_mark)
+        #     self._process_ads(ads)
+        #     logging.info("Observer {} initial poll done".format(self._name))
+        # except ConnectionError as ex:
+        #     logging.info("Observer {} connection failed with message: {}".format(self._name, ex.args[0]))
+        #
+        # # check of we got a quit signal meanwhile
+        # if self._quit: return   # Quit now if quit() was called while fetching ads
+
         while True:
-            time.sleep(self._interval)
-            if self._quit: return   # Quit now if quit() was called while sleeping
-            logging.info("Observer {} polling for new ads".format(self._name))
+            logging.info("Observer {} polling for new ads since {}".format(self._name, self._time_mark))
+
             try:
                 ads = self._connector.ads_after(self._time_mark)
-                if self._quit: return   # Quit now if quit() was called while fetching ads
+                if self._quit:
+                    return   # Quit now if quit() was called while fetching ads
+
                 self._process_ads(ads)
+
             except ConnectionError as ex:
-                logging.info("Observer {} connection failed with message: {}".format(self._name, ex.message))
+                logging.info("Observer {} connection failed with message: {}".format(self._name, ex.args[0]))
+
+            time.sleep(self._interval)
+
+            if self._quit:
+                return   # Quit now if quit() was called while sleeping
