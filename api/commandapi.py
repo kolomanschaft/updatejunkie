@@ -41,7 +41,7 @@ class CommandApi(Thread):
     def __init__(self, server):
         super(CommandApi, self).__init__()
         self._server = server
-        
+
     def _process_command_info(self, cmd_info):
         command = Command.from_command_info(cmd_info)
         self._server.command_queue.put_nowait(command)

@@ -124,7 +124,7 @@ class CreateObserverCommand(Command):
     name = "create_observer"
 
     def execute(self):
-        logging.info("Setting up observer " + self._cmd_info["name"])
+        logging.info("Setting up observer '{}'".format(self._cmd_info["name"]))
         profile = profiles.get_profile_by_name(self._cmd_info["profile"])
         store = self._setup_store()
         
@@ -162,7 +162,7 @@ class AddNotificationCommand(Command):
         notification_type = self._cmd_info["type"]
         observer_name = self._cmd_info["observer"]
 
-        logging.info("Adding {} notification to observer {}".format(notification_type, observer_name))
+        logging.info("Adding {} notification to observer '{}'".format(notification_type, observer_name))
         notification = None
 
         if (notification_type == "email"):

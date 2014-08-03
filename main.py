@@ -32,6 +32,7 @@ import sys
 import os
 import datetime
 import logging
+import signal
 
 if __name__ == "__main__":
  
@@ -59,11 +60,18 @@ if __name__ == "__main__":
     if (os.path.exists(config_path)):
         config = JsonScript(server, config_path)
         config.run()
-    
+
     # Start the web API
+    logging.info("Starting web API")
     web = WebApi(server)
+    web.daemon = True
     web.start()
 
-    # join the server thread
-    server.join()
-    
+    def shutdown(signal, frame):
+        logging.info("Caught keyboard interrupt. Shutting down...")
+        server.quit()
+        server.join()
+
+    # Waiting for Ctrl-c
+    signal.signal(signal.SIGINT, shutdown)
+    signal.pause()

@@ -24,13 +24,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from queue import Queue
+from queue import Queue, Empty
 from command import CommandError
 from threading import Thread
-
 import logging
 
+
 class ServerError(Exception):pass
+
 
 class Server(Thread):
     
@@ -39,11 +40,14 @@ class Server(Thread):
         self._config = dict()
         self._observers = list()
         self._command_queue = Queue()
+        self._quit = False
 
     def add_observer(self, observer):
         if (observer.name in [other.name for other in self._observers]):
-            logging.info("Replacing observer {}".format(observer.name))
+            logging.info("Replacing observer '{}' on server".format(observer.name))
             self.remove_observer(observer.name)
+        else:
+            logging.info("Adding observer '{}' to server".format(observer.name))
             
         self._observers.append(observer)
         observer.start()
@@ -54,7 +58,39 @@ class Server(Thread):
             observer.quit()
             self._observers.remove(observer)
         except StopIteration:
-            raise ServerError("No observer with the name of {}".format(name))
+            raise ServerError("No observer with the name of '{}'".format(name))
+
+    def run(self):
+        """
+        run() is called after everything is set up. It just waits for commands
+        to come in and executes them. Usually commands are put into the queue
+        by CommandApis like the WebApi or a JsonScript.
+        """
+        while True:
+
+            # spin the queue. checking for a quit signal every second
+            while True:
+                if self._quit:
+                    self._shutdown()
+                    return
+
+                try:
+                    command = self._command_queue.get(block=True, timeout=1)
+                    break   # received command!
+                except Empty:
+                    pass
+
+            # process the command
+            command.server = self
+            command.condition.acquire()
+            try:
+                command.response = self._process_command(command)
+                command.condition.notify_all()
+            finally:
+                command.condition.release()
+
+    def quit(self):
+        self._quit = True
     
     def __getitem__(self, key):
         if type(key) is not str:
@@ -62,37 +98,32 @@ class Server(Thread):
         try:
             return next(observer for observer in self._observers if observer.name == key)
         except StopIteration:
-            raise KeyError("Observer {} not found".format(key))
+            raise KeyError("Observer '{}' not found".format(key))
     
     def __iter__(self):
         return self._observers.__iter__()
     
-    def run(self):
-        """
-        run() is called after everything is set up. It just waits for commands 
-        to come in and executes them. Usually commands are put into the queue 
-        by CommandApis like the WebApi or a JsonScript.
-        """
-        def process_command(command):
-            try:
-                logging.info("Processing command {}".format(command.name))
-                response = command.execute()
-                response_message = {"status": "OK"}
-                response_message["response"] = response
-                return response_message
-            except (ServerError, CommandError) as ex:
-                args_text = "; ".join(["{}".format(arg) for arg in ex.args])
-                return {"status": "ERROR", "message": args_text}
+    def _process_command(self, command):
+        try:
+            logging.info("Processing command '{}'".format(command.name))
+            response = command.execute()
+            response_message = {"status": "OK"}
+            response_message["response"] = response
+            return response_message
+        except (ServerError, CommandError) as ex:
+            args_text = "; ".join(["{}".format(arg) for arg in ex.args])
+            return {"status": "ERROR", "message": args_text}
 
-        while True:
-            command = self._command_queue.get()
-            command.server = self
-            command.condition.acquire()
-            try:
-                command.response = process_command(command)
-                command.condition.notify_all()
-            finally:
-                command.condition.release()
+    def _shutdown(self):
+        logging.info("Shutting down all observers")
+        for observer in self._observers:
+            observer.quit()
+        for observer in self._observers:
+            observer.join(timeout=3)
+            if observer.is_alive():
+                logging.warning("Timeout while waiting for observer '{}' to shut down".format(observer.name))
+            else:
+                logging.info("Observer '{}' successfully shut down".format(observer.name))
 
     @property
     def config(self):

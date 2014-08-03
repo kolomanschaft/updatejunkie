@@ -32,6 +32,7 @@ import logging
 from itertools import compress
 from connector import Connector, ConnectionError
 
+
 class Observer(threading.Thread):
     
     def __init__(self, url, profile, store, assessor, notifications, update_interval = 180, name = "Unnamed Observer"):
@@ -61,10 +62,9 @@ class Observer(threading.Thread):
         
     def quit(self):
         """
-        Make the Thread quit on the next round.
+        Make the Thread quit
         """
         self._quit = True
-        logging.info("Observer {} quits on the next round".format(self._name))
 
     def _process_ads(self, ads):
         if len(ads) == 0: return
@@ -73,30 +73,16 @@ class Observer(threading.Thread):
         new_ads = self._store.add_ads(hit_ads)
         for ad in new_ads:
             try:
-                logging.info("Observer {} Found Ad: {}".format(self._name, ad["title"]))
+                logging.info("Observer '{}' Found Ad: {}".format(self._name, ad["title"]))
             except KeyError:
-                logging.info("Observer {} Found Ad: {}".format(self._name, ad.key))
+                logging.info("Observer '{}' Found Ad: {}".format(self._name, ad.key))
             if self._notifications:
                 self._notifications.notify_all(ad)
         self._time_mark = sorted(ads, key = lambda ad: ad.datetime)[-1].datetime
 
     def run(self):
-
-        # logging.info("Observer {} polling ads back to {}".format(self._name, self._time_mark))
-        #
-        # # initial poll
-        # try:
-        #     ads = self._connector.ads_after(self._time_mark)
-        #     self._process_ads(ads)
-        #     logging.info("Observer {} initial poll done".format(self._name))
-        # except ConnectionError as ex:
-        #     logging.info("Observer {} connection failed with message: {}".format(self._name, ex.args[0]))
-        #
-        # # check of we got a quit signal meanwhile
-        # if self._quit: return   # Quit now if quit() was called while fetching ads
-
         while True:
-            logging.info("Observer {} polling for new ads since {}".format(self._name, self._time_mark))
+            logging.info("Observer '{}' polling for new ads since {}".format(self._name, self._time_mark))
 
             try:
                 ads = self._connector.ads_after(self._time_mark)
@@ -106,9 +92,11 @@ class Observer(threading.Thread):
                 self._process_ads(ads)
 
             except ConnectionError as ex:
-                logging.info("Observer {} connection failed with message: {}".format(self._name, ex.args[0]))
+                logging.info("Observer '{}' connection failed with message: {}".format(self._name, ex.args[0]))
 
-            time.sleep(self._interval)
+            next_time = datetime.datetime.now() + datetime.timedelta(seconds=self._interval)
 
-            if self._quit:
-                return   # Quit now if quit() was called while sleeping
+            while datetime.datetime.now() < next_time:
+                time.sleep(1)
+                if self._quit:
+                    return   # Quit now if quit() was called while sleeping
