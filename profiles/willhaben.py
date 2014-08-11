@@ -93,19 +93,3 @@ class WillhabenProfile(base.ProfileBase):
             tags["description"] = lines[0]
 
         return tags
-    
-
-if __name__ == "__main__":
-
-    from urllib import request
-    from pprint import PrettyPrinter
-
-    with request.urlopen("http://www.willhaben.at/iad/kaufen-und-verkaufen/marktplatz?KITCHENAPPLIANCES_DETAIL=4&CATEGORY/SUBCATEGORY=8599&CATEGORY/MAINCATEGORY=8214") as f:
-        html = f.read()
-    
-    p = WillhabenProfile()
-    ads = list(p.parse(html))
-    
-    pp = PrettyPrinter()
-    pp.pprint(ads)
-    

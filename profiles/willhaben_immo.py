@@ -75,19 +75,3 @@ class WillhabenImmoProfile(base.ProfileBase):
         tags["zipcode"] = int(zip_text)
         
         return tags
-    
-
-if __name__ == "__main__":
-
-    from urllib import request
-    from pprint import PrettyPrinter
-
-    with request.urlopen("http://www.willhaben.at/iad/immobilien/eigentumswohnung/wien/wien-1150-rudolfsheim-fuenfhaus/") as f:
-        html = f.read()
-    
-    p = WillhabenImmoProfile()
-    ads = p.parse(html)
-    
-    pp = PrettyPrinter()
-    pp.pprint(ads)
-    

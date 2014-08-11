@@ -26,8 +26,7 @@
 				"keywords": [ "teutonia" ]
 			}
 		],
-		"notification":
-		[
+
 			{
 				"type": "email",
 				"to": [ "John Doe <john.doe@example.com>" ]

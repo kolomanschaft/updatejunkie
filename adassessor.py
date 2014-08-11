@@ -24,6 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+
 class AdCriterion(object):
     def __init__(self, data):
         self._tagname = ""
@@ -44,6 +45,7 @@ class AdCriterion(object):
             if subclass.criterion_type == data["type"]:
                 return subclass(data)
 
+
 class AdCriterionLessThan(AdCriterion):
     criterion_type = "less_than"
 
@@ -62,7 +64,8 @@ class AdCriterionLessThan(AdCriterion):
         d["type"] = self.criterion_type
         d["limit"] = self._limit
         return d
-    
+
+
 class AdCriterionGreaterThan(AdCriterion):
     criterion_type = "greater_than"
 
@@ -81,6 +84,7 @@ class AdCriterionGreaterThan(AdCriterion):
         d["type"] = self.criterion_type
         d["limit"] = self._limit
         return d
+
 
 class AdCriterionKeywordsAll(AdCriterion):
     criterion_type = "keywords_all"
@@ -101,6 +105,7 @@ class AdCriterionKeywordsAll(AdCriterion):
         d["keywords"] = self._keywords
         return d
 
+
 class AdCriterionKeywordsAny(AdCriterion):
     criterion_type = "keywords_any"
 
@@ -120,6 +125,7 @@ class AdCriterionKeywordsAny(AdCriterion):
         d["keywords"] = self._keywords
         return d
 
+
 class AdCriterionKeywordsNot(AdCriterion):
     criterion_type = "keywords_not"
 
@@ -138,6 +144,7 @@ class AdCriterionKeywordsNot(AdCriterion):
         d["type"] = self.criterion_type
         d["keywords"] = self._keywords
         return d
+
 
 class AdAssessor:
     
