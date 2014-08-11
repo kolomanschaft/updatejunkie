@@ -2,35 +2,39 @@
 	{
 		"command": "smtp_config",
 		"host": "mail.example.com",
-		"port": 25,
+		"port": 587,
 		"user": "myuser123",
 		"pass": "secret"
 	},
 	{
 		"command": "create_observer",
-		"name": "Bugaboo",
+		"name": "Reboarder",
 		"profile": "Willhaben",
-		"url": "http://www.willhaben.at/iad/kaufen-und-verkaufen/baby-kind/transport/",
+		"url": "http://www.willhaben.at/iad/kaufen-und-verkaufen/marktplatz?CATEGORY/MAINCATEGORY=68&CATEGORY/SUBCATEGORY=3914&BABYPRAMS_DETAIL=1",
 		"store": true,
 		"interval": 120,
-		"trigger":
+		"criteria":
 		[
 			{
-				"tag": "title",
-				"type": "any",
-				"keywords": [ "bugaboo" ]
-			}
+				"tag": "description",
+				"type": "keywords_any",
+				"keywords": [ "reboarder", "re-board", "re-boarder" ]
+			},
 			{
-				"tag": "title",
-				"type": "not",
-				"keywords": [ "teutonia" ]
-			}
-		],
-
-			{
-				"type": "email",
-				"to": [ "John Doe <john.doe@example.com>" ]
+				"tag": "price",
+				"type": "less_than",
+				"limit": 350
 			}
 		]
+	},
+	{
+		"command": "add_notification",
+		"type": "email",
+		"observer": "Reboarder",
+		"from": "UpdateJunkie <junkie@example.com>",
+		"to": [ "John Doe <john@example.com>" ],
+		"mime_type": "text/html",
+		"subject": "{title} for {price}",
+		"body": "I found a new ad ({datetime}):<br/><br/>\n<b>{title}</b><br/>\nfor € <b>{price}</b><br/><br/>\n<a href=\"{url}\">{url}</a><br/><br/>\nbye!"
 	}
 ]
