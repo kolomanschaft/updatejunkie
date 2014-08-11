@@ -263,8 +263,7 @@ All profiles are derived from a base class `ProfileBase`. This is your starting 
 
 __tags__: A dictionary containing all tags as its keys that define a single ad. The values should be default values that define the tag's type. A parsed ad should be represented by an identical dictionary (with different values).<br />
 __key_tag__: The name of a tag that can be used as identifier. The key tag must be unique and time-invariant.<br />
-__datetime_tag__: The name of a tag that contains a string with datetime information. If the website does not provide time information for ads you could use the time the ad was parsed.<br />
-__datetime_tag_format__: A format string describing the string in the `datetime_tag`. The syntax is according to strftime(). (This is historical nonsense and will be changed. Why providing a datetime string and a format string instead of just providing a ready-to-use datetime).<br />
+__datetime_tag__: The name of a tag that contains a datetime. If the website does not provide time information for ads you could use the time the ad was parsed.<br />
 
 #### Required methods
 

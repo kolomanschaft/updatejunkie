@@ -59,14 +59,6 @@ class ProfileBase(object):
         raise NotImplementedError()
 
     @property
-    def datetime_tag_format(self):
-        """
-        Format information for the datetime string following the specifications 
-        of strptime().
-        """
-        raise NotImplementedError()
-
-    @property
     def paging_param(self):
         """
         If the profile supports paging (each page is limited to a certain
