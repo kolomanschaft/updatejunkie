@@ -3,12 +3,14 @@
 *~
 *.log
 .DS_Store
-store/*.save
-store/*.db
-store/*.store
+store/
 config/*.cfg
 config/*.json
 client/*
+
+# Python
+
+__pycache__/
 
 # Eclipse / PyDev
 
