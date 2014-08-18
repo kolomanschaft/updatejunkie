@@ -38,12 +38,18 @@ class WebApi(CommandApi):
         try:
             json_decoded = bottle.request.json
             return self._process_command_info(json_decoded)
+
         except Exception as error:
             # Relay the error as JSON response
             return {"status": "ERROR", 
                     "message": "{}".format(error.args[0])
                    }
+        finally:
+            # Make sure the API can be used from every other doman (CORS)
+            bottle.response.headers['Access-Control-Allow-Origin'] = '*'
+            bottle.response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, OPTIONS'
+            bottle.response.headers['Access-Control-Allow-Headers'] = 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
             
     def run(self):
-        bottle.route("/api/command")(self._command)
+        bottle.route("/api/command", "POST")(self._command)
         bottle.run(host="localhost", port="8118", debug=True)
