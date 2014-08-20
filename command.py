@@ -46,7 +46,7 @@ class Command(object):
         self._cmd_info = cmd_info
         self._server = server
         self._cv = Condition()
-        self._result = None
+        self._response = None
     
     def execute(self):
         raise CommandError("Execute must be implemented in a subclass.")
@@ -77,22 +77,22 @@ class Command(object):
     def condition(self):
         """
         A condition variable which will be notified after the command was 
-        executed by the server. The result will also be available at the 
+        executed by the server. The response will also be available at the 
         time of notification.
         """
         return self._cv
     
     @property
-    def result(self):
+    def response(self):
         """
-        After the command was executed the server stores the result in 
+        After the command was executed the server stores the response in 
         this property.
         """
-        return self._result
+        return self._response
     
-    @result.setter
-    def result(self, result):
-        self._result = result
+    @response.setter
+    def response(self, response):
+        self._response = response
 
 
 class SmtpSettingsCommand(Command):

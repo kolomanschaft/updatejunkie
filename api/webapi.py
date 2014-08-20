@@ -29,16 +29,17 @@ bottle = imp.load_source('bottle', 'api/bottle/bottle.py')
 
 from api.commandapi import CommandApi
 
-class WebApi(CommandApi):
-    """
-    A RESTful JSON API based on the web framework bottle.py 
-    """
-        
-    def _command(self):
-        try:
-            json_decoded = bottle.request.json
-            return self._process_command_info(json_decoded)
 
+def request_handler(handler):
+    """
+    A decorator for WebApi request handlers. The request handlers only have to convert the request into a command info 
+    dictionary and return that. The decorator takes care of the HTTP response and unhandled exceptions.
+    """
+    def wrapper(*args):
+        instance = args[0]
+        cmd_info = handler(args)
+        try:
+            return instance._process_command_info(cmd_info)
         except Exception as error:
             # Relay the error as JSON response
             return {"status": "ERROR", 
@@ -49,7 +50,19 @@ class WebApi(CommandApi):
             bottle.response.headers['Access-Control-Allow-Origin'] = '*'
             bottle.response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, OPTIONS'
             bottle.response.headers['Access-Control-Allow-Headers'] = 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
+    return wrapper
+
+
+class WebApi(CommandApi):
+    """
+    A RESTful JSON API based on the web framework bottle.py 
+    """
+
+    @request_handler
+    def _list_observers(self):
+        cmd_info = {"command": "list_observers"}
+        return cmd_info
             
     def run(self):
-        bottle.route("/api/command", "POST")(self._command)
+        bottle.route("/api/list/observers", "GET")(self._list_observers)
         bottle.run(host="localhost", port="8118", debug=True)

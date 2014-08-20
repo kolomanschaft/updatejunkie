@@ -44,4 +44,8 @@ class CommandApi(Thread):
 
     def _process_command_info(self, cmd_info):
         command = Command.from_command_info(cmd_info)
+        command.condition.acquire()
         self._server.command_queue.put_nowait(command)
+        command.condition.wait()
+        command.condition.release()
+        return command.response
