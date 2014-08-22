@@ -37,9 +37,9 @@ def request_handler(handler):
     A decorator for WebApi request handlers. The request handlers only have to convert the request into a command info 
     dictionary and return that. The decorator takes care of the HTTP response and unhandled exceptions.
     """
-    def wrapper(*args):
+    def wrapper(*args, **kwargs):
         instance = args[0]
-        cmd_info = handler(args)
+        cmd_info = handler(*args, **kwargs)
         try:
             response = instance._process_command_info(cmd_info)
             if response["status"] == "ERROR":
@@ -66,9 +66,14 @@ class WebApi(CommandApi):
 
     @request_handler
     def _list_observers(self):
-        cmd_info = {"command": "list_observers"}
-        return cmd_info
+        return {"command": "list_observers"}
+
+    @request_handler
+    def _get_observer(self, name):
+        return {"command": "get_observer", "name": name}
+
             
     def run(self):
         bottle.route("/api/list/observers", "GET")(self._list_observers)
+        bottle.route("/api/observer/<name>", "GET")(self._get_observer)
         bottle.run(host="localhost", port="8118", debug=True)

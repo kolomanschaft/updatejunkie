@@ -256,10 +256,11 @@ class GetObserverCommand(Command):
     def execute(self):
         if "name" not in self._cmd_info:
             raise CommandError("The get_observer command must specify a name.")
-        observer = self._server[self._cmd_info["name"]]
-        if observer is None:
-            raise CommandError("Observer {} not found.".format(self._cmd_info["name"]))
-        return observer.serialize()
+        try:
+            observer = self._server[self._cmd_info["name"]]
+            return observer.serialize()
+        except KeyError as error:
+            raise CommandError(error.args[0])
 
 
 class ListCommandsCommand(Command):

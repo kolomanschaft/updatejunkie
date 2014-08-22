@@ -39,7 +39,7 @@ class Connector():
     
     @property
     def profile_name(self):
-        return self._profile.Name
+        return self._profile.name
     
     @property
     def url(self):

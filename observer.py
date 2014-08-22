@@ -54,6 +54,7 @@ class Observer(threading.Thread):
     def serialize(self):
         d = dict()
         d["name"] = self._name
+        d["state"] = self._state
         d["url"] = self._connector.url
         d["interval"] = self._interval
         d["profile"] = self._connector.profile_name
