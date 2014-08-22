@@ -29,6 +29,8 @@ bottle = imp.load_source('bottle', 'api/bottle/bottle.py')
 
 from api.commandapi import CommandApi
 
+class WebApiError(Exception):
+    pass
 
 def request_handler(handler):
     """
@@ -39,12 +41,16 @@ def request_handler(handler):
         instance = args[0]
         cmd_info = handler(args)
         try:
-            return instance._process_command_info(cmd_info)
+            response = instance._process_command_info(cmd_info)
+            if response["status"] == "ERROR":
+                bottle.response.status = 500
+            return response
         except Exception as error:
-            # Relay the error as JSON response
-            return {"status": "ERROR", 
-                    "message": "{}".format(error.args[0])
-                   }
+            # Relay the error as a 500 errror and a JSON message
+            bottle.response.status = 500
+            return { "status": "ERROR",
+                     "message": "{}".format(error.args[0])
+            } # TODO: Exposing internals like this might be a bad idea
         finally:
             # Make sure the API can be used from every other doman (CORS)
             bottle.response.headers['Access-Control-Allow-Origin'] = '*'

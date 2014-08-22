@@ -34,6 +34,10 @@ from connector import Connector, ConnectionError
 
 
 class Observer(threading.Thread):
+
+    # observer states
+    RUNNING = "RUNNING"
+    PAUSED = "PAUSED"
     
     def __init__(self, url, profile, store, assessor, notifications, update_interval = 180, name = "Unnamed Observer"):
         super(Observer, self).__init__()
@@ -45,6 +49,7 @@ class Observer(threading.Thread):
         self._name = name
         self._quit = False
         self._time_mark = datetime.datetime.now() - datetime.timedelta(days = 1)
+        self._state = Observer.RUNNING
     
     def serialize(self):
         d = dict()
@@ -59,7 +64,15 @@ class Observer(threading.Thread):
         # if self._notifications is not None:
         #     d["notifications"] = [notification.serialize() for notification in self._notifications]
         return d
-        
+
+    @property
+    def state(self):
+        return self._state
+
+    @state.setter
+    def state(self, value):
+        self._state = value
+
     def quit(self):
         """
         Make the Thread quit
@@ -81,21 +94,22 @@ class Observer(threading.Thread):
         self._time_mark = sorted(ads, key = lambda ad: ad.datetime)[-1].datetime
 
     def run(self):
+        self._state = Observer.RUNNING
         while True:
-            logging.info("Observer '{}' polling for new ads since {}".format(self._name, self._time_mark))
+            if self._state == Observer.RUNNING:
+                logging.info("Observer '{}' polling for new ads since {}".format(self._name, self._time_mark))
+                try:
+                    ads = self._connector.ads_after(self._time_mark)
+                    if self._quit:
+                        return   # Quit now if quit() was called while fetching ads
 
-            try:
-                ads = self._connector.ads_after(self._time_mark)
-                if self._quit:
-                    return   # Quit now if quit() was called while fetching ads
+                    self._process_ads(ads)
 
-                self._process_ads(ads)
+                except ConnectionError as ex:
+                    logging.info("Observer '{}' connection failed with message: {}".format(self._name, ex.args[0]))
 
-            except ConnectionError as ex:
-                logging.info("Observer '{}' connection failed with message: {}".format(self._name, ex.args[0]))
-
+            # going to sleep
             next_time = datetime.datetime.now() + datetime.timedelta(seconds=self._interval)
-
             while datetime.datetime.now() < next_time:
                 time.sleep(1)
                 if self._quit:

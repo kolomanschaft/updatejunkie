@@ -191,10 +191,40 @@ class AddNotificationCommand(Command):
                                                header_subject, body)
         return email_notification
 
-        
+
+class PauseObserverCommand(Command):
+    """
+    Pauses an observer
+    """
+    name = "pause_observer"
+
+    def execute(self):
+        if "name" not in self._cmd_info:
+            raise CommandError("The pause_observer command must specify a name.")
+        try:
+            self._server[self._cmd_info["name"]].state = Observer.PAUSED
+        except KeyError as error:
+            raise CommandError(error.args[0])
+
+
+class ResumeObserverCommand(Command):
+    """
+    Resumes a paused observer
+    """
+    name = "resume_observer"
+
+    def execute(self):
+        if "name" not in self._cmd_info:
+            raise CommandError("The pause_observer command must specify a name.")
+        try:
+            self._server[self._cmd_info["name"]].state = Observer.RUNNING
+        except KeyError as error:
+            raise CommandError(error.args[0])
+
+
 class RemoveObserverCommand(Command):
     """
-    Command to remove an observer by its name.
+    Remove an observer
     """
     name = "remove_observer"
     
@@ -211,7 +241,10 @@ class ListObserversCommand(Command):
     name = "list_observers"
     
     def execute(self):
-        return [observer.name for observer in self._server]
+        return [{"name": observer.name,
+                 "state": observer.state
+                }
+                for observer in self._server]
 
 
 class GetObserverCommand(Command):
