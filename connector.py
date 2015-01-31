@@ -82,10 +82,10 @@ class Connector():
         return html
 
     def frontpage_ads(self):
-        if not self._profile.Website.PagingParameter:
+        if not self._profile.paging_param:
             html = self._get_page(None)
         else:
-            html = self._get_page(self._profile.Website.PagingParameter.InitialValue)
+            html = self._get_page(self._profile.paging_param_init)
         return self._profile.parse(html)
     
     def ads_all(self, pagestart = None, maxpages = 10):

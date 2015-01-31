@@ -45,21 +45,18 @@ if __name__ == "__main__":
     def print_ads(ads):
         for ad in ads:
             try:
-                keytag = ad.key
+                keytag = ad['id']
                 print("\nAd-ID:", keytag)
             except AdKeyError:
                 print("\nNo keytag set! Set ad.keytag")
             print("Tags:")
             pp.pprint(ad)
             try:
-                timetag = ad.timetag
+                timetag = ad['datetime']
                 print("TimeTag:", timetag)
             except AdKeyError:
                 print("No timetag!")
 
     c = Connector(url, profile)
-    print("Ad REGEX:", c._profile.Website.AdDefinition.Regex)
     ads = c.frontpage_ads()
     print_ads(ads)
-
-    print("\n{} ads found on the first page".format(len(ads)))
