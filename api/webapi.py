@@ -25,6 +25,7 @@ SOFTWARE.
 """
 
 import imp
+import urllib.request
 bottle = imp.load_source('bottle', 'api/bottle/bottle.py')
 
 from api.commandapi import CommandApi
@@ -32,9 +33,9 @@ from api.commandapi import CommandApi
 class WebApiError(Exception):
     pass
 
-def request_handler(handler):
+def api_call(handler):
     """
-    A decorator for WebApi request handlers. The request handlers only have to convert the request into a command info 
+    A decorator for WebApi call handlers. The handlers only have to convert the request into a command info
     dictionary and return that. The decorator takes care of the HTTP response and unhandled exceptions.
     """
     def wrapper(*args, **kwargs):
@@ -52,7 +53,7 @@ def request_handler(handler):
                      "message": "{}".format(error.args[0])
             } # TODO: Exposing internals like this might be a bad idea
         finally:
-            # Make sure the API can be used from every other doman (CORS)
+            # Make sure the API can be used from every other domain (CORS)
             bottle.response.headers['Access-Control-Allow-Origin'] = '*'
             bottle.response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, OPTIONS'
             bottle.response.headers['Access-Control-Allow-Headers'] = 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
@@ -64,16 +65,46 @@ class WebApi(CommandApi):
     A RESTful JSON API based on the web framework bottle.py 
     """
 
-    @request_handler
+    def __init__(self, server, host="localhost", port=8118):
+        CommandApi.__init__(self, server)
+        self.name = "WebApi"
+        self._host = host
+        self._port = port
+
+    @api_call
     def _list_observers(self):
         return {"command": "list_observers"}
 
-    @request_handler
+    @api_call
     def _get_observer(self, name):
         return {"command": "get_observer", "name": name}
 
-            
+    def ready(self):
+        """
+        Check whether the API is ready to process commands
+        """
+        try:
+            self._bottle_server.srv
+        except AttributeError:
+            return False    # No server, we can stop right here
+        url = "http://{}:{}/api/alive".format(self._host, self._port)
+        try:
+            urllib.request.urlopen(url)
+        except:
+            return False    # Request failed for some reason
+        else:
+            return True
+
+    def _alive(self):
+        bottle.response.status = 200
+
+    def quit(self):
+        if self.ready():
+            self._bottle_server.srv.shutdown()
+
     def run(self):
         bottle.route("/api/list/observers", "GET")(self._list_observers)
         bottle.route("/api/observer/<name>", "GET")(self._get_observer)
-        bottle.run(host="localhost", port="8118", debug=True)
+        bottle.route("/api/alive", "GET")(self._alive)
+        self._bottle_server = bottle.WSGIRefServer(host=self._host, port=self._port)
+        bottle.run(server=self._bottle_server, debug=True, quiet=True)

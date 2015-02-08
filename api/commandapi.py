@@ -39,13 +39,14 @@ class CommandApi(Thread):
     """
 
     def __init__(self, server):
-        super(CommandApi, self).__init__()
+        Thread.__init__(self)
         self._server = server
+        self.name = "CommandApi"
 
     def _process_command_info(self, cmd_info):
         command = Command.from_command_info(cmd_info)
         command.condition.acquire()
-        self._server.command_queue.put_nowait(command)
+        self._server.enqueue_command(command)
         command.condition.wait()
         command.condition.release()
         return command.response

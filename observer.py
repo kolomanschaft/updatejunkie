@@ -50,6 +50,7 @@ class Observer(threading.Thread):
         self._quit = False
         self._time_mark = datetime.datetime.now() - datetime.timedelta(days = 1)
         self._state = Observer.RUNNING
+        self.name = name
     
     def serialize(self):
         d = dict()

@@ -41,6 +41,7 @@ class Server(Thread):
         self._observers = list()
         self._command_queue = Queue()
         self._quit = False
+        self.name = "Server"
 
     def add_observer(self, observer):
         if (observer.name in [other.name for other in self._observers]):
@@ -59,6 +60,9 @@ class Server(Thread):
             self._observers.remove(observer)
         except StopIteration:
             raise ServerError("No observer with the name of '{}'".format(name))
+
+    def enqueue_command(self, command):
+        self._command_queue.put_nowait(command)
 
     def run(self):
         """
