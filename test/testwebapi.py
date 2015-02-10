@@ -25,8 +25,8 @@ SOFTWARE.
 """
 
 import unittest
-import requests
 import time
+import urllib.request
 
 from api.webapi import WebApi
 from server import Server
@@ -43,17 +43,19 @@ class TestWebApi(unittest.TestCase):
         self._web_api = WebApi(self._server)
         self._server.start()
         self._web_api.start()
-        while not self._web_api.ready():time.sleep(0.1)
+        while not self._web_api.ready():time.sleep(0.5)
 
     def tearDown(self):
         self._web_api.quit()
         self._server.quit()
+        self._web_api.join()
+        self._server.join()
 
     def _api_call(self, rel_url):
         url = "{}{}".format(self._base_url, rel_url)
-        resp = requests.get(url)
-        data = eval(resp.content)
-        return data
+        with urllib.request.urlopen(url) as f:
+            data = eval(f.read())
+            return data
 
     def test_command_list_observers(self):
         # First add 2 mocked observers
@@ -65,6 +67,10 @@ class TestWebApi(unittest.TestCase):
         observer_names = [observer["name"] for observer in data["response"]]
         self.assertListEqual(observer_names, ["Observer1", "Observer2"])
 
+    def test_command_get_observer(self):
+        self._server.add_observer(MockObserver("Observer1"))
+        data = self._api_call("/api/observer/Observer1")
+        self.assertDictEqual(data["response"], {"name": "Observer1"})
 
 class MockObserver(object):
 
@@ -88,3 +94,5 @@ class MockObserver(object):
     def join(self, timeout): pass
 
     def is_alive(self): return self._is_alive
+
+    def serialize(self): return {"name": self.name}

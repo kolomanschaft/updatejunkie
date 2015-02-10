@@ -120,12 +120,3 @@ class Connector():
             ads.extend(new_ads)
 
         return ads
-
-if __name__ == "__main__":
-    url = "http://www.willhaben.at/iad/kaufen-und-verkaufen/moebel-wohnen-buero/regale-schraenke-vitrinen-kommoden/"
-    c = Connector(url, "Willhaben")
-    #html = c._get_page(1)
-    #print c._get_adlist_from_html(html)
-    #print [ad.key for ad in c._get_adlist_from_html(html)]
-    print([ad.timetag for ad in c.ads_in(datetime.timedelta(hours = 2))])
-    
