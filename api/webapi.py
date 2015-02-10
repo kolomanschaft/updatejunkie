@@ -24,9 +24,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import imp
+from api.bottle import bottle
 import urllib.request
-bottle = imp.load_source('bottle', 'api/bottle/bottle.py')
 
 from api.commandapi import CommandApi
 
@@ -40,6 +39,7 @@ def api_call(handler):
     """
     def wrapper(*args, **kwargs):
         instance = args[0]
+        #bottle = instance.bottle
         cmd_info = handler(*args, **kwargs)
         try:
             response = instance._process_command_info(cmd_info)
@@ -70,6 +70,7 @@ class WebApi(CommandApi):
         self.name = "WebApi"
         self._host = host
         self._port = port
+        self._bottle = None
 
     @api_call
     def _list_observers(self):
@@ -78,6 +79,10 @@ class WebApi(CommandApi):
     @api_call
     def _get_observer(self, name):
         return {"command": "get_observer", "name": name}
+
+    @property
+    def bottle(self):
+        return self._bottle
 
     def ready(self):
         """
@@ -103,8 +108,10 @@ class WebApi(CommandApi):
             self._bottle_server.srv.shutdown()
 
     def run(self):
-        bottle.route("/api/list/observers", "GET")(self._list_observers)
-        bottle.route("/api/observer/<name>", "GET")(self._get_observer)
-        bottle.route("/api/alive", "GET")(self._alive)
+        self._bottle = bottle.Bottle()
+        self._bottle.route("/api/list/observers", "GET")(self._list_observers)
+        self._bottle.route("/api/observer/<name>", "GET")(self._get_observer)
+        self._bottle.route("/api/alive", "GET")(self._alive)
         self._bottle_server = bottle.WSGIRefServer(host=self._host, port=self._port)
-        bottle.run(server=self._bottle_server, debug=True, quiet=True)
+        self._bottle.run(server=self._bottle_server, debug=True, quiet=True)
+        self._bottle_server.srv.socket.close()  # Prevents unclosed socket warning
