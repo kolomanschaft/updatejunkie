@@ -27,6 +27,7 @@ SOFTWARE.
 import unittest
 import time
 import urllib.request
+import json
 
 from api.webapi import WebApi
 from server import Server
@@ -51,10 +52,14 @@ class TestWebApi(unittest.TestCase):
         self._web_api.join()
         self._server.join()
 
-    def _api_call(self, rel_url):
+    def _api_call(self, rel_url, method, data=None):
         url = "{}{}".format(self._base_url, rel_url)
-        with urllib.request.urlopen(url) as f:
-            data = eval(f.read())
+        req = urllib.request.Request(url=url, data=data,
+                                     headers={'Content-Type': 'application/json'},
+                                     method=method)
+        with urllib.request.urlopen(req) as f:
+            json_str = f.read().decode("utf-8")
+            data = json.loads(json_str)
             return data
 
     def test_command_list_observers(self):
@@ -63,14 +68,21 @@ class TestWebApi(unittest.TestCase):
         self._server.add_observer(MockObserver("Observer2"))
 
         # Now call the API to see if we get those two
-        data = self._api_call("/api/list/observers")
+        data = self._api_call("/api/list/observers", "GET")
         observer_names = [observer["name"] for observer in data["response"]]
         self.assertListEqual(observer_names, ["Observer1", "Observer2"])
 
     def test_command_get_observer(self):
         self._server.add_observer(MockObserver("Observer1"))
-        data = self._api_call("/api/observer/Observer1")
+        data = self._api_call("/api/observer/Observer1", "GET")
         self.assertDictEqual(data["response"], {"name": "Observer1"})
+
+    def test_command_smtp_settings(self):
+        smtp_settings = {"host": "smtp.myhost.com", "port": 587, "user": "Moatl", "pass": "geheim123"}
+        smtp_settings_encoded = bytearray(source=json.dumps(smtp_settings), encoding="utf8")
+        self._api_call("/api/settings/smtp", "PUT", smtp_settings_encoded)
+        self.assertDictEqual( self._server.settings["smtp"], smtp_settings)
+
 
 class MockObserver(object):
 

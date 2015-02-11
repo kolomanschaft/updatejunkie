@@ -80,6 +80,12 @@ class WebApi(CommandApi):
     def _get_observer(self, name):
         return {"command": "get_observer", "name": name}
 
+    @api_call
+    def _smtp_settings(self):
+        cmd = bottle.request.json
+        cmd["command"] = "smtp_settings"
+        return cmd
+
     @property
     def bottle(self):
         return self._bottle
@@ -111,6 +117,7 @@ class WebApi(CommandApi):
         self._bottle = bottle.Bottle()
         self._bottle.route("/api/list/observers", "GET")(self._list_observers)
         self._bottle.route("/api/observer/<name>", "GET")(self._get_observer)
+        self._bottle.route("/api/settings/smtp", "PUT")(self._smtp_settings)
         self._bottle.route("/api/alive", "GET")(self._alive)
         self._bottle_server = bottle.WSGIRefServer(host=self._host, port=self._port)
         self._bottle.run(server=self._bottle_server, debug=True, quiet=True)

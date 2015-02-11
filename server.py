@@ -37,7 +37,7 @@ class Server(Thread):
     
     def __init__(self):
         super(Server, self).__init__()
-        self._config = dict()
+        self._settings = dict()
         self._observers = list()
         self._command_queue = Queue()
         self._quit = False
@@ -130,8 +130,8 @@ class Server(Thread):
                 logging.info("Observer '{}' successfully shut down".format(observer.name))
 
     @property
-    def config(self):
-        return self._config
+    def settings(self):
+        return self._settings
     
     @property
     def command_queue(self):

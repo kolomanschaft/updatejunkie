@@ -99,21 +99,23 @@ class SmtpSettingsCommand(Command):
     """
     Command to change the SMTP settings for sending email notifications.
     """
-    name = "smtp_config"
+    name = "smtp_settings"
     
     def execute(self):
-        self._validate_smtp_config(self._cmd_info)
-        if "user" not in self._cmd_info:
-            self._cmd_info["user"] = None
-        if "pass" not in self._cmd_info:
-            self._cmd_info["pass"] = None
-        self._server.config["smtp"] = self._cmd_info
+        smtp_settings = self._cmd_info
+        smtp_settings.pop("command")
+        self._validate_smtp_settings(smtp_settings)
+        if "user" not in smtp_settings:
+            smtp_settings["user"] = None
+        if "pass" not in smtp_settings:
+            smtp_settings["pass"] = None
+        self._server.settings["smtp"] = smtp_settings
     
-    def _validate_smtp_config(self, config):
-        if "host" not in config:
-            raise CommandError("'host' is missing in the smtp configuration.")
-        if "port" not in config:
-            raise CommandError("'port' is missing in the smtp configuration.")
+    def _validate_smtp_settings(self, settings):
+        if "host" not in settings:
+            raise CommandError("'host' is missing in the smtp settings.")
+        if "port" not in settings:
+            raise CommandError("'port' is missing in the smtp settings.")
 
 
 class CreateObserverCommand(Command):
@@ -171,7 +173,7 @@ class AddNotificationCommand(Command):
         self._server[observer_name]._notifications.add_notification(notification)
 
     def _setup_email_notification(self):
-        if not self._server.config["smtp"]:
+        if not self._server.settings["smtp"]:
             raise CommandError("Cannot setup email notifications without smtp settings.")
 
         header_from = self._cmd_info["from"]
@@ -179,7 +181,7 @@ class AddNotificationCommand(Command):
         header_mime_type = self._cmd_info["mime_type"]
         header_subject = self._cmd_info["subject"]
         body = self._cmd_info["body"]
-        smtp = self._server.config["smtp"]
+        smtp = self._server.settings["smtp"]
         if type(header_to) == str:
             header_to = [header_to]   # make it a list
 
