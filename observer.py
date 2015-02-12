@@ -59,8 +59,8 @@ class Observer(threading.Thread):
         d["url"] = self._connector.url
         d["interval"] = self._interval
         d["profile"] = self._connector.profile_name
-        if self._store is not None:
-            d["store"] = True
+        d["store"] = self._store is not None
+
         if self._assessor is not None:
             d["criteria"] = [criterion.serialize() for criterion in self._assessor.criteria]
         # if self._notifications is not None:

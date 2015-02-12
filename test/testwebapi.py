@@ -83,6 +83,22 @@ class TestWebApi(unittest.TestCase):
         self._api_call("/api/settings/smtp", "PUT", smtp_settings_encoded)
         self.assertDictEqual( self._server.settings["smtp"], smtp_settings)
 
+    def test_command_create_observer(self):
+        observer_data = dict(profile="Willhaben",
+                             url="that wont work for sure",
+                             store=False,
+                             interval=30,
+                             criteria=[
+                                 dict(tag="title",
+                                      type="keywords_all",
+                                      keywords=["word", "perfect"])])
+        observer_data_encoded = bytearray(source=json.dumps(observer_data), encoding="utf-8")
+        self._api_call("/api/observer/MyObserver", "PUT", observer_data_encoded)
+        self.assertTrue("MyObserver" in self._server.observers())   # Check if the observer is there
+        observer_serialized = self._server["MyObserver"].serialize()    # Check if the server has all the correct properties
+        observer_data["state"] = observer_serialized["state"]   # not in the original data
+        observer_data["name"] = observer_serialized["name"]     # not in the original data
+        self.assertDictEqual(observer_data, observer_serialized)
 
 class MockObserver(object):
 

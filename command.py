@@ -128,17 +128,14 @@ class CreateObserverCommand(Command):
     def execute(self):
         logging.info("Setting up observer '{}'".format(self._cmd_info["name"]))
         profile = profiles.get_profile_by_name(self._cmd_info["profile"])
-        store = self._setup_store()
-        
+        store = None
+        if self._cmd_info["store"]:
+            store = self._setup_store()
         assessor = AdAssessor()
         for json in self._cmd_info["criteria"]:
             assessor.add_criterion(AdCriterion.from_json(json))
-
-        # Add an empty notification server
-        notification_server = NotificationServer()
-
-        # Setup the actual observer
-        observer = Observer(url=self._cmd_info["url"], profile=profile,
+        notification_server = NotificationServer()  # Add an empty notification server
+        observer = Observer(url=self._cmd_info["url"], profile=profile, # Setup the actual observer
                             store=store, assessor=assessor,
                             notifications=notification_server,
                             update_interval=self._cmd_info["interval"],

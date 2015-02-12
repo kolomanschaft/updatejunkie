@@ -61,6 +61,10 @@ class Server(Thread):
         except StopIteration:
             raise ServerError("No observer with the name of '{}'".format(name))
 
+    def observers(self):
+        observer_names = [obs.name for obs in self._observers]
+        return observer_names
+
     def enqueue_command(self, command):
         self._command_queue.put_nowait(command)
 

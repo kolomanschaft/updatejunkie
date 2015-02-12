@@ -74,7 +74,7 @@ class Connector():
         
         try:
             f = urllib.request.urlopen(url, data)
-        except urllib.error.URLError:
+        except (urllib.error.URLError, ValueError):
             raise ConnectionError("Could not connect to {}".format(url))
         
         html = str(f.read(), self._profile.encoding)
