@@ -267,3 +267,19 @@ class ListCommandsCommand(Command):
     def execute(self):
         return [cmd_class.name for cmd_class in Command.__subclasses__()]
 
+
+class WebSettingsCommand(Command):
+    """
+    Configure the web API. After this command the web API will be restarted.
+    FIXME: How could this be made available over the web API itself?
+    """
+    name = "web_settings"
+
+    def execute(self):
+        if not "host" in self._cmd_info:
+            raise CommandError("Command info is missing host information")
+        if not "port" in self._cmd_info:
+            raise CommandError("Command info is missing port information")
+        web_settings = dict(host=self._cmd_info["host"],
+                            port=self._cmd_info["port"])
+        self._server.settings["web"] = web_settings

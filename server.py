@@ -72,8 +72,8 @@ class Server(Thread):
 
     def start_web_api(self):
         if "web" in self._settings:
-            host = self._settings["host"]
-            port = self._settings["port"]
+            host = self._settings["web"]["host"]
+            port = self._settings["web"]["port"]
         else:
             host = "localhost"
             port = "8118"
