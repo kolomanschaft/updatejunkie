@@ -1,6 +1,6 @@
 [
 	{
-		"command": "smtp_config",
+		"command": "smtp_settings",
 		"host": "mail.example.com",
 		"port": 587,
 		"user": "myuser123",

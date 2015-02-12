@@ -62,10 +62,7 @@ if __name__ == "__main__":
         config.run()
 
     # Start the web API
-    logging.info("Starting web API")
-    web = WebApi(server)
-    web.daemon = True
-    web.start()
+    server.start_web_api()
 
     def shutdown(signal, frame):
         logging.info("Caught keyboard interrupt. Shutting down...")

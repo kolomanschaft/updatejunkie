@@ -26,6 +26,7 @@ SOFTWARE.
 
 from queue import Queue, Empty
 from command import CommandError
+from api.webapi import WebApi
 from threading import Thread
 import logging
 
@@ -41,6 +42,7 @@ class Server(Thread):
         self._observers = list()
         self._command_queue = Queue()
         self._quit = False
+        self._web_api = None
         self.name = "Server"
 
     def add_observer(self, observer):
@@ -67,6 +69,23 @@ class Server(Thread):
 
     def enqueue_command(self, command):
         self._command_queue.put_nowait(command)
+
+    def start_web_api(self):
+        if "web" in self._settings:
+            host = self._settings["host"]
+            port = self._settings["port"]
+        else:
+            host = "localhost"
+            port = "8118"
+        if self._web_api:
+            logging.info("Shutting down web API")
+            self._web_api.quit()
+            self._web_api.join(3)
+            if self._web_api.is_alive():
+                logging.error("Failed to shut down the web API. Reload failed.")
+        logging.info("Starting web API at http://{}:{}".format(host, port))
+        self._web_api = WebApi(self, host, port)
+        self._web_api.start()
 
     def run(self):
         """
@@ -123,9 +142,17 @@ class Server(Thread):
             return {"status": "ERROR", "message": args_text}
 
     def _shutdown(self):
-        logging.info("Shutting down all observers")
+        logging.info("Shutting down all services")
+        if self._web_api:
+            self._web_api.quit()
         for observer in self._observers:
             observer.quit()
+        if self._web_api:
+            self._web_api.join(timeout=3)
+            if self._web_api.is_alive():
+                logging.warning("Timeout while waiting for web API to shut down")
+            else:
+                logging.info("Web API successfully shut down")
         for observer in self._observers:
             observer.join(timeout=3)
             if observer.is_alive():

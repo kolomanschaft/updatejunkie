@@ -25,6 +25,7 @@ SOFTWARE.
 """
 
 from api.commandapi import CommandApi
+from command import CommandError
 
 import json
 import logging
@@ -46,8 +47,10 @@ class JsonScript(CommandApi):
         logging.info("Processing command script at {}".format(self._path))
         with open(self._path, "r") as f:
             json_decoded = json.loads(f.read())
-            if type(json_decoded) is list:
-                for cmd_info in json_decoded: self._process_command_info(cmd_info)
-            else:
-                self._process_command_info(json_decoded)
-        
+            try:
+                if type(json_decoded) is list:
+                    for cmd_info in json_decoded: self._process_command_info(cmd_info)
+                else:
+                    self._process_command_info(json_decoded)
+            except CommandError as ex:
+                logging.error("Processing command script failed: {}".format(ex.args[0]))

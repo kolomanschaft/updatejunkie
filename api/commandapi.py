@@ -24,11 +24,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from command import Command, CommandError
-from server import ServerError
+from command import Command
 from threading import Thread
-
-import logging
 
 class CommandApi(Thread):
     """
