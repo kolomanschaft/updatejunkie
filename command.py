@@ -49,6 +49,11 @@ class Command(object):
         self._response = None
     
     def execute(self):
+        """
+        Implement execute() in a derived command. All information neede to process the command should be provided via
+        self._cmd_info. Execute must not return a list. A list will not be excepted as valid response by the web API
+        due to client side security exploits.
+        """
         raise CommandError("Execute must be implemented in a subclass.")
     
     @classmethod
@@ -236,10 +241,10 @@ class ListObserversCommand(Command):
     name = "list_observers"
     
     def execute(self):
-        return [{"name": observer.name,
-                 "state": observer.state
-                }
-                for observer in self._server]
+        observers = [{"name": observer.name,
+                      "state": observer.state}
+                     for observer in self._server]
+        return dict(observers=observers)
 
 
 class GetObserverCommand(Command):
@@ -265,7 +270,8 @@ class ListCommandsCommand(Command):
     name = "list_commands"
     
     def execute(self):
-        return [cmd_class.name for cmd_class in Command.__subclasses__()]
+        commands = [cmd_class.name for cmd_class in Command.__subclasses__()]
+        return dict(commands=commands)
 
 
 class WebSettingsCommand(Command):

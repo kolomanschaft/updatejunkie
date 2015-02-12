@@ -27,6 +27,7 @@ SOFTWARE.
 import unittest
 import time
 import urllib.request
+import urllib.error
 import json
 
 from api.webapi import WebApi
@@ -59,8 +60,10 @@ class TestWebApi(unittest.TestCase):
                                      headers={'Content-Type': 'application/json'},
                                      method=method)
         with urllib.request.urlopen(req) as f:
+            data = None
             json_str = f.read().decode("utf-8")
-            data = json.loads(json_str)
+            if len(json_str) > 0:
+                data = json.loads(json_str)
             return data
 
     def _encode_dict(self, dict):   # dict --> UTF-8 string
@@ -75,13 +78,14 @@ class TestWebApi(unittest.TestCase):
 
         # Now call the API to see if we get those two
         data = self._api_call("/api/list/observers", "GET")
-        observer_names = [observer["name"] for observer in data["response"]]
+        self.assertIn("observers", data)
+        observer_names = [observer["name"] for observer in data["observers"]]
         self.assertListEqual(observer_names, ["Observer1", "Observer2"])
 
     def test_command_get_observer(self):
         self._server.add_observer(MockObserver("Observer1"))
         data = self._api_call("/api/observer/Observer1", "GET")
-        self.assertDictEqual(data["response"], {"name": "Observer1"})
+        self.assertDictEqual(data, {"name": "Observer1"})
 
     def test_command_smtp_settings(self):
         smtp_settings = {"host": "smtp.myhost.com", "port": 587, "user": "Moatl", "pwd": "geheim123"}
@@ -145,9 +149,10 @@ class TestWebApi(unittest.TestCase):
 
     def test_command_list_commands(self):
         data = self._api_call("/api/list/commands", "GET")
-        self.assertIsInstance(data["response"], list)
-        self.assertGreater(len(data["response"]), 0)
-        for cmd in data["response"]:
+        self.assertIsInstance(data, dict)
+        self.assertIn("commands", data)
+        self.assertGreater(len(data["commands"]), 0)
+        for cmd in data["commands"]:
             self.assertIsInstance(cmd, str)
 
 class MockObserver(object):

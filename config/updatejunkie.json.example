@@ -6,6 +6,11 @@
 		"user": "myuser123",
 		"pwd": "secret"
 	},
+    {
+        "command": "web_settings",
+        "host": "localhost",
+        "port": 8118
+    },
 	{
 		"command": "create_observer",
 		"name": "Reboarder",

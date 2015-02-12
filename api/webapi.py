@@ -45,13 +45,13 @@ def api_call(handler):
             response = instance._process_command_info(cmd_info)
             if response["status"] == "ERROR":
                 bottle.response.status = 500
-            return response
+                return "Error: {}".format(response["message"])
+            else:
+                return response["response"]
         except Exception as error:
             # Relay the error as a 500 errror and a JSON message
             bottle.response.status = 500
-            return { "status": "ERROR",
-                     "message": "{}".format(error.args[0])
-            } # TODO: Exposing internals like this might be a bad idea
+            return "Uncaught exception: {}".format(error.args[0])
         finally:
             # Make sure the API can be used from every other domain (CORS)
             bottle.response.headers['Access-Control-Allow-Origin'] = '*'
