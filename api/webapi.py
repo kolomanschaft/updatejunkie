@@ -93,6 +93,29 @@ class WebApi(CommandApi):
         cmd["name"] = name
         return cmd
 
+    @api_call
+    def _remove_observer(self, name):
+        return {"command": "remove_observer", "name": name}
+
+    @api_call
+    def _add_notification(self, name):
+        cmd = bottle.request.json
+        cmd["command"] = "add_notification"
+        cmd["observer"] = name
+        return cmd
+
+    @api_call
+    def _pause_observer(self, name):
+        return {"command": "pause_observer", "name": name}
+
+    @api_call
+    def _resume_observer(self, name):
+        return {"command": "resume_observer", "name": name}
+
+    @api_call
+    def _list_commands(self):
+        return {"command": "list_commands"}
+
     @property
     def bottle(self):
         return self._bottle
@@ -123,8 +146,13 @@ class WebApi(CommandApi):
     def run(self):
         self._bottle = bottle.Bottle()
         self._bottle.route("/api/list/observers", "GET")(self._list_observers)
+        self._bottle.route("/api/list/commands", "GET")(self._list_commands)
         self._bottle.route("/api/observer/<name>", "GET")(self._get_observer)
         self._bottle.route("/api/observer/<name>", "PUT")(self._create_observer)
+        self._bottle.route("/api/observer/<name>", "DELETE")(self._remove_observer)
+        self._bottle.route("/api/observer/<name>/pause", "PUT")(self._pause_observer)
+        self._bottle.route("/api/observer/<name>/resume", "PUT")(self._resume_observer)
+        self._bottle.route("/api/observer/<name>/notification", "POST")(self._add_notification)
         self._bottle.route("/api/settings/smtp", "PUT")(self._smtp_settings)
         self._bottle.route("/api/alive", "GET")(self._alive)
         self._bottle_server = bottle.WSGIRefServer(host=self._host, port=self._port)

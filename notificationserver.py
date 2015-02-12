@@ -29,7 +29,7 @@ from notifications import Notification
 class NotificationServer:
     
     def __init__(self):
-        self._notifications = []
+        self._notifications = list()
     
     def add_notification(self, notification):
         if not isinstance(notification, Notification):

@@ -75,6 +75,10 @@ class Observer(threading.Thread):
     def state(self, value):
         self._state = value
 
+    @property
+    def notifications(self):
+        return self._notifications
+
     def quit(self):
         """
         Make the Thread quit

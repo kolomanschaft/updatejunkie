@@ -107,8 +107,8 @@ class SmtpSettingsCommand(Command):
         self._validate_smtp_settings(smtp_settings)
         if "user" not in smtp_settings:
             smtp_settings["user"] = None
-        if "pass" not in smtp_settings:
-            smtp_settings["pass"] = None
+        if "pwd" not in smtp_settings:
+            smtp_settings["pwd"] = None
         self._server.settings["smtp"] = smtp_settings
     
     def _validate_smtp_settings(self, settings):
@@ -160,19 +160,15 @@ class AddNotificationCommand(Command):
     def execute(self):
         notification_type = self._cmd_info["type"]
         observer_name = self._cmd_info["observer"]
-
         logging.info("Adding {} notification to observer '{}'".format(notification_type, observer_name))
         notification = None
-
         if notification_type == "email":
             notification = self._setup_email_notification()
-
-        self._server[observer_name]._notifications.add_notification(notification)
+        self._server[observer_name].notifications.add_notification(notification)
 
     def _setup_email_notification(self):
-        if not self._server.settings["smtp"]:
+        if not "smtp" in self._server.settings.keys():
             raise CommandError("Cannot setup email notifications without smtp settings.")
-
         header_from = self._cmd_info["from"]
         header_to = self._cmd_info["to"]
         header_mime_type = self._cmd_info["mime_type"]
@@ -184,7 +180,7 @@ class AddNotificationCommand(Command):
 
         from notifications import EmailNotification
         email_notification = EmailNotification(smtp["host"], smtp["port"],
-                                               smtp["user"], smtp["pass"],
+                                               smtp["user"], smtp["pwd"],
                                                header_from, header_to,
                                                header_mime_type,
                                                header_subject, body)
@@ -269,5 +265,5 @@ class ListCommandsCommand(Command):
     name = "list_commands"
     
     def execute(self):
-        return [cmd_class.command for cmd_class in Command.__subclasses__()]
+        return [cmd_class.name for cmd_class in Command.__subclasses__()]
 

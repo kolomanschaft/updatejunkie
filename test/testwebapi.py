@@ -32,6 +32,7 @@ import json
 from api.webapi import WebApi
 from server import Server
 from observer import Observer
+from notificationserver import NotificationServer
 
 class TestWebApi(unittest.TestCase):
 
@@ -62,6 +63,11 @@ class TestWebApi(unittest.TestCase):
             data = json.loads(json_str)
             return data
 
+    def _encode_dict(self, dict):   # dict --> UTF-8 string
+        dict_str = json.dumps(dict)
+        dict_encoded = bytearray(source=dict_str, encoding="utf-8")
+        return dict_encoded
+
     def test_command_list_observers(self):
         # First add 2 mocked observers
         self._server.add_observer(MockObserver("Observer1"))
@@ -78,8 +84,8 @@ class TestWebApi(unittest.TestCase):
         self.assertDictEqual(data["response"], {"name": "Observer1"})
 
     def test_command_smtp_settings(self):
-        smtp_settings = {"host": "smtp.myhost.com", "port": 587, "user": "Moatl", "pass": "geheim123"}
-        smtp_settings_encoded = bytearray(source=json.dumps(smtp_settings), encoding="utf8")
+        smtp_settings = {"host": "smtp.myhost.com", "port": 587, "user": "Moatl", "pwd": "geheim123"}
+        smtp_settings_encoded = self._encode_dict(smtp_settings)
         self._api_call("/api/settings/smtp", "PUT", smtp_settings_encoded)
         self.assertDictEqual( self._server.settings["smtp"], smtp_settings)
 
@@ -92,7 +98,7 @@ class TestWebApi(unittest.TestCase):
                                  dict(tag="title",
                                       type="keywords_all",
                                       keywords=["word", "perfect"])])
-        observer_data_encoded = bytearray(source=json.dumps(observer_data), encoding="utf-8")
+        observer_data_encoded = self._encode_dict(observer_data)
         self._api_call("/api/observer/MyObserver", "PUT", observer_data_encoded)
         self.assertTrue("MyObserver" in self._server.observers())   # Check if the observer is there
         observer_serialized = self._server["MyObserver"].serialize()    # Check if the server has all the correct properties
@@ -100,12 +106,57 @@ class TestWebApi(unittest.TestCase):
         observer_data["name"] = observer_serialized["name"]     # not in the original data
         self.assertDictEqual(observer_data, observer_serialized)
 
+    def test_command_add_notification(self):
+        observer = MockObserver("MyObserver")
+        self._server.add_observer(observer)
+        smtp_settings = {"host": "fake", "port": 0,
+                         "user": "me", "pwd": "secret"} # Fake SMTP settings
+        self._server.settings["smtp"] = smtp_settings
+        notification_data = {"type": "email",
+                             "from": "UpdateJunkie <junkie@koloman.net>",
+                             "to": [ "Martin Hammerschmied <gestatten@gmail.com>" ],
+                             "mime_type": "text/html",
+                             "subject": "{title} for {price}",
+                             "body": "I found a new ad ({datetime}):<br/><br/>\n<b>{title}</b><br/>\nfor € <b>{price}</b><br/><br/>\n<a href=\"{url}\">{url}</a><br/><br/>\nbye!"
+        }
+        notification_data_encoded = self._encode_dict(notification_data)
+        self._api_call("/api/observer/MyObserver/notification", "POST", notification_data_encoded)
+        notification = next(iter(observer.notifications))
+        self.assertEqual(notification.host, smtp_settings["host"])
+        self.assertEqual(notification.port, smtp_settings["port"])
+        self.assertEqual(notification.user, smtp_settings["user"])
+        self.assertEqual(notification.pw, smtp_settings["pwd"])
+
+    def test_commands_pause_resume_observer(self):
+        observer = MockObserver("MyObserver")
+        self._server.add_observer(observer)
+        observer.state = Observer.RUNNING
+        self._api_call("/api/observer/MyObserver/pause", "PUT")
+        self.assertEqual(observer.state, Observer.PAUSED)
+        self._api_call("/api/observer/MyObserver/resume", "PUT")
+        self.assertEqual(observer.state, Observer.RUNNING)
+
+    def test_command_remove_observer(self):
+        observer = MockObserver("MyObserver")
+        self._server.add_observer(observer)
+        self.assertIsInstance(self._server["MyObserver"], MockObserver)
+        self._api_call("/api/observer/MyObserver", "DELETE")
+        self.assertRaises(KeyError, lambda: self._server["MyObserver"])
+
+    def test_command_list_commands(self):
+        data = self._api_call("/api/list/commands", "GET")
+        self.assertIsInstance(data["response"], list)
+        self.assertGreater(len(data["response"]), 0)
+        for cmd in data["response"]:
+            self.assertIsInstance(cmd, str)
+
 class MockObserver(object):
 
     def __init__(self, name):
         self._name = name
         self._state = Observer.RUNNING
         self._is_alive = True
+        self._notifications = NotificationServer()
 
     @property
     def name(self):
@@ -114,6 +165,10 @@ class MockObserver(object):
     @property
     def state(self):
         return self._state
+
+    @state.setter
+    def state(self, state):
+        self._state = state
 
     def start(self): pass
 
@@ -124,3 +179,7 @@ class MockObserver(object):
     def is_alive(self): return self._is_alive
 
     def serialize(self): return {"name": self.name}
+
+    @property
+    def notifications(self):
+        return self._notifications

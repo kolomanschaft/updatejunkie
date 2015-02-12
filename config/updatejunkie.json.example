@@ -4,7 +4,7 @@
 		"host": "mail.example.com",
 		"port": 587,
 		"user": "myuser123",
-		"pass": "secret"
+		"pwd": "secret"
 	},
 	{
 		"command": "create_observer",
