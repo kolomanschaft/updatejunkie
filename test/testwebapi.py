@@ -106,7 +106,6 @@ class TestWebApi(unittest.TestCase):
         self._api_call("/api/observer/MyObserver", "PUT", observer_data_encoded)
         self.assertTrue("MyObserver" in self._server.observers())   # Check if the observer is there
         observer_serialized = self._server["MyObserver"].serialize()    # Check if the server has all the correct properties
-        observer_data["state"] = observer_serialized["state"]   # not in the original data
         observer_data["name"] = observer_serialized["name"]     # not in the original data
         self.assertDictEqual(observer_data, observer_serialized)
 
@@ -139,6 +138,16 @@ class TestWebApi(unittest.TestCase):
         self.assertEqual(observer.state, Observer.PAUSED)
         self._api_call("/api/observer/MyObserver/resume", "PUT")
         self.assertEqual(observer.state, Observer.RUNNING)
+
+    def test_command_observer_state(self):
+        observer = MockObserver("MyObserver")
+        self._server.add_observer(observer)
+        observer.state = Observer.RUNNING
+        data = self._api_call("/api/observer/MyObserver/state", "GET")
+        self.assertDictEqual(data, {"state": "RUNNING"})
+        observer.state = Observer.PAUSED
+        data = self._api_call("/api/observer/MyObserver/state", "GET")
+        self.assertDictEqual(data, {"state": "PAUSED"})
 
     def test_command_remove_observer(self):
         observer = MockObserver("MyObserver")

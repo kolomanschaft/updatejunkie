@@ -116,6 +116,10 @@ class WebApi(CommandApi):
     def _list_commands(self):
         return {"command": "list_commands"}
 
+    @api_call
+    def _observer_state(self, name):
+        return {"command": "observer_state", "name": name}
+
     @property
     def bottle(self):
         return self._bottle
@@ -152,6 +156,7 @@ class WebApi(CommandApi):
         self._bottle.route("/api/observer/<name>", "DELETE")(self._remove_observer)
         self._bottle.route("/api/observer/<name>/pause", "PUT")(self._pause_observer)
         self._bottle.route("/api/observer/<name>/resume", "PUT")(self._resume_observer)
+        self._bottle.route("/api/observer/<name>/state", "GET")(self._observer_state)
         self._bottle.route("/api/observer/<name>/notification", "POST")(self._add_notification)
         self._bottle.route("/api/settings/smtp", "PUT")(self._smtp_settings)
         self._bottle.route("/api/alive", "GET")(self._alive)

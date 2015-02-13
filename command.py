@@ -247,6 +247,18 @@ class ListObserversCommand(Command):
         return dict(observers=observers)
 
 
+class ObserverStateCommand(Command):
+    """
+    Returns the state (PASUED, RUNNING) of an observer
+    """
+    name = "observer_state"
+
+    def execute(self):
+        observer_name = self._cmd_info["name"]
+        observer_state = self._server[observer_name].state
+        return dict(state=observer_state)
+
+
 class GetObserverCommand(Command):
     """
     Returns a list of all observers that are currently running.
