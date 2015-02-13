@@ -36,17 +36,6 @@ This way you can create various command scripts and run multiple instances simul
 
 You can also start UpdateJunkie without a command script and configure it using only the JSON API.
 
-## The Command API
-
-The whole configuration of UpdateJunkie is based on commands. Commands can be send to UpdateJunkie in two ways:
-
-* Via a web API (JSON)
-* Via a JSON command script
-
-In general you can launch UpdateJunkie without a command script. After launch UpdateJunkie can be configured using the web-based JSON API. If nothing else was configured (by a command script using the `web_settings` command), UpdateJunkie's web server listens on `http://localhost:8118`. However, it is recommended to use a command script to properly bootstrap UpdateJunkie. The root element in command scripts can either be a dictionary containing a single command, or a list of commands (see `config/updatejunkie.json.example`).
-
-The web API uses the same command infrastructure as command scripts. Therefore all commands are available both ways. The only exception is the `web_settings` command which reconfigures the web server. Since this command restarts the web service during the execution it is not available via the web API.
-
 For a full list of commands see the [commands] page in the wiki
 
 [willhaben.at]: http://www.willhaben.at/
