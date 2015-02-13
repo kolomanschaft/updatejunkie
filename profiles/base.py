@@ -59,34 +59,29 @@ class ProfileBase(object):
         raise NotImplementedError()
 
     @property
-    def paging_param(self):
-        """
-        If the profile supports paging (each page is limited to a certain
-        number of ads) this is the name of the HTTP parameter that specifies
-        the page. (The only supported paging parameter type is integer)
-        """
-        raise NotImplementedError()
-
-    @property
-    def paging_param_init(self):
-        """
-        The initial value of the paging parameter. Typically 0 or 1.
-        """
-        raise NotImplementedError()
-
-    @property
-    def paging_method(self):
-        """
-        The method for the paging parameter. This property is usually "GET".
-        """
-        raise NotImplementedError()
-
-    @property
     def encoding(self):
         """
         The Websites character encoding.
         """
         raise NotImplementedError()
+
+    def first_page(self, url):
+        """
+        This is part of the paging mechanism. The paging is expected to be somehow encoded in the URL (e.g. in the
+        query string or as part of the relative path). Override this method in a subclass to enable paging.
+        :param url: The URL as specified in the observer configuration.
+        :return: The URL of the first page.
+        """
+        return url
+
+    def next_page(self, url):
+        """
+        This is part of the paging mechanism. It should lead the way from one page to the next. If the return value is
+        identical to `url` the connector will assume that there is no more page.
+        :param url: Either the return value of first_page() or of a previous call of next_page()
+        :return: The URL of the next page (relative to the `url` param)
+        """
+        return url
 
     def parse(self, html):
         """

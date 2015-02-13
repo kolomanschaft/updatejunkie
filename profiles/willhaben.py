@@ -24,10 +24,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import re
+import urllib.parse
+
 from bs4 import BeautifulSoup
 from . import base
-#import base
-import re
 from datetime import datetime
 
 class WillhabenProfile(base.ProfileBase):
@@ -53,20 +54,25 @@ class WillhabenProfile(base.ProfileBase):
         return "datetime"
 
     @property
-    def paging_param(self):
-        return "page"
-
-    @property
-    def paging_param_init(self):
-        return 1
-
-    @property
-    def paging_method(self):
-        return "GET"
-
-    @property
     def encoding(self):
         return "ISO-8859-1"
+
+    def first_page(self, url):
+        url_components = list(urllib.parse.urlparse(url))
+        query = dict(urllib.parse.parse_qsl(url_components[4]))
+        query["page"] = 1
+        url_components[4] = urllib.parse.urlencode(query)
+        return urllib.parse.urlunparse(url_components)
+
+    def next_page(self, url):
+        url_components = list(urllib.parse.urlparse(url))
+        query = dict(urllib.parse.parse_qsl(url_components[4]))
+        if "p" in query:
+            query["page"] = int(query["page"]) + 1
+        else:
+            query["p"] = 1
+        url_components[4] = urllib.parse.urlencode(query)
+        return urllib.parse.urlunparse(url_components)
 
     def parse(self, html):
         soup = BeautifulSoup(html)

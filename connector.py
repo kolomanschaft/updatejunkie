@@ -58,20 +58,12 @@ class Connector():
     def _get_page(self, page):
         data = None
         url = self._url
-        if page is not None:
-            page_param = self._profile.paging_param
-            new_encoded = urlencode({page_param: page})
-            if self._profile.paging_method == "GET":
-                page_match = re.search("{}=[0-9]+".format(page_param), self._url)
-                if page_match:
-                    url = self._url.replace(page_match.group(), new_encoded)
-                elif self._url.find("?") >= 0:
-                    url = self._url + "&" + new_encoded
-                else:
-                    url = self._url + "?" + new_encoded
-            else:
-                data = new_encoded
-        
+        url = self._profile.first_page(url)
+        for i in range(0, page, 1):
+            next_url = self._profile.next_page(url)
+            if next_url == url:
+                raise IndexError("Page {} does not exist".format(page))
+            url = next_url
         try:
             f = urllib.request.urlopen(url, data)
         except (urllib.error.URLError, ValueError):
@@ -82,11 +74,11 @@ class Connector():
         return html
 
     def frontpage_ads(self):
-        if not self._profile.paging_param:
-            html = self._get_page(None)
-        else:
-            html = self._get_page(self._profile.paging_param_init)
-        return self._profile.parse(html)
+        try:
+            html = self._get_page(0)
+            return self._profile.parse(html)
+        except IndexError:
+            return []
     
     def ads_all(self, pagestart = None, maxpages = 10):
         timelimit = datetime.datetime(1970,1,1)
@@ -98,19 +90,15 @@ class Connector():
         timelimit = datetime.datetime.now() - dtime
         return self.ads_after(timelimit, maxpages)
     
-    def ads_after(self, timelimit, maxpages = 10):
-        if not self._profile.paging_param:
-            ads = self.frontpage_ads()
-            return [ad for ad in ads if ad.timetag > timelimit]
-
-        pagestart = int(self._profile.paging_param_init)
-
+    def ads_after(self, timelimit, maxpages = 100):
         if not isinstance(timelimit, datetime.datetime):
             raise ConnectionError("timelimit needs to be a datetime instance")
-
         ads = []
-        for page in range(pagestart,pagestart+maxpages):
-            html = self._get_page(page)
+        for page in range(0, maxpages):
+            try:
+                html = self._get_page(page)
+            except IndexError:
+                break
             new_ads = [Ad(tags, self._profile.key_tag, self._profile.datetime_tag)
                        for tags in self._profile.parse(html)
                        if tags[self._profile.datetime_tag] > timelimit]
