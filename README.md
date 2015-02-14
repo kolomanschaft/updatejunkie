@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/kolomanschaft/updatejunkie.svg?branch=master)](https://travis-ci.org/kolomanschaft/updatejunkie)
 # UpdateJunkie
 
 UpdateJunkie is a simple, platform independent agent for polling article-based websites. It started out as an observer for the advertising-platform [willhaben.at]. But by adding *profiles* one can observe all kinds of article-based websites. The following list shows an overview of the profiles that are currently supported:
