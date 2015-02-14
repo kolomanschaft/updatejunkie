@@ -94,7 +94,7 @@ class WillhabenProfile(base.ProfileBase):
         tags["id"] = int(id_str)
 
         # The title
-        tags["title"] = soup.div.a.contents[0].strip()
+        tags["title"] = soup.div.a.span.contents[0].strip()
 
         # This node contains ZIP code, location and datetime
         seller_details_node = soup.find('p', attrs={'class', 'bot-1'})
