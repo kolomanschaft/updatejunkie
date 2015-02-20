@@ -39,9 +39,10 @@ def api_call(handler):
     """
     def wrapper(*args, **kwargs):
         instance = args[0]
-        #bottle = instance.bottle
         cmd_info = handler(*args, **kwargs)
         try:
+            if bottle.request.method == "OPTIONS":  # OPTIONS requests are used for AJAX preflight requests only.
+                return
             response = instance._process_command_info(cmd_info)
             if response["status"] == "ERROR":
                 bottle.response.status = 500
@@ -152,13 +153,13 @@ class WebApi(CommandApi):
         self._bottle.route("/api/list/observers", "GET")(self._list_observers)
         self._bottle.route("/api/list/commands", "GET")(self._list_commands)
         self._bottle.route("/api/observer/<name>", "GET")(self._get_observer)
-        self._bottle.route("/api/observer/<name>", "PUT")(self._create_observer)
-        self._bottle.route("/api/observer/<name>", "DELETE")(self._remove_observer)
-        self._bottle.route("/api/observer/<name>/pause", "PUT")(self._pause_observer)
-        self._bottle.route("/api/observer/<name>/resume", "PUT")(self._resume_observer)
+        self._bottle.route("/api/observer/<name>", ["PUT", "OPTIONS"])(self._create_observer)
+        self._bottle.route("/api/observer/<name>", ["DELETE", "OPTIONS"])(self._remove_observer)
+        self._bottle.route("/api/observer/<name>/pause", ["PUT", "OPTIONS"])(self._pause_observer)
+        self._bottle.route("/api/observer/<name>/resume", ["PUT", "OPTIONS"])(self._resume_observer)
         self._bottle.route("/api/observer/<name>/state", "GET")(self._observer_state)
-        self._bottle.route("/api/observer/<name>/notification", "POST")(self._add_notification)
-        self._bottle.route("/api/settings/smtp", "PUT")(self._smtp_settings)
+        self._bottle.route("/api/observer/<name>/notification", ["POST", "OPTIONS"])(self._add_notification)
+        self._bottle.route("/api/settings/smtp", ["PUT", "OPTIONS"])(self._smtp_settings)
         self._bottle.route("/api/alive", "GET")(self._alive)
         self._bottle_server = bottle.WSGIRefServer(host=self._host, port=self._port)
         self._bottle.run(server=self._bottle_server, debug=True, quiet=True)
