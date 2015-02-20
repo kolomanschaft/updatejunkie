@@ -72,6 +72,7 @@ class WebApi(CommandApi):
         self._host = host
         self._port = port
         self._bottle = None
+        self._client_path = None
 
     @api_call
     def _list_observers(self):
@@ -141,8 +142,16 @@ class WebApi(CommandApi):
         else:
             return True
 
-    def _alive(self):
-        bottle.response.status = 200
+    def register_static_route(self, static_root, rel_url):
+        """
+        The API's web server can be used to deliver static content such as a web client. This method must be called
+        *after* start() was called.
+        :param static_root: File path to the static content
+        :param rel_url: Relative URL to the static content (e.g. "/client")
+        """
+        def get_static_file(filepath):
+            return bottle.static_file(filepath, static_root)
+        self._bottle.route("{}/<filepath:path>".format(rel_url))(get_static_file)
 
     def quit(self):
         if self.ready():
@@ -160,7 +169,11 @@ class WebApi(CommandApi):
         self._bottle.route("/api/observer/<name>/state", "GET")(self._observer_state)
         self._bottle.route("/api/observer/<name>/notification", ["POST", "OPTIONS"])(self._add_notification)
         self._bottle.route("/api/settings/smtp", ["PUT", "OPTIONS"])(self._smtp_settings)
-        self._bottle.route("/api/alive", "GET")(self._alive)
+
+        def alive_helper():
+            bottle.response.status = 200
+        self._bottle.route("/api/alive", "GET")(alive_helper)
+
         self._bottle_server = bottle.WSGIRefServer(host=self._host, port=self._port)
         self._bottle.run(server=self._bottle_server, debug=True, quiet=True)
         self._bottle_server.srv.socket.close()  # Prevents unclosed socket warning

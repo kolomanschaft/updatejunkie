@@ -164,6 +164,22 @@ class TestWebApi(unittest.TestCase):
         for cmd in data["commands"]:
             self.assertIsInstance(cmd, str)
 
+    def test_static_route(self):
+        import tempfile, os.path
+        root = tempfile.gettempdir()
+        filepath = tempfile.mktemp()
+        file = os.path.basename(filepath)
+        content = "This is not the file you are looking for..."
+        rel_url = "/showmethefile"
+        url = "{}{}/{}".format(self._base_url, rel_url, file)
+        with open(filepath, "w") as f:
+            f.write(content)
+        self._web_api.register_static_route(root, rel_url)
+        with urllib.request.urlopen(url) as f:
+            content_get = f.read().decode("utf-8")
+        self.assertEqual(content, content_get)
+
+
 class MockObserver(object):
 
     def __init__(self, name):
