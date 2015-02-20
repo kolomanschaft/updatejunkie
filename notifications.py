@@ -26,6 +26,8 @@ SOFTWARE.
 
 import smtplib
 import re
+import logging
+
 from email.mime.text import MIMEText
 from email.header import Header
 
@@ -78,12 +80,21 @@ class EmailNotification(Notification):
         return msg
 
     def notify(self, ad):
-        server = smtplib.SMTP(self.host, self.port)
-        server.login(self.user, self.pw)
-        for to in self.to:
-            msg = self._get_mail(ad, to)
-            server.sendmail(self.sender, to, msg)
-        server.quit()
+        server = None
+        try:
+            server = smtplib.SMTP("gibtsnicht.koloman.net", self.port)
+            server.login(self.user, self.pw)
+            for to in self.to:
+                msg = self._get_mail(ad, to)
+                server.sendmail(self.sender, to, msg)
+        except smtplib.SMTPAuthenticationError:
+            logging.error("SMTP Authentication failed: Wrong username or password!")
+        except ConnectionRefusedError:
+            logging.error("Connection to {} was refused!".format(self.host))
+        except Exception as error:
+            logging.error("Failed to send email notification: {}".format(error.args))
+        finally:
+            if server: server.quit()
 
     def serialize(self):
         return {"type": "email", "to": self.to}

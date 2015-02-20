@@ -255,7 +255,10 @@ class ObserverStateCommand(Command):
 
     def execute(self):
         observer_name = self._cmd_info["name"]
-        observer_state = self._server[observer_name].state
+        try:
+            observer_state = self._server[observer_name].state
+        except KeyError:
+            raise CommandError("Observer {} not found.".format(observer_name))
         return dict(state=observer_state)
 
 
