@@ -142,16 +142,21 @@ class WebApi(CommandApi):
         else:
             return True
 
-    def register_static_route(self, static_root, rel_url):
+    def register_static_directory(self, static_root, rel_url, default_file=None):
         """
         The API's web server can be used to deliver static content such as a web client. This method must be called
         *after* start() was called.
-        :param static_root: File path to the static content
+        :param static_root: Path to the static content (must be a folder)
         :param rel_url: Relative URL to the static content (e.g. "/client")
+        :param default_file: Served when the root URL is requested (e.g. "index.html")
         """
         def get_static_file(filepath):
             return bottle.static_file(filepath, static_root)
         self._bottle.route("{}/<filepath:path>".format(rel_url))(get_static_file)
+        if default_file:
+            def get_default_file():
+                return bottle.static_file(default_file, static_root)
+            self._bottle.route("{}/".format(rel_url))(get_default_file)
 
     def quit(self):
         if self.ready():

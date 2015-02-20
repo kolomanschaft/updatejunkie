@@ -64,6 +64,10 @@ if __name__ == "__main__":
     # Start the web API
     server.start_web_api()
 
+    # Register web client
+    client_root = "{}/client/".format(os.path.dirname(__file__))
+    server.register_client(client_root)
+
     def shutdown(signal, frame):
         logging.info("Caught keyboard interrupt. Shutting down...")
         server.quit()

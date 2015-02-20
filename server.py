@@ -87,6 +87,11 @@ class Server(Thread):
         self._web_api = WebApi(self, host, port)
         self._web_api.start()
 
+    def register_client(self, client_root, default_file="index.html"):
+        if not self._web_api:
+            raise ServerError("Web API must be started before a client can be registered")
+        self._web_api.register_static_directory(client_root, "", default_file)
+
     def run(self):
         """
         run() is called after everything is set up. It just waits for commands

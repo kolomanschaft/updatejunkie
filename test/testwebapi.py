@@ -174,7 +174,7 @@ class TestWebApi(unittest.TestCase):
         url = "{}{}/{}".format(self._base_url, rel_url, file)
         with open(filepath, "w") as f:
             f.write(content)
-        self._web_api.register_static_route(root, rel_url)
+        self._web_api.register_static_directory(root, rel_url)
         with urllib.request.urlopen(url) as f:
             content_get = f.read().decode("utf-8")
         self.assertEqual(content, content_get)
