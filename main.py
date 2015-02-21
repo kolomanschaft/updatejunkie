@@ -65,7 +65,7 @@ if __name__ == "__main__":
     server.start_web_api()
 
     # Register web client
-    client_root = "{}/client/".format(os.path.dirname(__file__))
+    client_root = "{}/client/".format(os.path.dirname(os.path.abspath(__file__)))
     server.register_client(client_root)
 
     def shutdown(signal, frame):
