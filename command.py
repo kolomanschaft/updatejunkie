@@ -34,7 +34,11 @@ from threading import Condition
 import os
 import logging
 
-class CommandError(Exception):pass
+class CommandError(Exception):
+    """
+    Raised if something goes terribly wrong.
+    """
+    pass
 
 
 class Command(object):
@@ -121,6 +125,20 @@ class SmtpSettingsCommand(Command):
             raise CommandError("'host' is missing in the smtp settings.")
         if "port" not in settings:
             raise CommandError("'port' is missing in the smtp settings.")
+
+
+class GetSmtpSettingsCommand(Command):
+    """
+    Returns the current SMTP settings.
+    """
+    name = "get_smtp_settings"
+
+    def execute(self):
+        try:
+            smtp_settings = self._server.settings["smtp"]
+            return smtp_settings;
+        except KeyError:
+            return {}
 
 
 class CreateObserverCommand(Command):

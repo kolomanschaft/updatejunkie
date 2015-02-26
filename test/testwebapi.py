@@ -93,6 +93,12 @@ class TestWebApi(unittest.TestCase):
         self._api_call("/api/settings/smtp", "PUT", smtp_settings_encoded)
         self.assertDictEqual( self._server.settings["smtp"], smtp_settings)
 
+    def test_command_get_smtp_settings(self):
+        smtp_settings = {"host": "smtp.myhost.com", "port": 587, "user": "Moatl", "pwd": "geheim123"}
+        self._server.settings["smtp"] = smtp_settings;
+        smtp_settings_get = self._api_call("/api/settings/smtp", "GET")
+        self.assertDictEqual(smtp_settings_get, smtp_settings)
+
     def test_command_create_observer(self):
         observer_data = dict(profile="Willhaben",
                              url="that wont work for sure",

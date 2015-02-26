@@ -39,13 +39,13 @@ def api_call(handler):
     """
     def wrapper(*args, **kwargs):
         instance = args[0]
-        cmd_info = handler(*args, **kwargs)
         try:
+            cmd_info = handler(*args, **kwargs)
             if bottle.request.method == "OPTIONS":  # OPTIONS requests are used for AJAX preflight requests only.
                 return
             response = instance._process_command_info(cmd_info)
             if response["status"] == "ERROR":
-                bottle.response.status = 500
+                bottle.response.status = 400
                 return "Error: {}".format(response["message"])
             else:
                 return response["response"]
@@ -84,8 +84,11 @@ class WebApi(CommandApi):
 
     @api_call
     def _smtp_settings(self):
-        cmd = bottle.request.json
-        cmd["command"] = "smtp_settings"
+        if bottle.request.method == "GET":
+            cmd = {"command": "get_smtp_settings"}
+        elif bottle.request.method == "PUT":
+            cmd = bottle.request.json
+            cmd["command"] = "smtp_settings"
         return cmd
 
     @api_call
@@ -173,7 +176,7 @@ class WebApi(CommandApi):
         self._bottle.route("/api/observer/<name>/resume", ["PUT", "OPTIONS"])(self._resume_observer)
         self._bottle.route("/api/observer/<name>/state", "GET")(self._observer_state)
         self._bottle.route("/api/observer/<name>/notification", ["POST", "OPTIONS"])(self._add_notification)
-        self._bottle.route("/api/settings/smtp", ["PUT", "OPTIONS"])(self._smtp_settings)
+        self._bottle.route("/api/settings/smtp", ["PUT", "GET", "OPTIONS"])(self._smtp_settings)
 
         def alive_helper():
             bottle.response.status = 200
