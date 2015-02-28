@@ -25,7 +25,7 @@ SOFTWARE.
 """
 
 import unittest
-from config import ConfigNode
+from config import ConfigNode, Config
 
 class TestConfigNode(unittest.TestCase):
 
@@ -39,7 +39,7 @@ class TestConfigNode(unittest.TestCase):
                             }
                         }
                     }
-        config = ConfigNode(template)
+        config = Config(template)
         self.assertDictEqual(template, config)
         config['x'] = {'new': 'dict'}
         self.assertIs(type(config['x']), ConfigNode)
@@ -48,5 +48,17 @@ class TestConfigNode(unittest.TestCase):
         class bla: pass
         template = {'a': 1, 'b': bla()}
         def convert():
-            ConfigNode(template)
+            Config(template)
         self.assertRaises(TypeError, convert)
+
+    def test_config_path(self):
+        value = "Itse meee, Mario!"
+        template = {
+            'a': {
+                'b': {
+                    'c': value
+                }
+            }
+        }
+        config = Config(template)
+        self.assertEqual(value, config.a.b.c)

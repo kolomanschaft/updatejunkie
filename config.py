@@ -24,10 +24,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+def Config(tree):
+    """
+    Create a tree-structured configuration from a dictionary. The tree can be queried using attribute notation.
+    :param tree: A dictionary who's values can either be more dictionaries or a primitive value type.
+    :return: The root configuration node.
+    """
+    return ConfigNode(tree)
+
 class ConfigNode(dict):
 
     def __init__(self, tree=None):
-        self._children = dict()
+        self._parent = None
         self._value_types = [int, float, bool, str]
         if tree:
             if type(tree) is not dict:
@@ -37,28 +45,19 @@ class ConfigNode(dict):
 
     def __setitem__(self, key, value):
         if type(value) == ConfigNode:
-            super(ConfigNode, self).__setitem__(key, value)
-        elif type(value) in self._value_types:
+            value._parent = self
             super(ConfigNode, self).__setitem__(key, value)
         elif type(value) == dict:
-            super(ConfigNode, self).__setitem__(key, ConfigNode(value))
+            node = ConfigNode(value)
+            node._parent = self
+            super(ConfigNode, self).__setitem__(key, node)
+        elif type(value) in self._value_types:
+            super(ConfigNode, self).__setitem__(key, value)
         else:
             raise TypeError("Did not expect value type '{}'".format(type(value)))
 
-    # def __getitem__(self, key):
-    #     return self._children[key]
-    #
-    # def __len__(self, key):
-    #     return len(self._children)
-    #
-    # def __delitem__(self, key):
-    #     del self._children[key]
-    #
-    # def __iter__(self):
-    #     return self._children.__iter__()
-    #
-    # def __contains__(self, key):
-    #     return key in self._children
-    #
-    # def keys(self):
-    #     return self._children.keys()
+    def __getattr__(self, name):
+        if name in self:
+            return self[name]
+        else:
+            raise AttributeError("No config node {}".format(name))
