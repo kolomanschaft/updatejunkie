@@ -118,7 +118,7 @@ class SmtpSettingsCommand(Command):
             smtp_settings["user"] = None
         if "pwd" not in smtp_settings:
             smtp_settings["pwd"] = None
-        self._server.settings["smtp"] = smtp_settings
+        self._server.config.smtp = smtp_settings
     
     def _validate_smtp_settings(self, settings):
         if "host" not in settings:
@@ -135,7 +135,7 @@ class GetSmtpSettingsCommand(Command):
 
     def execute(self):
         try:
-            smtp_settings = self._server.settings["smtp"]
+            smtp_settings = self._server.config.smtp
             return smtp_settings;
         except KeyError:
             return {}
@@ -190,14 +190,14 @@ class AddNotificationCommand(Command):
         self._server[observer_name].notifications.add_notification(notification)
 
     def _setup_email_notification(self):
-        if not "smtp" in self._server.settings.keys():
+        if not "smtp" in self._server.config:
             raise CommandError("Cannot setup email notifications without smtp settings.")
         header_from = self._cmd_info["from"]
         header_to = self._cmd_info["to"]
         header_mime_type = self._cmd_info["mime_type"]
         header_subject = self._cmd_info["subject"]
         body = self._cmd_info["body"]
-        smtp = self._server.settings["smtp"]
+        smtp = self._server.config.smtp
         if type(header_to) == str:
             header_to = [header_to]   # make it a list
 
@@ -321,4 +321,4 @@ class WebSettingsCommand(Command):
             raise CommandError("Command info is missing port information")
         web_settings = dict(host=self._cmd_info["host"],
                             port=self._cmd_info["port"])
-        self._server.settings["web"] = web_settings
+        self._server.config["web"] = web_settings

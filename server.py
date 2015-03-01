@@ -27,6 +27,7 @@ SOFTWARE.
 from queue import Queue, Empty
 from command import CommandError
 from api.webapi import WebApi
+from config import Config
 from threading import Thread
 import logging
 
@@ -38,12 +39,29 @@ class Server(Thread):
     
     def __init__(self):
         super(Server, self).__init__()
-        self._settings = dict()
+        self._config = self._create_config()
         self._observers = list()
         self._command_queue = Queue()
         self._quit = False
         self._web_api = None
         self.name = "Server"
+
+    def _create_config(self):
+        """
+        These are all available config values. The configuration is fixed. New values can not be added afterwards.
+        """
+        return Config({
+            'smtp': {
+                'host': None,
+                'port': None,
+                'user': None,
+                'pwd': None
+            },
+            'web': {
+                'host': None,
+                'port': None
+            }
+        }, fixed=True)
 
     def add_observer(self, observer):
         if (observer.name in [other.name for other in self._observers]):
@@ -71,9 +89,9 @@ class Server(Thread):
         self._command_queue.put_nowait(command)
 
     def start_web_api(self):
-        if "web" in self._settings:
-            host = self._settings["web"]["host"]
-            port = self._settings["web"]["port"]
+        if "web" in self._config:
+            host = self._config.web.host
+            port = self._config.web.port
         else:
             host = "localhost"
             port = "8118"
@@ -166,8 +184,8 @@ class Server(Thread):
                 logging.info("Observer '{}' successfully shut down".format(observer.name))
 
     @property
-    def settings(self):
-        return self._settings
+    def config(self):
+        return self._config
     
     @property
     def command_queue(self):

@@ -24,19 +24,28 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-def Config(tree):
+def Config(tree, fixed=False):
     """
     Create a tree-structured configuration from a dictionary. The tree can be queried using attribute notation.
     :param tree: A dictionary who's values can either be more dictionaries or a primitive value type.
-    :return: The root configuration node.
+    :param fixed: If `True` the configuration tree is fixed. No further nodes can be added to the config.
+    :return: The root ConfigNode object.
     """
-    return ConfigNode(tree)
+    config = ConfigNode(tree)
+    config.fixed_tree = fixed
+    return config
 
 class ConfigNode(dict):
+    """
+    A specialized dictionary that acts as a node in a tree-like data structure used to store configuration information.
+    Each node can have an arbitrary number of children. Each child can either be another ConfigNode or one out of
+    several primitive value types (see self._value_types).
+    """
 
     def __init__(self, tree=None):
         self._parent = None
-        self._value_types = [int, float, bool, str]
+        self._value_types = [int, float, bool, str, type(None)]
+        self._fixed_tree = False
         if tree:
             if type(tree) is not dict:
                 raise TypeError("'tree' argument must be a dictionary")
@@ -44,6 +53,8 @@ class ConfigNode(dict):
                 self[key] = tree[key]
 
     def __setitem__(self, key, value):
+        if key not in self and self._fixed_tree:
+            raise FixedTreeError("Adding new config nodes is not allowed")
         if type(value) == ConfigNode:
             value._parent = self
             super(ConfigNode, self).__setitem__(key, value)
@@ -61,3 +72,15 @@ class ConfigNode(dict):
             return self[name]
         else:
             raise AttributeError("No config node {}".format(name))
+
+    @property
+    def fixed_tree(self):
+        return self._fixed_tree
+
+    @fixed_tree.setter
+    def fixed_tree(self, value):
+        if type(value) is not bool:
+            raise TypeError('`fixed_tree` must be a bool')
+        self._fixed_tree = value
+
+class FixedTreeError(Exception): pass

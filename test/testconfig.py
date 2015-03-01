@@ -25,40 +25,43 @@ SOFTWARE.
 """
 
 import unittest
-from config import ConfigNode, Config
+from config import *
 
 class TestConfigNode(unittest.TestCase):
 
+    def setUp(self):
+        self._template = {
+            'a': 1,
+            'b': {
+                'c': 'test',
+                'd': {
+                    'f': 'value'
+                }
+            }
+        }
+
     def test_config_from_dict(self):
-        template =  {
-                        'a': 1,
-                        'b': {
-                            'c': 'test',
-                            'd': {
-                                'f': 'value'
-                            }
-                        }
-                    }
-        config = Config(template)
-        self.assertDictEqual(template, config)
+        config = Config(self._template)
+        self.assertDictEqual(self._template, config)
         config['x'] = {'new': 'dict'}
         self.assertIs(type(config['x']), ConfigNode)
 
     def test_illegal_value_type(self):
         class bla: pass
-        template = {'a': 1, 'b': bla()}
+        self._template['x'] = bla()
         def convert():
-            Config(template)
+            Config(self._template)
         self.assertRaises(TypeError, convert)
 
     def test_config_path(self):
-        value = "Itse meee, Mario!"
-        template = {
-            'a': {
-                'b': {
-                    'c': value
-                }
-            }
-        }
-        config = Config(template)
-        self.assertEqual(value, config.a.b.c)
+        config = Config(self._template)
+        self.assertEqual('value', config.b.d.f)
+
+    def test_fixed_tree(self):
+        config = Config({})
+        config['anode'] = 5
+        self.assertEqual(config.anode, 5)
+        def fix_and_add():
+            config.fixed_tree = True
+            config['anothernode'] = 3
+        self.assertRaises(FixedTreeError, fix_and_add)

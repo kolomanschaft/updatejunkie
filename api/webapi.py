@@ -171,7 +171,7 @@ class WebApi(CommandApi):
         self._bottle.route("/api/list/commands", "GET")(self._list_commands)
         self._bottle.route("/api/observer/<name>", "GET")(self._get_observer)
         self._bottle.route("/api/observer/<name>", ["PUT", "OPTIONS"])(self._create_observer)
-        self._bottle.route("/api/observer/<name>", ["DELETE", "OPTIONS"])(self._remove_observer)
+        self._bottle.route("/api/observer/<name>", "DELETE")(self._remove_observer)
         self._bottle.route("/api/observer/<name>/pause", ["PUT", "OPTIONS"])(self._pause_observer)
         self._bottle.route("/api/observer/<name>/resume", ["PUT", "OPTIONS"])(self._resume_observer)
         self._bottle.route("/api/observer/<name>/state", "GET")(self._observer_state)
