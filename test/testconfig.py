@@ -65,3 +65,20 @@ class TestConfigNode(unittest.TestCase):
             config.fixed_tree = True
             config['anothernode'] = 3
         self.assertRaises(FixedTreeError, fix_and_add)
+
+    def test_update(self):
+        # The update method should behave exactly like the built-in dict's update method
+        config = Config(self._template)
+        # update with dict
+        config.update({'g': {}})
+        self.assertIs(type(config.g), ConfigNode)
+        # update with keyword argument
+        config.update(k={})
+        self.assertIs(type(config.k), ConfigNode)
+        # update with iterable
+        config.update([('m', {})])
+        self.assertIs(type(config.m), ConfigNode)
+        def fix_and_update():
+            config.fixed_tree = True
+            config.update(n=25)
+        self.assertRaises(FixedTreeError, fix_and_update)

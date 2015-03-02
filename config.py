@@ -73,6 +73,17 @@ class ConfigNode(dict):
         else:
             raise AttributeError("No config node {}".format(name))
 
+    def update(self, other=None, **kwargs):
+        if other:
+            if hasattr(other, 'keys'):
+                for key in other:
+                    self[key] = other[key]
+            else:
+                for key, value in other:
+                    self[key] = value
+        for key in kwargs:
+            self[key] = kwargs[key]
+
     @property
     def fixed_tree(self):
         return self._fixed_tree
