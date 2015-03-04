@@ -66,10 +66,10 @@ class TestWebApi(unittest.TestCase):
                 data = json.loads(json_str)
             return data
 
-    def _encode_dict(self, dict):   # dict --> UTF-8 string
-        dict_str = json.dumps(dict)
-        dict_encoded = bytearray(source=dict_str, encoding="utf-8")
-        return dict_encoded
+    def _encode_object(self, object):   # object --> UTF-8 string
+        object_str = json.dumps(object)
+        object_encoded = object_str.encode('utf-8')
+        return object_encoded
 
     def test_command_list_observers(self):
         # First add 2 mocked observers
@@ -89,9 +89,15 @@ class TestWebApi(unittest.TestCase):
 
     def test_command_set_config(self):
         smtp_settings = {"host": "smtp.myhost.com", "port": 587, "user": "Moatl", "pwd": "geheim123"}
-        smtp_settings_encoded = self._encode_dict(smtp_settings)
-        self._api_call("/api/config/smtp", "PUT", smtp_settings_encoded)
-        self.assertDictEqual( self._server.config.smtp, smtp_settings)
+        # Set all SMTP settings together
+        self._api_call("/api/config/smtp", "PUT", self._encode_object(smtp_settings))
+        self.assertDictEqual(self._server.config.smtp, smtp_settings)
+        # Set a single string value
+        self._api_call("/api/config/smtp/host", "PUT", self._encode_object("say.what.host"))
+        self.assertEqual(self._server.config.smtp.host, "say.what.host")
+        # Set a single integer value
+        self._api_call("/api/config/smtp/port", "PUT", self._encode_object(8123))
+        self.assertEqual(self._server.config.smtp.port, 8123)
 
     def test_command_get_config(self):
         smtp_settings = {"host": "smtp.myhost.com", "port": 587, "user": "Moatl", "pwd": "geheim123"}
@@ -112,7 +118,7 @@ class TestWebApi(unittest.TestCase):
                                  dict(tag="title",
                                       type="keywords_all",
                                       keywords=["word", "perfect"])])
-        observer_data_encoded = self._encode_dict(observer_data)
+        observer_data_encoded = self._encode_object(observer_data)
         self._api_call("/api/observer/MyObserver", "PUT", observer_data_encoded)
         self.assertTrue("MyObserver" in self._server.observers())   # Check if the observer is there
         observer_serialized = self._server["MyObserver"].serialize()    # Check if the server has all the correct properties
@@ -132,7 +138,7 @@ class TestWebApi(unittest.TestCase):
                              "subject": "{title} for {price}",
                              "body": "I found a new ad ({datetime}):<br/><br/>\n<b>{title}</b><br/>\nfor € <b>{price}</b><br/><br/>\n<a href=\"{url}\">{url}</a><br/><br/>\nbye!"
         }
-        notification_data_encoded = self._encode_dict(notification_data)
+        notification_data_encoded = self._encode_object(notification_data)
         self._api_call("/api/observer/MyObserver/notification", "POST", notification_data_encoded)
         notification = next(iter(observer.notifications))
         self.assertEqual(notification.host, smtp_settings["host"])
