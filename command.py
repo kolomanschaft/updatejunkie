@@ -30,6 +30,7 @@ from adassessor import AdAssessor, AdCriterion
 from notificationserver import NotificationServer
 from observer import Observer
 from threading import Condition
+from config import FixedTreeError
 
 import os
 import logging
@@ -103,43 +104,39 @@ class Command(object):
     def response(self, response):
         self._response = response
 
-
-class SmtpSettingsCommand(Command):
+class SetConfig(Command):
     """
-    Command to change the SMTP settings for sending email notifications.
+    Set one or more values in the server configuration.
     """
-    name = "smtp_settings"
-    
-    def execute(self):
-        smtp_settings = self._cmd_info
-        smtp_settings.pop("command")
-        self._validate_smtp_settings(smtp_settings)
-        if "user" not in smtp_settings:
-            smtp_settings["user"] = None
-        if "pwd" not in smtp_settings:
-            smtp_settings["pwd"] = None
-        self._server.config.smtp = smtp_settings
-    
-    def _validate_smtp_settings(self, settings):
-        if "host" not in settings:
-            raise CommandError("'host' is missing in the smtp settings.")
-        if "port" not in settings:
-            raise CommandError("'port' is missing in the smtp settings.")
-
-
-class GetSmtpSettingsCommand(Command):
-    """
-    Returns the current SMTP settings.
-    """
-    name = "get_smtp_settings"
+    name = "set_config"
 
     def execute(self):
         try:
-            smtp_settings = self._server.config.smtp
-            return smtp_settings;
+            config_values = self._cmd_info["config"]
         except KeyError:
-            return {}
+            raise CommandError("Command is missing the `config` key")
+        logging.info("Setting configuration {}".format(config_values))
+        try:
+            self._server.config.update(config_values)
+        except (FixedTreeError, TypeError) as error:
+            raise CommandError("Structure does not comply with the config tree: {}".format(error.args[0]))
 
+class GetConfig(Command):
+    """
+    TODO: ...
+    """
+    name = "get_config"
+
+    def execute(self):
+        path = self._cmd_info["path"]
+        path_fragments = path.split('.')
+        node = self._server.config
+        try:
+            for fragment in path_fragments:
+                node = node[fragment]
+        except KeyError:
+            raise CommandError("Config path {} does not exist".format(path))
+        return {path_fragments[-1]: node}
 
 class CreateObserverCommand(Command):
     """
@@ -305,20 +302,3 @@ class ListCommandsCommand(Command):
     def execute(self):
         commands = [cmd_class.name for cmd_class in Command.__subclasses__()]
         return dict(commands=commands)
-
-
-class WebSettingsCommand(Command):
-    """
-    Configure the web API. After this command the web API will be restarted.
-    FIXME: How could this be made available over the web API itself?
-    """
-    name = "web_settings"
-
-    def execute(self):
-        if not "host" in self._cmd_info:
-            raise CommandError("Command info is missing host information")
-        if not "port" in self._cmd_info:
-            raise CommandError("Command info is missing port information")
-        web_settings = dict(host=self._cmd_info["host"],
-                            port=self._cmd_info["port"])
-        self._server.config["web"] = web_settings

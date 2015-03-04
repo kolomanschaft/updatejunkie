@@ -83,12 +83,18 @@ class WebApi(CommandApi):
         return {"command": "get_observer", "name": name}
 
     @api_call
-    def _smtp_settings(self):
-        if bottle.request.method == "GET":
-            cmd = {"command": "get_smtp_settings"}
-        elif bottle.request.method == "PUT":
-            cmd = bottle.request.json
-            cmd["command"] = "smtp_settings"
+    def _set_config(self, pathname):
+        path_fragments = reversed(pathname.split('/'))
+        config = bottle.request.json
+        for fragment in path_fragments: # include path as dict-tree
+            config = {fragment: config}
+        cmd = dict(command="set_config", config=config)
+        return cmd
+
+    @api_call
+    def _get_config(self, pathname):
+        config_path = pathname.replace('/', '.')
+        cmd = dict(command="get_config", path=config_path)
         return cmd
 
     @api_call
@@ -176,7 +182,8 @@ class WebApi(CommandApi):
         self._bottle.route("/api/observer/<name>/resume", ["PUT", "OPTIONS"])(self._resume_observer)
         self._bottle.route("/api/observer/<name>/state", "GET")(self._observer_state)
         self._bottle.route("/api/observer/<name>/notification", ["POST", "OPTIONS"])(self._add_notification)
-        self._bottle.route("/api/settings/smtp", ["PUT", "GET", "OPTIONS"])(self._smtp_settings)
+        self._bottle.route("/api/config/<pathname:path>", ["GET", "OPTIONS"])(self._get_config)
+        self._bottle.route("/api/config/<pathname:path>", "PUT")(self._set_config)
 
         def alive_helper():
             bottle.response.status = 200

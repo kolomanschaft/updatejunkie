@@ -58,8 +58,8 @@ class Server(Thread):
                 'pwd': None
             },
             'web': {
-                'host': None,
-                'port': None
+                'host': 'localhost',
+                'port': 8118
             }
         }, fixed=True)
 
@@ -89,12 +89,8 @@ class Server(Thread):
         self._command_queue.put_nowait(command)
 
     def start_web_api(self):
-        if "web" in self._config:
-            host = self._config.web.host
-            port = self._config.web.port
-        else:
-            host = "localhost"
-            port = "8118"
+        host = self._config.web.host
+        port = self._config.web.port
         if self._web_api:
             logging.info("Shutting down web API")
             self._web_api.quit()

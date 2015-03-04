@@ -47,10 +47,16 @@ class JsonScript(CommandApi):
         logging.info("Processing command script at {}".format(self._path))
         with open(self._path, "r") as f:
             json_decoded = json.loads(f.read())
-            try:
-                if type(json_decoded) is list:
-                    for cmd_info in json_decoded: self._process_command_info(cmd_info)
-                else:
-                    self._process_command_info(json_decoded)
-            except CommandError as ex:
-                logging.error("Processing command script failed: {}".format(ex.args[0]))
+            if type(json_decoded) is list:
+                for cmd_info in json_decoded:
+                    self._process_command_info_log_error(cmd_info)
+            else:
+                self._process_command_info_log_error(json_decoded)
+
+    def _process_command_info_log_error(self, cmd_info):
+        try:
+            response = self._process_command_info(cmd_info)
+            if response["status"] == "ERROR":
+                logging.error("Command `{}` failed: {}".format(cmd_info["command"], response["message"]))
+        except Exception as ex:
+            logging.error("Unexpected error during command: {}".format(ex.args))

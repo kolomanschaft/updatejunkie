@@ -87,17 +87,21 @@ class TestWebApi(unittest.TestCase):
         data = self._api_call("/api/observer/Observer1", "GET")
         self.assertDictEqual(data, {"name": "Observer1"})
 
-    def test_command_smtp_settings(self):
+    def test_command_set_config(self):
         smtp_settings = {"host": "smtp.myhost.com", "port": 587, "user": "Moatl", "pwd": "geheim123"}
         smtp_settings_encoded = self._encode_dict(smtp_settings)
-        self._api_call("/api/settings/smtp", "PUT", smtp_settings_encoded)
-        self.assertDictEqual( self._server.settings["smtp"], smtp_settings)
+        self._api_call("/api/config/smtp", "PUT", smtp_settings_encoded)
+        self.assertDictEqual( self._server.config.smtp, smtp_settings)
 
-    def test_command_get_smtp_settings(self):
+    def test_command_get_config(self):
         smtp_settings = {"host": "smtp.myhost.com", "port": 587, "user": "Moatl", "pwd": "geheim123"}
-        self._server.settings["smtp"] = smtp_settings;
-        smtp_settings_get = self._api_call("/api/settings/smtp", "GET")
-        self.assertDictEqual(smtp_settings_get, smtp_settings)
+        self._server.config.smtp = smtp_settings;
+        response_data = self._api_call("/api/config/smtp", "GET")
+        self.assertDictEqual(response_data["smtp"], smtp_settings)
+        response_data = self._api_call("/api/config/smtp/host", "GET")
+        self.assertEqual(response_data["host"], smtp_settings["host"])
+        response_data = self._api_call("/api/config/smtp/port", "GET")
+        self.assertEqual(response_data["port"], smtp_settings["port"])
 
     def test_command_create_observer(self):
         observer_data = dict(profile="Willhaben",
@@ -120,7 +124,7 @@ class TestWebApi(unittest.TestCase):
         self._server.add_observer(observer)
         smtp_settings = {"host": "fake", "port": 0,
                          "user": "me", "pwd": "secret"} # Fake SMTP settings
-        self._server.settings["smtp"] = smtp_settings
+        self._server.config.smtp = smtp_settings
         notification_data = {"type": "email",
                              "from": "UpdateJunkie <junkie@koloman.net>",
                              "to": [ "Martin Hammerschmied <gestatten@gmail.com>" ],
