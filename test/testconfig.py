@@ -53,11 +53,13 @@ class TestConfigNode(unittest.TestCase):
             Config(self._template)
         self.assertRaises(TypeError, convert)
 
-    def test_config_path(self):
+    def test_config_attribute_access(self):
         config = Config(self._template)
         self.assertEqual('value', config.b.d.f)
+        config.b.d.f = 25
+        self.assertEqual(25, config.b.d['f'])
 
-    def test_fixed_tree(self):
+    def test_fixed_tree_simple(self):
         config = Config({})
         config['anode'] = 5
         self.assertEqual(config.anode, 5)
@@ -66,8 +68,17 @@ class TestConfigNode(unittest.TestCase):
             config['anothernode'] = 3
         self.assertRaises(FixedTreeError, fix_and_add)
 
+    def test_fixed_tree_node_assignment(self):
+        config = Config(self._template, fixed=True)
+        def assign_wrong_type():
+            config.b = 25
+        self.assertRaises(TypeError, assign_wrong_type)
+        config.b = dict(c=5, d=dict(f=10))  # This should work
+        def assign_illegal_node():
+            config.b = dict(c=5, d=dict())  # Is missing the 'f' key
+        self.assertRaises(FixedTreeError, assign_illegal_node)
+
     def test_update(self):
-        # The update method should behave exactly like the built-in dict's update method
         config = Config(self._template)
         # update with dict
         config.update({'g': {}})
@@ -82,3 +93,20 @@ class TestConfigNode(unittest.TestCase):
             config.fixed_tree = True
             config.update(n=25)
         self.assertRaises(FixedTreeError, fix_and_update)
+
+    def test_nested_update(self):
+        config = Config(self._template)
+        config.update(dict(b=dict(d=dict(f=25))))
+        self.assertIs(type(config.b), ConfigNode)
+        self.assertIs(type(config.b.d), ConfigNode)
+        self.assertEqual(25, config.b.d.f)
+        def fix_and_update():
+            config.fixed_tree = True
+            config.update(dict(b=dict(d=dict(newkey='new value'))))
+        self.assertRaises(FixedTreeError, fix_and_update)
+
+    def test_key_constraints(self):
+        config = Config(self._template)
+        def set_illegal_key():
+            config[".*$"] = 25
+        self.assertRaises(KeyError, set_illegal_key)
