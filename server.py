@@ -119,7 +119,6 @@ class Server(Thread):
                 if self._quit:
                     self._shutdown()
                     return
-
                 try:
                     command = self._command_queue.get(block=True, timeout=1)
                     break   # received command!
@@ -152,6 +151,7 @@ class Server(Thread):
     def _process_command(self, command):
         try:
             logging.info("Processing command '{}'".format(command.name))
+            logging.debug("Command info: {}".format(command._cmd_info))
             response = command.execute()
             response_message = {"status": "OK"}
             response_message["response"] = response

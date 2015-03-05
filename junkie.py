@@ -26,40 +26,41 @@ SOFTWARE.
 
 from server import Server
 from api.jsonscript import JsonScript
-from api.webapi import WebApi
 
 import sys
 import os
-import datetime
 import logging
 import signal
+import argparse
 
 if __name__ == "__main__":
- 
-    dtime = "2013-05-23 23:27"
-    dtime_format = "%Y-%m-%d %H:%M"
-    datetime.datetime.strptime(dtime, dtime_format)
+
+    # Parse command line arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", "--launch-script", type=str, default="./config/updatejunkie.json",
+                        help="Specify a command script that will be executed at launch")
+    verbosity = dict(DEBUG=logging.DEBUG, INFO=logging.INFO, SILENT=100)
+    parser.add_argument("-v", "--verbosity", type=str, choices=verbosity.keys(), default="INFO",
+                        help="Set verbosity (Default is INFO)")
+    args = parser.parse_args()
 
     # Setup logging
-    logging.basicConfig(filename='updatejunkie.log', format='[%(asctime)s] %(message)s', datefmt = dtime_format, level=logging.DEBUG)
+    dtime_format = "%Y-%m-%d %H:%M"
+    logging.basicConfig(filename='updatejunkie.log', format='[%(asctime)s] %(message)s', datefmt = dtime_format,
+                        level=verbosity[args.verbosity])
     logging.getLogger().addHandler(logging.StreamHandler())
-    
-    # Create the 'files/' directory if it doesn't exist yet
-    if not os.path.exists("./config/"): os.mkdir("config")
-    
-    # Configuration script path
-    if len(sys.argv) > 1:
-        config_path = sys.argv[1]
-    else:
-        config_path = "./config/updatejunkie.json"
-    
+
+    # Start the engines!
     server = Server()
+    server.daemon = True
     server.start()
         
-    # If we have a command script, process it
-    if (os.path.exists(config_path)):
-        config = JsonScript(server, config_path)
+    # Process the launch script
+    try:
+        config = JsonScript(server, args.launch_script)
         config.run()
+    except FileNotFoundError:
+        logging.error("Command script not found: {}".format(args.launch_script))
 
     # Start the web API
     server.start_web_api()
@@ -71,7 +72,9 @@ if __name__ == "__main__":
     def shutdown(signal, frame):
         logging.info("Caught keyboard interrupt. Shutting down...")
         server.quit()
-        server.join()
+        server.join(timeout=10)
+        if server.is_alive():
+            logging.warning("Timeout while waiting for the server to shut down. Force exiting now.")
 
     # Waiting for Ctrl-c
     signal.signal(signal.SIGINT, shutdown)

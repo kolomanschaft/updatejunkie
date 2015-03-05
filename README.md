@@ -15,29 +15,19 @@ At the moment the only available notification type is email. But it should be ve
 * Specify notification trigger-criteria based on tags (e.g. description contains X, price lower than Y, etc.)
 * Handle paging in websites
 * Persistent store of already processed articles
-* Configurable entirely through a RESTful JSON API and/or a JSON startup script
+* Configurable entirely through a RESTful JSON API and/or a JSON launch script
 * Easily extendable for new websites by using Python-based profiles
  
 ## Dependencies
 
-* Python (>=3.0)
+* Python (>=3.2)
 * BeautifulSoup 4 (for most profiles)
 
-## Setup
+## Documentation
 
-To launch UpdateJunkie simply run `main.py`:
-
-    python3 main.py
-
-UpdateJunkie will look for a command script at `config/updatejunkie.json`. However, you can create arbitrary command scripts and pass them as an argument:
-
-    python3 main.py path/to/commandscript.json
-
-This way you can create various command scripts and run multiple instances simultaneously, if desired. Use `files/willhaben.json.example` as a template.
-
-You can also start UpdateJunkie without a command script and configure it using only the JSON API.
-
-For a full list of commands see the [commands] page in the wiki
+For an explanation on how to [setup] UJ and extensive list of available [commands] and how to use the API, please consult the [wiki].
 
 [willhaben.at]: http://www.willhaben.at/
 [commands]: https://github.com/kolomanschaft/updatejunkie/wiki/Commands
+[setup]: https://github.com/kolomanschaft/updatejunkie/wiki/Setup
+[wiki]: https://github.com/kolomanschaft/updatejunkie/wiki

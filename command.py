@@ -115,7 +115,7 @@ class SetConfig(Command):
             config_values = self._cmd_info["config"]
         except KeyError:
             raise CommandError("Command is missing the `config` key")
-        logging.info("Setting configuration {}".format(config_values))
+        logging.debug("Setting configuration {}".format(config_values))
         try:
             self._server.config.update(config_values)
         except (FixedTreeError, TypeError) as error:
