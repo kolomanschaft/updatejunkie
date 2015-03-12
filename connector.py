@@ -24,14 +24,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import urllib.request, urllib.error, urllib.parse
-from urllib.parse import urlencode
-import re
 from adstore import Ad
+import urllib.request, urllib.error, urllib.parse
+import re
 import datetime
-import html.parser as htmlparser
-from threading import Lock
 import profiles
+import logging
 
 class ConnectionError(Exception): pass
 
@@ -65,6 +63,7 @@ class Connector():
                 raise IndexError("Page {} does not exist".format(page))
             url = next_url
         try:
+            logging.debug("Connnector fetching page {} from URL: {}".format(page, url))
             f = urllib.request.urlopen(url, data)
         except (urllib.error.URLError, ValueError):
             raise ConnectionError("Could not connect to {}".format(url))

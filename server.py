@@ -54,6 +54,7 @@ class Server(Thread):
             'smtp': {
                 'host': None,
                 'port': None,
+                'auth': True,
                 'user': None,
                 'pwd': None
             },

@@ -7,6 +7,7 @@
             {
                 "host": "myhost.example.com",
                 "port": 25,
+                "auth": true,
                 "user": "kolomanschaft",
                 "pwd": "secret123"
             },

@@ -150,9 +150,7 @@ class CreateObserverCommand(Command):
     def execute(self):
         logging.info("Setting up observer '{}'".format(self._cmd_info["name"]))
         profile = profiles.get_profile_by_name(self._cmd_info["profile"])
-        store = None
-        if self._cmd_info["store"]:
-            store = self._setup_store()
+        store = self._setup_store(self._cmd_info["store"])
         assessor = AdAssessor()
         for json in self._cmd_info["criteria"]:
             assessor.add_criterion(AdCriterion.from_json(json))
@@ -165,9 +163,9 @@ class CreateObserverCommand(Command):
         
         self._server.add_observer(observer)
 
-    def _setup_store(self):
+    def _setup_store(self, persistent):
         save_file = None    # Ads that have already been processed are registered in this file
-        if self._cmd_info["store"]:
+        if persistent:
             if not os.path.exists("./store/"): os.mkdir("store")
             save_file = "store/adstore.{}.db".format(self._cmd_info["name"])
         return AdStore(path=save_file)
@@ -189,23 +187,25 @@ class AddNotificationCommand(Command):
         self._server[observer_name].notifications.add_notification(notification)
 
     def _setup_email_notification(self):
-        if not "smtp" in self._server.config:
-            raise CommandError("Cannot setup email notifications without smtp settings.")
-        header_from = self._cmd_info["from"]
-        header_to = self._cmd_info["to"]
-        header_mime_type = self._cmd_info["mime_type"]
-        header_subject = self._cmd_info["subject"]
-        body = self._cmd_info["body"]
+        try:
+            header_from = self._cmd_info["from"]
+            header_to = self._cmd_info["to"]
+            header_mime_type = self._cmd_info["mime_type"]
+            header_subject = self._cmd_info["subject"]
+            body = self._cmd_info["body"]
+        except KeyError as error:
+            raise CommandError("Some information is missing: {}",format(error.args[0]))
         smtp = self._server.config.smtp
         if type(header_to) == str:
             header_to = [header_to]   # make it a list
 
         from notifications import EmailNotification
-        email_notification = EmailNotification(smtp["host"], smtp["port"],
-                                               smtp["user"], smtp["pwd"],
-                                               header_from, header_to,
-                                               header_mime_type,
-                                               header_subject, body)
+        email_notification = EmailNotification(host=smtp["host"], port=smtp["port"],
+                                               auth=smtp["auth"], user=smtp["user"],
+                                               pwd=smtp["pwd"],
+                                               sender=header_from, to=header_to,
+                                               mimetype=header_mime_type,
+                                               subject=header_subject, body=body)
         return email_notification
 
 

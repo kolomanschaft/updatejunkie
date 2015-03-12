@@ -48,32 +48,33 @@ class EmailNotification(Notification):
     Sends email notification using python's smtplib module
     """
 
-    def __init__(self, host, port, user, pw, sender, to, mimetype, subject, body):
-        self.host = host
-        self.port = port
-        self.user = user
-        self.pw = pw
-        self.sender = sender
-        self.to = to
-        self.subject = subject
-        self.body = body
-        self.mimetype = mimetype
-    
+    def __init__(self, host, port, sender, to, subject, body, auth=False, user=None, pwd=None, mimetype="text/plain"):
+        self._host = host
+        self._port = port
+        self._auth = auth
+        self._user = user
+        self._pwd = pwd
+        self._sender = sender
+        self._to = to
+        self._subject = subject
+        self._body = body
+        self._mimetype = mimetype
+
     def _get_mime_string(self, to, subject, body):
-        match = re.match("text/(.+)", self.mimetype)
+        match = re.match("text/(.+)", self._mimetype)
         if not match:
-            raise RuntimeError("MIME type not supported: {}".format(self.mimetype))
+            raise RuntimeError("MIME type not supported: {}".format(self._mimetype))
         subtype = match.groups()[0]
         mimetext = MIMEText(body, subtype, _charset = "utf-8")
-        mimetext["From"] = self.sender
+        mimetext["From"] = self._sender
         mimetext["Subject"] = Header(subject, "utf-8")
         mimetext["To"] = Header(to, "utf-8")
         return mimetext.as_string()
     
     def _get_mail(self, ad, to):
         try:
-            body = self.body.format(**ad)
-            subject = self.subject.format(**ad)
+            body = self._body.format(**ad)
+            subject = self._subject.format(**ad)
             msg = self._get_mime_string(to, subject, body)
         except KeyError as expn:
             raise NotificationError("Profile doesn't support tagname '{}'".format(expn.args[0]))
@@ -82,19 +83,25 @@ class EmailNotification(Notification):
     def notify(self, ad):
         server = None
         try:
-            server = smtplib.SMTP("gibtsnicht.koloman.net", self.port)
-            server.login(self.user, self.pw)
-            for to in self.to:
+            server = smtplib.SMTP(self._host, self._port)
+            try:
+                server.starttls()
+            except smtplib.SMTPException:
+                logging.debug("The SMTP server does not support STARTTLS")
+            if self._auth:
+                server.login(self._user, self._pwd)
+            for to in self._to:
                 msg = self._get_mail(ad, to)
-                server.sendmail(self.sender, to, msg)
-        except smtplib.SMTPAuthenticationError:
-            logging.error("SMTP Authentication failed: Wrong username or password!")
+                logging.debug("Sending mail to {}".format(to))
+                server.sendmail(self._sender, to, msg)
+        except smtplib.SMTPAuthenticationError as error:
+            logging.error("SMTP Authentication failed: {}".format(error.args))
         except ConnectionRefusedError:
-            logging.error("Connection to {} was refused!".format(self.host))
+            logging.error("Connection to {} was refused!".format(self._host))
         except Exception as error:
             logging.error("Failed to send email notification: {}".format(error.args))
         finally:
             if server: server.quit()
 
     def serialize(self):
-        return {"type": "email", "to": self.to}
+        return {"type": "email", "to": self._to}

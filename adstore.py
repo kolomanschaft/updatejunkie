@@ -69,46 +69,46 @@ class AdStore(object):
         """
         'flag' has the same meaning as the 'flag' parameter in anydbm.open()
         """
-        self.path = path
-        self.autosave = autosave
-        self.autosort = autosort
+        self._path = path
+        self._autosave = autosave
+        self._autosort = autosort
         self._lock = RLock()
         self.load()
     
     def _sort_by_date(self):
         try:
-            self.ads = sorted(self.ads, key = lambda ad: ad.datetime)
+            self._ads = sorted(self._ads, key = lambda ad: ad.datetime)
         except AdKeyError:
             pass
     
     def length(self):
-        return len(self.ads)
+        return len(self._ads)
     
     def save(self):
         self._lock.acquire()
-        if not self.path: return
+        if not self._path: return
         try:
-            with open(self.path, "wb") as f:
+            with open(self._path, "wb") as f:
                 pickler = pickle.Pickler(f)
-                pickler.dump(self.ads)
+                pickler.dump(self._ads)
         except: raise
         self._lock.release()
         return True
     
     def load(self):
         self._lock.acquire()
-        if not self.path:
-            self.ads = []
+        if not self._path:
+            self._ads = []
             self._lock.release()
             return
         try:
-            with open(self.path, "rb") as f:
+            with open(self._path, "rb") as f:
                 unpickler = pickle.Unpickler(f)
-                self.ads = unpickler.load()
+                self._ads = unpickler.load()
         except EOFError: pass
         except IOError: pass
         finally:
-            if not hasattr(self, "ads"): self.ads = []
+            if not hasattr(self, "_ads"): self._ads = []
             self._lock.release()
 
     def add_ads(self, ads):
@@ -117,32 +117,32 @@ class AdStore(object):
         """
         self._lock.acquire()
         added_ads = []
-        cur_keys = [ad.key for ad in self.ads]
+        cur_keys = [ad.key for ad in self._ads]
         new_keys = [ad.key for ad in ads]
         for i in range(len(new_keys)):
             if new_keys[i] not in cur_keys:
-                self.ads.append(ads[i])
+                self._ads.append(ads[i])
                 added_ads.append(ads[i])
-        if self.autosort: self._sort_by_date()
-        if self.autosave: self.save()
+        if self._autosort: self._sort_by_date()
+        if self._autosave: self.save()
         self._lock.release()
         return added_ads
     
     def remove_ads(self, ads):
         self._lock.acquire()
         removed_ads = []
-        cur_keys = [ad.key for ad in self.ads]
+        cur_keys = [ad.key for ad in self._ads]
         new_keys = [ad.key for ad in ads]
         for i in range(len(new_keys)):
             if new_keys[i] in cur_keys:
                 idx = cur_keys.index(new_keys[i])
-                del self.ads[idx]
+                del self._ads[idx]
                 del cur_keys[idx]
                 removed_ads.append(ads[i])
-        if self.autosort: self._sort_by_date()
-        if self.autosave: self.save()
+        if self._autosort: self._sort_by_date()
+        if self._autosave: self.save()
         self._lock.release()
         return removed_ads
     
     def __getitem__(self, key):
-        return self.ads[key]
+        return self._ads[key]
