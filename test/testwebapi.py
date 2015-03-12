@@ -88,7 +88,8 @@ class TestWebApi(unittest.TestCase):
         self.assertDictEqual(data, {"name": "Observer1"})
 
     def test_command_set_config(self):
-        smtp_settings = {"smtp": {"host": "smtp.myhost.com", "port": 587, "user": "Moatl", "pwd": "geheim123"}}
+        smtp_settings = {"smtp": {"host": "smtp.myhost.com", "port": 587, "auth": True,
+                                  "user": "Moatl", "pwd": "geheim123"}}
         # Set all SMTP settings together
         self._api_call("/api/config", "PUT", self._encode_object(smtp_settings))
         self.assertDictEqual(self._server.config.smtp, smtp_settings["smtp"])
@@ -100,7 +101,8 @@ class TestWebApi(unittest.TestCase):
         self.assertEqual(self._server.config.smtp.port, 8123)
 
     def test_command_get_config(self):
-        smtp_settings = {"host": "smtp.myhost.com", "port": 587, "user": "Moatl", "pwd": "geheim123"}
+        smtp_settings = {"host": "smtp.myhost.com", "port": 587, "auth": True,
+                         "user": "Moatl", "pwd": "geheim123"}
         self._server.config.smtp = smtp_settings;
         response_data = self._api_call("/api/config/smtp", "GET")
         self.assertDictEqual(response_data["smtp"], smtp_settings)
@@ -131,7 +133,7 @@ class TestWebApi(unittest.TestCase):
     def test_command_add_notification(self):
         observer = MockObserver("MyObserver")
         self._server.add_observer(observer)
-        smtp_settings = {"host": "fake", "port": 0,
+        smtp_settings = {"host": "fake", "port": 0, "auth": True,
                          "user": "me", "pwd": "secret"} # Fake SMTP settings
         self._server.config.smtp = smtp_settings
         notification_data = {"type": "email",
@@ -144,10 +146,10 @@ class TestWebApi(unittest.TestCase):
         notification_data_encoded = self._encode_object(notification_data)
         self._api_call("/api/observer/MyObserver/notification", "POST", notification_data_encoded)
         notification = next(iter(observer.notifications))
-        self.assertEqual(notification.host, smtp_settings["host"])
-        self.assertEqual(notification.port, smtp_settings["port"])
-        self.assertEqual(notification.user, smtp_settings["user"])
-        self.assertEqual(notification.pw, smtp_settings["pwd"])
+        self.assertEqual(notification._host, smtp_settings["host"])
+        self.assertEqual(notification._port, smtp_settings["port"])
+        self.assertEqual(notification._user, smtp_settings["user"])
+        self.assertEqual(notification._pwd, smtp_settings["pwd"])
 
     def test_commands_pause_resume_observer(self):
         observer = MockObserver("MyObserver")

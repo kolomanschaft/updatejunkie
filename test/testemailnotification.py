@@ -45,7 +45,7 @@ class TestEmailNotification(unittest.TestCase):
         subject = "$Rückenschmerzen sind öfters schlächt$"
         body = "{datetime}{title}€{price}{url}"
         notification = EmailNotification(host = None, port = 25, user = None, 
-                          pw = None, sender = sender, to = to, 
+                          pwd = None, sender = sender, to = to,
                           mimetype = mimetype, subject = subject, body = body)
         for ad in self.ads:
             notification._get_mail(ad, to)
