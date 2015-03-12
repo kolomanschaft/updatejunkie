@@ -39,14 +39,14 @@ class TestWebApi(unittest.TestCase):
 
     @property
     def _base_url(self):
-        return "http://localhost:8118"
+        return "http://localhost:8457"
 
     def setUp(self):
         self._server = Server()
-        self._web_api = WebApi(self._server)
+        self._web_api = WebApi(self._server, port=8457)
         self._server.start()
         self._web_api.start()
-        while not self._web_api.ready():time.sleep(0.5)
+        self._web_api.wait_ready()
 
     def tearDown(self):
         self._web_api.quit()
@@ -88,10 +88,10 @@ class TestWebApi(unittest.TestCase):
         self.assertDictEqual(data, {"name": "Observer1"})
 
     def test_command_set_config(self):
-        smtp_settings = {"host": "smtp.myhost.com", "port": 587, "user": "Moatl", "pwd": "geheim123"}
+        smtp_settings = {"smtp": {"host": "smtp.myhost.com", "port": 587, "user": "Moatl", "pwd": "geheim123"}}
         # Set all SMTP settings together
-        self._api_call("/api/config/smtp", "PUT", self._encode_object(smtp_settings))
-        self.assertDictEqual(self._server.config.smtp, smtp_settings)
+        self._api_call("/api/config", "PUT", self._encode_object(smtp_settings))
+        self.assertDictEqual(self._server.config.smtp, smtp_settings["smtp"])
         # Set a single string value
         self._api_call("/api/config/smtp/host", "PUT", self._encode_object("say.what.host"))
         self.assertEqual(self._server.config.smtp.host, "say.what.host")
@@ -108,6 +108,9 @@ class TestWebApi(unittest.TestCase):
         self.assertEqual(response_data["host"], smtp_settings["host"])
         response_data = self._api_call("/api/config/smtp/port", "GET")
         self.assertEqual(response_data["port"], smtp_settings["port"])
+        response_data = self._api_call("/api/config", "GET")
+        self.assertIn("web", response_data)
+        self.assertIn("smtp", response_data)
 
     def test_command_create_observer(self):
         observer_data = dict(profile="Willhaben",

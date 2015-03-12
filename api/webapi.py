@@ -25,6 +25,7 @@ SOFTWARE.
 """
 
 from api.bottle import bottle
+from threading import Thread, Condition
 import urllib.request
 
 from api.commandapi import CommandApi
@@ -63,7 +64,7 @@ def api_call(handler):
 
 class WebApi(CommandApi):
     """
-    A RESTful JSON API based on the web framework bottle.py 
+    A RESTful JSON API based on the web micro framework bottle.py
     """
 
     def __init__(self, server, host="localhost", port=8118):
@@ -73,6 +74,9 @@ class WebApi(CommandApi):
         self._port = port
         self._bottle = None
         self._client_path = None
+        self._ready = False
+        self._ready_cv = Condition()
+        self._register_routes()
 
     @api_call
     def _list_observers(self):
@@ -83,8 +87,11 @@ class WebApi(CommandApi):
         return {"command": "get_observer", "name": name}
 
     @api_call
-    def _set_config(self, pathname):
-        path_fragments = reversed(pathname.split('/'))
+    def _set_config(self, pathname=None):
+        try:
+            path_fragments = reversed(pathname.split('/'))
+        except AttributeError:
+            path_fragments = []
         config = bottle.request.json
         for fragment in path_fragments: # include path as dict-tree
             config = {fragment: config}
@@ -92,8 +99,11 @@ class WebApi(CommandApi):
         return cmd
 
     @api_call
-    def _get_config(self, pathname):
-        config_path = pathname.replace('/', '.')
+    def _get_config(self, pathname=None):
+        try:
+            config_path = pathname.replace('/', '.')
+        except AttributeError:
+            config_path = ""
         cmd = dict(command="get_config", path=config_path)
         return cmd
 
@@ -131,9 +141,48 @@ class WebApi(CommandApi):
     def _observer_state(self, name):
         return {"command": "observer_state", "name": name}
 
+    def _register_routes(self):
+        self._bottle = bottle.Bottle()
+        self._bottle.route("/api/list/observers", "GET")(self._list_observers)
+        self._bottle.route("/api/list/commands", "GET")(self._list_commands)
+        self._bottle.route("/api/observer/<name>", "GET")(self._get_observer)
+        self._bottle.route("/api/observer/<name>", ["PUT", "OPTIONS"])(self._create_observer)
+        self._bottle.route("/api/observer/<name>", "DELETE")(self._remove_observer)
+        self._bottle.route("/api/observer/<name>/pause", ["PUT", "OPTIONS"])(self._pause_observer)
+        self._bottle.route("/api/observer/<name>/resume", ["PUT", "OPTIONS"])(self._resume_observer)
+        self._bottle.route("/api/observer/<name>/state", "GET")(self._observer_state)
+        self._bottle.route("/api/observer/<name>/notification", ["POST", "OPTIONS"])(self._add_notification)
+        self._bottle.route("/api/config", ["GET", "OPTIONS"])(self._get_config)
+        self._bottle.route("/api/config/<pathname:path>", ["GET", "OPTIONS"])(self._get_config)
+        self._bottle.route("/api/config", "PUT")(self._set_config)
+        self._bottle.route("/api/config/<pathname:path>", "PUT")(self._set_config)
+
+        def alive_helper():
+            bottle.response.status = 200
+        self._bottle.route("/api/alive", "GET")(alive_helper)
+
+    def run(self):
+        # Thread sets the self._ready flag True when the API is alive
+        self._ready_thread = Thread(target=self._block_test_ready, name="WebApiTestReady", daemon=True)
+        self._ready_thread.start()
+
+        self._bottle_server = bottle.WSGIRefServer(host=self._host, port=self._port)
+        self._bottle.run(server=self._bottle_server, debug=True, quiet=True)
+        self._bottle_server.srv.socket.close()  # Prevents unclosed socket warning
+
     @property
     def bottle(self):
         return self._bottle
+
+    def wait_ready(self):
+        """
+        Blocks until the API is up and ready to process commands.
+        """
+        if self._ready:
+            return
+        self._ready_cv.acquire()
+        self._ready_cv.wait()
+        self._ready_cv.release()
 
     def ready(self):
         """
@@ -150,6 +199,17 @@ class WebApi(CommandApi):
             return False    # Request failed for some reason
         else:
             return True
+
+    def _block_test_ready(self):
+        import time
+        while(True):
+            if self.ready():
+                self._ready = True
+                self._ready_cv.acquire()
+                self._ready_cv.notify_all()
+                self._ready_cv.release()
+                return
+            time.sleep(0.05)
 
     def register_static_directory(self, static_root, rel_url, default_file=None):
         """
@@ -170,25 +230,3 @@ class WebApi(CommandApi):
     def quit(self):
         if self.ready():
             self._bottle_server.srv.shutdown()
-
-    def run(self):
-        self._bottle = bottle.Bottle()
-        self._bottle.route("/api/list/observers", "GET")(self._list_observers)
-        self._bottle.route("/api/list/commands", "GET")(self._list_commands)
-        self._bottle.route("/api/observer/<name>", "GET")(self._get_observer)
-        self._bottle.route("/api/observer/<name>", ["PUT", "OPTIONS"])(self._create_observer)
-        self._bottle.route("/api/observer/<name>", "DELETE")(self._remove_observer)
-        self._bottle.route("/api/observer/<name>/pause", ["PUT", "OPTIONS"])(self._pause_observer)
-        self._bottle.route("/api/observer/<name>/resume", ["PUT", "OPTIONS"])(self._resume_observer)
-        self._bottle.route("/api/observer/<name>/state", "GET")(self._observer_state)
-        self._bottle.route("/api/observer/<name>/notification", ["POST", "OPTIONS"])(self._add_notification)
-        self._bottle.route("/api/config/<pathname:path>", ["GET", "OPTIONS"])(self._get_config)
-        self._bottle.route("/api/config/<pathname:path>", "PUT")(self._set_config)
-
-        def alive_helper():
-            bottle.response.status = 200
-        self._bottle.route("/api/alive", "GET")(alive_helper)
-
-        self._bottle_server = bottle.WSGIRefServer(host=self._host, port=self._port)
-        self._bottle.run(server=self._bottle_server, debug=True, quiet=True)
-        self._bottle_server.srv.socket.close()  # Prevents unclosed socket warning

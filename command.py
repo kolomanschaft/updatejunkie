@@ -129,6 +129,8 @@ class GetConfig(Command):
 
     def execute(self):
         path = self._cmd_info["path"]
+        if (len(path) == 0):    # Special case: Return whole configuration
+            return self._server.config
         path_fragments = path.split('.')
         node = self._server.config
         try:
