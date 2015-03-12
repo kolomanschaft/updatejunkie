@@ -143,6 +143,10 @@ class AdStore(object):
         if self._autosave: self.save()
         self._lock.release()
         return removed_ads
+
+    @property
+    def path(self):
+        return self._path
     
     def __getitem__(self, key):
         return self._ads[key]

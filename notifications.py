@@ -94,6 +94,8 @@ class EmailNotification(Notification):
                 msg = self._get_mail(ad, to)
                 logging.debug("Sending mail to {}".format(to))
                 server.sendmail(self._sender, to, msg)
+        except smtplib.SMTPHeloError:
+            logging.error("Communication with SMTP server {} failed".format(self._host))
         except smtplib.SMTPAuthenticationError as error:
             logging.error("SMTP Authentication failed: {}".format(error.args))
         except ConnectionRefusedError:
@@ -101,7 +103,9 @@ class EmailNotification(Notification):
         except Exception as error:
             logging.error("Failed to send email notification: {}".format(error.args))
         finally:
-            if server: server.quit()
+            try:
+                server.quit()
+            except:pass
 
     def serialize(self):
         return {"type": "email", "to": self._to}
