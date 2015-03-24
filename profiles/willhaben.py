@@ -26,10 +26,16 @@ SOFTWARE.
 
 import re
 import urllib.parse
+import itertools
 
 from bs4 import BeautifulSoup
 from . import base
 from datetime import datetime
+from enum import Enum
+
+class Rubric(Enum):
+    USED_CARS = 1
+    MARKET_PLACE = 2
 
 class WillhabenProfile(base.ProfileBase):
     
@@ -37,10 +43,20 @@ class WillhabenProfile(base.ProfileBase):
     base_url = "http://www.willhaben.at"
     
     def __init__(self):
-        self._tags = {"id":0, "url":"", "title":"", "price":0.0,
-                      "description":"", "image":"", "zip":0, "city":"",
-                      "datetime":None}
-        
+        self._tags = {"id":0,   # unique ID
+                      "url":"", # Details page
+                      "title":"",   # Ad title
+                      "price":0.0,  # price (if present)
+                      "description":"", # Snippet of description from listing (Only MARKET_PLACE)
+                      "image":"",   # Image URL
+                      "zip":0,  # ZIP code of seller
+                      "city":"",    # City of seller
+                      "datetime":None,  # In case of used cars this is the time of polling
+                      "milage": 0,  # USED_CARS only
+                      "year": 0,    # Year of construction (USED_CARS only)
+                      "horsepower": 0,    # USED_CARS only
+                      "fuel": 0}    # Type of fuel (USED_CARS only)
+
     @property
     def tags(self):
         return self._tags.keys()
@@ -76,11 +92,20 @@ class WillhabenProfile(base.ProfileBase):
 
     def parse(self, html):
         soup = BeautifulSoup(html)
+
+        description_header = soup.head.find('meta', attrs={'name': 'description'}).attrs['content']
+        if description_header.find('Gebrauchtwagen') >= 0:
+            rubric = Rubric.USED_CARS
+        elif description_header.find('Marktplatz') >= 0:
+            rubric = Rubric.MARKET_PLACE
+        else:
+            raise HTMLParseError("Could not determine the willhaben.at rubric")
+
         allads = soup.find(name="ul", attrs={"id":"resultlist"})
         ads = allads.findAll("li", attrs={"class":"media"})
-        return map(self._soup_to_tags, ads)
+        return map(self._soup_to_tags, ads, itertools.repeat(rubric, len(ads)))
 
-    def _soup_to_tags(self, soup):
+    def _soup_to_tags(self, soup, rubric):
         tags = self._tags.copy()
 
         # The image URL
@@ -94,31 +119,49 @@ class WillhabenProfile(base.ProfileBase):
         tags["id"] = int(id_str)
 
         # The title
-        tags["title"] = soup.div.a.span.contents[0].strip()
+        tags["title"] = soup.div.find_all('a')[1].span.contents[0].strip()
 
         # This node contains ZIP code, location and datetime
         seller_details_node = soup.find('p', attrs={'class', 'bot-1'})
 
         # The datetime
-        if (len(seller_details_node.contents) > 4):
-            datetime_str = soup.find('p', attrs={'class', 'bot-1'}).contents[4].strip()
-        else:
-            datetime_str = soup.find('p', attrs={'class', 'bot-1'}).contents[2].strip()
-        tags["datetime"] = datetime.strptime(datetime_str, "%d.%m.%Y %H:%M")
+        if rubric == Rubric.MARKET_PLACE:
+            if (len(seller_details_node.contents) > 4):
+                datetime_str = soup.find('p', attrs={'class', 'bot-1'}).contents[4].strip()
+            else:
+                datetime_str = soup.find('p', attrs={'class', 'bot-1'}).contents[2].strip()
+            tags["datetime"] = datetime.strptime(datetime_str, "%d.%m.%Y %H:%M")
+        elif rubric == Rubric.USED_CARS:
+            tags["datetime"] = datetime.now()   # used cars ads have no datetime
 
         # The location
         location_str = seller_details_node.contents[0].strip()
-        location_matches = re.match("([0-9]+)[\r\n\s]*(.*$)", location_str, re.M | re.DOTALL).groups(())
-        tags["zip"] = location_matches[0]
-        tags["city"] = location_matches[1]
+        (zip, city) = re.match("([0-9]+)?\W*(.*)", location_str, re.M | re.DOTALL).groups(())
+        if zip: tags["zip"] = zip
+        if city: tags["city"] = city
 
-        # The price tag (if present)
-        price_str = soup.find('p', attrs={'class':'info-2'}).text.strip()
-        price_match = re.search("([0-9]+),-", price_str, re.M)
-        if price_match:
-            tags["price"] = float(price_match.groups()[0])
+        subtitle_str = soup.find('p', attrs={'class':'info-2'}).text.strip()
+        if rubric == Rubric.MARKET_PLACE:
+            subtitle_match = re.search(r"([0-9]+),-", subtitle_str, re.M)
+            if subtitle_match:
+                tags["price"] = float(subtitle_match.groups()[0])
+        elif rubric == Rubric.USED_CARS:
+            subtitle_match = re.match(r"([0-9]{4})\W*([0-9.]+)\W*km\W*([0-9.]+)?", subtitle_str, re.M)
+            if subtitle_match:
+                (year, milage, price) = subtitle_match.groups()
+                tags["year"] = int(year)
+                tags["milage"] = int(milage.replace(".", ""))
+                if price is not None: tags["price"] = float(price.replace(".", ""))
 
         # The description
-        tags["description"] = soup.find('p', attrs={'class':'info-3'}).text.strip()
+        if rubric == Rubric.MARKET_PLACE:
+            tags["description"] = soup.find('p', attrs={'class':'info-3'}).text.strip()
+        elif rubric == Rubric.USED_CARS:
+            details_str = soup.find('p', attrs={'class':'info-3'}).text.strip()
+            subtitle_match = re.match(r"([0-9.]+)\W*kW\W*\(([0-9.]+)\W*PS\)\W*([a-zA-Z ]+)\W*(.*)", details_str, re.M)
+            if subtitle_match:
+                (_, horsepower, fuel, _) = subtitle_match.groups()
+                tags["horsepower"] = float(horsepower)
+                tags["fuel"] = fuel
 
         return tags

@@ -24,6 +24,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+class HTMLParseError(Exception) : pass
+
 class ProfileBase(object):
     """
     Base class for profiles. The primary purpose of this base class is to 

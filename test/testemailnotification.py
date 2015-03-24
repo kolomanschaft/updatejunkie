@@ -25,18 +25,18 @@ SOFTWARE.
 """
 
 import unittest
+from datetime import datetime
 from notifications import *
-#from connector import *
-from profiles.willhaben import *
 
 
 class TestEmailNotification(unittest.TestCase):
     
     def setUp(self):
-        with open("test/test.html", "r", encoding="UTF-8") as htmlfile:
-            html = htmlfile.read()
-        profile = WillhabenProfile()
-        self.ads = profile.parse(html)
+        self._ads = [
+            dict(datetime = datetime.now(), title="T1", price=3.5, url="http://wer.wo.was.org"),
+            dict(datetime = datetime.now(), title="Titolo", price=301.0, url="http://wer.wo.wie.org"),
+            dict(datetime = datetime.now(), title="Schraeg", price=0.1, url="http://blind.oder.was.it"),
+        ]
 
     def test_MIME_string_generation(self):
         sender = "Gustl Hemmer <gustl@example.com>"
@@ -47,5 +47,5 @@ class TestEmailNotification(unittest.TestCase):
         notification = EmailNotification(host = None, port = 25, user = None, 
                           pwd = None, sender = sender, to = to,
                           mimetype = mimetype, subject = subject, body = body)
-        for ad in self.ads:
+        for ad in self._ads:
             notification._get_mail(ad, to)
