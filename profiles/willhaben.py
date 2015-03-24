@@ -92,7 +92,6 @@ class WillhabenProfile(base.ProfileBase):
 
     def parse(self, html):
         soup = BeautifulSoup(html)
-
         description_header = soup.head.find('meta', attrs={'name': 'description'}).attrs['content']
         if description_header.find('Gebrauchtwagen') >= 0:
             rubric = Rubric.USED_CARS
@@ -100,8 +99,9 @@ class WillhabenProfile(base.ProfileBase):
             rubric = Rubric.MARKET_PLACE
         else:
             raise HTMLParseError("Could not determine the willhaben.at rubric")
-
         allads = soup.find(name="ul", attrs={"id":"resultlist"})
+        if not allads:
+            return []
         ads = allads.findAll("li", attrs={"class":"media"})
         return map(self._soup_to_tags, ads, itertools.repeat(rubric, len(ads)))
 
