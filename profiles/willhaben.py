@@ -114,8 +114,8 @@ class WillhabenProfile(base.ProfileBase):
         # The ad's URL
         tags["url"] = self.base_url + soup.a['href']
 
-        # The ID (encoded in the ad link)
-        id_str = re.findall("adId=([0-9]+)", tags["url"])[0]
+        # The ID
+        id_str = soup.div.a.attrs['id']
         tags["id"] = int(id_str)
 
         # The title
@@ -126,16 +126,13 @@ class WillhabenProfile(base.ProfileBase):
 
         # The datetime
         if rubric == Rubric.MARKET_PLACE:
-            if (len(seller_details_node.contents) > 4):
-                datetime_str = soup.find('p', attrs={'class', 'bot-1'}).contents[4].strip()
-            else:
-                datetime_str = soup.find('p', attrs={'class', 'bot-1'}).contents[2].strip()
+            datetime_str = soup.find('p', attrs={'class', 'bot-1'}).span.contents[-1].strip()
             tags["datetime"] = datetime.strptime(datetime_str, "%d.%m.%Y %H:%M")
         elif rubric == Rubric.USED_CARS:
             tags["datetime"] = datetime.now()   # used cars ads have no datetime
 
         # The location
-        location_str = seller_details_node.contents[0].strip()
+        location_str = seller_details_node.span.contents[0].strip()
         (zip, city) = re.match("([0-9]+)?\W*(.*)", location_str, re.M | re.DOTALL).groups(())
         if zip: tags["zip"] = zip
         if city: tags["city"] = city
